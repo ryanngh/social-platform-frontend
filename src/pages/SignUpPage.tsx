@@ -1,0 +1,336 @@
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Mail, Lock, User, Phone, ArrowRight, Users, MessageCircle, AtSign } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import toast from 'react-hot-toast';
+import clsx from 'clsx';
+
+export const SignUpPage: React.FC = () => {
+  const [step, setStep] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    email: '',
+    phoneNumber: '',
+    firstName: '',
+    lastName: '',
+    username: '',
+    password: '',
+    confirmPassword: ''
+  });
+
+  const { register } = useAuth();
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleNextStep = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (step === 1) {
+      if (!formData.email || !formData.phoneNumber || !formData.firstName || !formData.lastName || !formData.username) {
+        toast.error('Please fill in all fields');
+        return;
+      }
+      setStep(2);
+    } else if (step === 2) {
+      handleSubmit();
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (formData.password !== formData.confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+    
+    if (formData.password.length < 8) {
+      toast.error('Password must be at least 8 characters long');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      await register({
+        email: formData.email,
+        phoneNumber: formData.phoneNumber,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        username: formData.username,
+        password: formData.password
+      });
+      setStep(3); // Success step
+    } catch (error: unknown) {
+      const msg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(msg || 'Failed to create account. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#FAFAFB] flex flex-col items-center justify-center p-4">
+      
+      {/* Header */}
+      <div className="w-full max-w-[1240px] flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-[#004AC6] font-['Be_Vietnam_Pro']">RySocial</h1>
+        <p className="text-sm text-[#4B5563]">
+          Already have an account?{' '}
+          <Link to="/signin" className="font-semibold text-[#004AC6] hover:text-[#003da3]">
+            Sign In
+          </Link>
+        </p>
+      </div>
+
+      <div className="bg-white max-w-[1240px] w-full min-h-[750px] rounded-2xl shadow-sm border border-gray-200 flex flex-col lg:flex-row overflow-hidden">
+        
+        {/* Left Panel */}
+        <div className="w-full lg:w-5/12 bg-[#FAFAFC] p-8 lg:p-12 flex flex-col justify-between border-r border-gray-100">
+          <div>
+            <h2 className="text-3xl font-bold text-[#1F2937] leading-tight mb-8">
+              Join RySocial today! 🚀
+            </h2>
+            
+            {/* Illustration Placeholder */}
+            <div className="w-full h-[240px] bg-gradient-to-br from-[#EFF6FF] to-[#DBEAFE] rounded-2xl mb-10 flex items-center justify-center">
+              <span className="text-[#004AC6] font-medium">Community Illustration</span>
+            </div>
+
+            {/* Feature Bullets */}
+            <div className="space-y-6">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-full bg-[rgba(0,74,198,0.10)] text-[#004AC6] flex items-center justify-center shrink-0">
+                  <Users className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-[15px] font-semibold text-[#1F2937] mb-1">Connect with people</h3>
+                  <p className="text-[13px] text-[#4B5563]">Find friends, family, and people who share your interests.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-full bg-[rgba(0,74,198,0.10)] text-[#004AC6] flex items-center justify-center shrink-0">
+                  <MessageCircle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-[15px] font-semibold text-[#1F2937] mb-1">Share your ideas</h3>
+                  <p className="text-[13px] text-[#4B5563]">Express yourself through posts, photos, and stories.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-12 text-xs text-gray-500 flex gap-4">
+            <a href="#" className="hover:text-gray-900">Privacy Policy</a>
+            <a href="#" className="hover:text-gray-900">Terms of Service</a>
+          </div>
+        </div>
+
+        {/* Right Panel */}
+        <div className="w-full lg:w-7/12 p-8 lg:p-12 xl:p-16 flex flex-col">
+          <div className="max-w-[500px] w-full mx-auto flex-1 flex flex-col">
+            
+            {/* Steps Progress */}
+            {step < 3 && (
+              <div className="mb-10">
+                <h2 className="text-3xl font-bold text-[#1F2937] mb-2">Create your account</h2>
+                <p className="text-[#4B5563] mb-8">
+                  Step {step} of 2 — {step === 1 ? 'Basic information' : 'Profile & Security'}
+                </p>
+                
+                <div className="flex items-center gap-2">
+                  <div className={clsx("w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold", step >= 1 ? "bg-[#004AC6] text-white" : "bg-gray-100 text-gray-400")}>1</div>
+                  <div className={clsx("h-[2px] flex-1", step >= 2 ? "bg-[#004AC6]" : "bg-gray-200")}></div>
+                  <div className={clsx("w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold", step >= 2 ? "bg-[#004AC6] text-white" : "bg-gray-100 text-gray-400")}>2</div>
+                  <div className={clsx("h-[2px] flex-1", step >= 3 ? "bg-[#004AC6]" : "bg-gray-200")}></div>
+                  <div className={clsx("w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold", step >= 3 ? "bg-[#004AC6] text-white" : "bg-gray-100 text-gray-400")}>3</div>
+                </div>
+              </div>
+            )}
+
+            {/* Form */}
+            {step < 3 ? (
+              <form onSubmit={handleNextStep} className="space-y-5 flex-1 flex flex-col">
+                {step === 1 && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="block text-[13px] font-semibold text-[#1F2937]">First name</label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                            <User className="h-5 w-5 text-gray-400" />
+                          </div>
+                          <input
+                            type="text"
+                            name="firstName"
+                            value={formData.firstName}
+                            onChange={handleInputChange}
+                            className="block w-full pl-10 pr-3 h-[46px] text-sm rounded-lg border-gray-200 focus:ring-1 focus:ring-[#004AC6] focus:border-[#004AC6] placeholder-gray-400"
+                            placeholder="John"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="block text-[13px] font-semibold text-[#1F2937]">Last name</label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                            <User className="h-5 w-5 text-gray-400" />
+                          </div>
+                          <input
+                            type="text"
+                            name="lastName"
+                            value={formData.lastName}
+                            onChange={handleInputChange}
+                            className="block w-full pl-10 pr-3 h-[46px] text-sm rounded-lg border-gray-200 focus:ring-1 focus:ring-[#004AC6] focus:border-[#004AC6] placeholder-gray-400"
+                            placeholder="Doe"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="block text-[13px] font-semibold text-[#1F2937]">Nickname (Username)</label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                          <AtSign className="h-5 w-5 text-gray-400" />
+                        </div>
+                        <input
+                          type="text"
+                          name="username"
+                          value={formData.username}
+                          onChange={handleInputChange}
+                          className="block w-full pl-10 pr-3 h-[46px] text-sm rounded-lg border-gray-200 focus:ring-1 focus:ring-[#004AC6] focus:border-[#004AC6] placeholder-gray-400"
+                          placeholder="johndoe123"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="block text-[13px] font-semibold text-[#1F2937]">Email</label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                          <Mail className="h-5 w-5 text-gray-400" />
+                        </div>
+                        <input
+                          type="email"
+                          name="email"
+                          value={formData.email}
+                          onChange={handleInputChange}
+                          className="block w-full pl-10 pr-3 h-[46px] text-sm rounded-lg border-gray-200 focus:ring-1 focus:ring-[#004AC6] focus:border-[#004AC6] placeholder-gray-400"
+                          placeholder="john@example.com"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="block text-[13px] font-semibold text-[#1F2937]">Phone number</label>
+                      <div className="relative flex rounded-lg">
+                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none z-10">
+                          <Phone className="h-5 w-5 text-gray-400" />
+                        </div>
+                        <span className="inline-flex items-center px-4 pl-10 rounded-l-lg border border-r-0 border-gray-200 bg-gray-50 text-gray-500 sm:text-sm">
+                          +84
+                        </span>
+                        <input
+                          type="tel"
+                          name="phoneNumber"
+                          value={formData.phoneNumber}
+                          onChange={handleInputChange}
+                          className="flex-1 block w-full px-3 h-[46px] text-sm rounded-none rounded-r-lg border-gray-200 focus:ring-1 focus:ring-[#004AC6] focus:border-[#004AC6] placeholder-gray-400"
+                          placeholder="912 345 678"
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {step === 2 && (
+                  <>
+                    <div className="space-y-1.5">
+                      <label className="block text-[13px] font-semibold text-[#1F2937]">Password</label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                          <Lock className="h-5 w-5 text-gray-400" />
+                        </div>
+                        <input
+                          type="password"
+                          name="password"
+                          value={formData.password}
+                          onChange={handleInputChange}
+                          className="block w-full pl-10 pr-3 h-[46px] text-sm rounded-lg border-gray-200 focus:ring-1 focus:ring-[#004AC6] focus:border-[#004AC6] placeholder-gray-400"
+                          placeholder="Create a password"
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">Must be at least 8 characters long.</p>
+                    </div>
+
+                    <div className="space-y-1.5 mt-4">
+                      <label className="block text-[13px] font-semibold text-[#1F2937]">Confirm Password</label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                          <Lock className="h-5 w-5 text-gray-400" />
+                        </div>
+                        <input
+                          type="password"
+                          name="confirmPassword"
+                          value={formData.confirmPassword}
+                          onChange={handleInputChange}
+                          className="block w-full pl-10 pr-3 h-[46px] text-sm rounded-lg border-gray-200 focus:ring-1 focus:ring-[#004AC6] focus:border-[#004AC6] placeholder-gray-400"
+                          placeholder="Confirm your password"
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                <div className="mt-auto pt-8">
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className={clsx(
+                      "w-full flex justify-center py-2 px-4 border border-transparent rounded-[8px] shadow-sm text-sm font-semibold text-white bg-[#004AC6] hover:bg-[#003da3] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#004AC6] h-[46px] items-center transition-colors duration-200 gap-2",
+                      isLoading && "opacity-75 cursor-not-allowed"
+                    )}
+                  >
+                    {isLoading ? 'Processing...' : (step === 1 ? 'Continue' : 'Create Account')}
+                    {!isLoading && <ArrowRight className="w-4 h-4" />}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center text-center">
+                <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6">
+                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h2 className="text-3xl font-bold text-[#1F2937] mb-4">Account created!</h2>
+                <p className="text-[#4B5563] mb-8 max-w-[300px]">
+                  Welcome to RySocial, {formData.firstName}! Your account has been successfully created.
+                </p>
+                <Link
+                  to="/signin"
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-[8px] shadow-sm text-sm font-semibold text-white bg-[#004AC6] hover:bg-[#003da3] h-[46px] items-center transition-colors duration-200"
+                >
+                  Sign in to continue
+                </Link>
+              </div>
+            )}
+
+            {/* Legal Disclaimer */}
+            {step < 3 && (
+              <p className="mt-6 text-center text-xs text-gray-500">
+                By continuing, you agree to our{' '}
+                <a href="#" className="font-medium text-gray-700 hover:text-gray-900">Terms of Service</a>
+                {' '}and{' '}
+                <a href="#" className="font-medium text-gray-700 hover:text-gray-900">Privacy Policy</a>.
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SignUpPage;
