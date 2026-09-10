@@ -1,5 +1,6 @@
 import { Edit3, Plus, Zap, Lock, UserPlus } from 'lucide-react';
 import type { User } from '../../types';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface ProfileTabsProps {
   activeTab: string;
@@ -9,7 +10,8 @@ interface ProfileTabsProps {
 }
 
 export const ProfileTabs = ({ activeTab, user, isOwnProfile, isPrivate = false }: ProfileTabsProps) => {
-  const displayName = [user.firstName, user.lastName].filter(Boolean).join(' ') || user.username || 'User';
+  const { t, language } = useLanguage();
+  const displayName = [user.firstName, user.lastName].filter(Boolean).join(' ') || user.username || t('topNav.userFallback');
 
   if (activeTab === 'Posts') {
     // 1. Private Account State
@@ -20,31 +22,31 @@ export const ProfileTabs = ({ activeTab, user, isOwnProfile, isPrivate = false }
             <Lock className="w-8 h-8 text-[#535F70]" />
           </div>
           <h3 className="text-base sm:text-lg font-bold text-[#1A1C1E] mb-2">
-            Đây là tài khoản riêng tư
+            {t('profile.privateAccount')}
           </h3>
           <p className="text-xs sm:text-sm text-[#535F70] max-w-md leading-relaxed mb-6">
-            Hãy theo dõi {displayName} để xem ảnh, bài viết và các hoạt động chia sẻ trên trang cá nhân.
+            {t('profile.privateAccountDesc', { name: displayName })}
           </p>
           <button
             className="px-6 py-2.5 bg-[#004AC6] hover:bg-[#003A9F] text-white text-xs sm:text-sm font-semibold rounded-full transition shadow flex items-center gap-2 cursor-pointer"
             type="button"
           >
             <UserPlus className="w-4 h-4" />
-            <span>Gửi yêu cầu theo dõi</span>
+            <span>{t('profile.requestFollow')}</span>
           </button>
         </div>
       );
     }
 
-    // 2. Empty Posts State (matches rysocial_profile_empty_posts_state)
+    // 2. Empty Posts State
     return (
       <div className="bg-white border border-[#E2E2EC] rounded-xl p-8 sm:p-12 text-center shadow-card flex flex-col items-center justify-center">
         <div className="w-20 h-20 rounded-full bg-[#EFF4FF] border border-[#d6e0f1] flex items-center justify-center text-[#004AC6] mb-4 shadow-sm">
           <Edit3 className="w-10 h-10 text-[#004AC6]" />
         </div>
-        <h3 className="text-lg font-bold text-[#1A1C1E] mb-2">Chưa có bài viết nào</h3>
+        <h3 className="text-lg font-bold text-[#1A1C1E] mb-2">{t('profile.noPosts')}</h3>
         <p className="text-xs sm:text-sm text-[#535F70] max-w-[420px] leading-relaxed mb-6">
-          {displayName} chưa đăng bài viết nào trên trang cá nhân. Hãy theo dõi hoặc quay lại sau để cập nhật những chia sẻ mới nhất!
+          {t('profile.noPostsDesc', { name: displayName })}
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3">
           {isOwnProfile && (
@@ -53,7 +55,7 @@ export const ProfileTabs = ({ activeTab, user, isOwnProfile, isPrivate = false }
               type="button"
             >
               <Plus className="w-4 h-4" />
-              <span>Tạo bài viết mới</span>
+              <span>{t('profile.createNewPost')}</span>
             </button>
           )}
           <button
@@ -61,7 +63,7 @@ export const ProfileTabs = ({ activeTab, user, isOwnProfile, isPrivate = false }
             type="button"
           >
             <Zap className="w-4 h-4 text-[#535F70]" />
-            <span>Khám phá các bài viết thịnh hành</span>
+            <span>{language === 'vi' ? 'Khám phá các bài viết thịnh hành' : 'Discover trending posts'}</span>
           </button>
         </div>
       </div>
@@ -71,8 +73,12 @@ export const ProfileTabs = ({ activeTab, user, isOwnProfile, isPrivate = false }
   // Other Tabs (Replies, Reposts, Media, Likes)
   return (
     <div className="bg-white border border-[#E2E2EC] rounded-xl p-8 text-center shadow-card flex flex-col items-center justify-center">
-      <h3 className="text-sm font-semibold text-[#1A1C1E] mb-1">Mục {activeTab} trống</h3>
-      <p className="text-xs text-[#535F70]">Chưa có nội dung nào trong phần này.</p>
+      <h3 className="text-sm font-semibold text-[#1A1C1E] mb-1">
+        {language === 'vi' ? `Mục ${activeTab} trống` : `${activeTab} section is empty`}
+      </h3>
+      <p className="text-xs text-[#535F70]">
+        {language === 'vi' ? 'Chưa có nội dung nào trong phần này.' : 'No content available in this section yet.'}
+      </p>
     </div>
   );
 };

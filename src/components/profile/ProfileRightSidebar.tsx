@@ -105,7 +105,7 @@ export const ProfileRightSidebar = () => {
           <a className="hover:underline" href="#">Cookie Policy</a>
           <a className="hover:underline" href="#">Accessibility</a>
         </div>
-        <p>© 2024 RySocial Inc.</p>
+        <p>© 2026 Mo3Studio.</p>
       </footer>
     </aside>
   );

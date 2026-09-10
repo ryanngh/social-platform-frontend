@@ -1,7 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 const RightSidebar: React.FC = () => {
+  const { t, language, setLanguage } = useLanguage();
+
   const suggestions = [
     {
       id: 1,
@@ -26,21 +29,21 @@ const RightSidebar: React.FC = () => {
   const trends = [
     {
       rank: 1,
-      category: 'Thiết kế · Thịnh hành',
+      category: language === 'vi' ? 'Thiết kế · Thịnh hành' : 'Design · Trending',
       hashtag: '#UIDesign',
-      count: '15.2K bài viết',
+      count: language === 'vi' ? '15.2K bài viết' : '15.2K posts',
     },
     {
       rank: 2,
-      category: 'Công nghệ · Thịnh hành',
+      category: language === 'vi' ? 'Công nghệ · Thịnh hành' : 'Tech · Trending',
       hashtag: '#DesignSystem',
-      count: '8,432 bài viết',
+      count: language === 'vi' ? '8,432 bài viết' : '8,432 posts',
     },
     {
       rank: 3,
-      category: 'Lập trình · Thịnh hành',
+      category: language === 'vi' ? 'Lập trình · Thịnh hành' : 'Coding · Trending',
       hashtag: '#WebDev',
-      count: '24.1K bài viết',
+      count: language === 'vi' ? '24.1K bài viết' : '24.1K posts',
     },
   ];
 
@@ -48,16 +51,16 @@ const RightSidebar: React.FC = () => {
     {
       id: 1,
       title: 'Design Systems Meetup',
-      type: 'Hội thảo · Offline',
-      time: '18 Tháng 6, 2024 - 9:00 AM',
+      type: language === 'vi' ? 'Hội thảo · Trực tiếp' : 'Seminar · In-person',
+      time: language === 'vi' ? '18 Tháng 6, 2024 - 9:00 AM' : 'June 18, 2024 - 9:00 AM',
       location: 'San Francisco, CA',
       image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=150&auto=format&fit=crop&q=80',
     },
     {
       id: 2,
       title: 'UI/UX Workshop',
-      type: 'Workshop · Online',
-      time: '20 Tháng 6, 2024 - 2:00 PM',
+      type: language === 'vi' ? 'Workshop · Trực tuyến' : 'Workshop · Online',
+      time: language === 'vi' ? '20 Tháng 6, 2024 - 2:00 PM' : 'June 20, 2024 - 2:00 PM',
       location: 'Online',
       image: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=150&auto=format&fit=crop&q=80',
     },
@@ -68,9 +71,9 @@ const RightSidebar: React.FC = () => {
       {/* 1. Friend Suggestions Card */}
       <section className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
         <div className="flex items-center justify-between mb-4">
-          <h4 className="font-bold text-gray-900 text-sm">Gợi ý cho bạn</h4>
-          <button className="text-xs font-semibold text-[#004AC6] hover:underline">
-            Xem tất cả
+          <h4 className="font-bold text-gray-900 text-sm">{t('rightSidebar.suggestions')}</h4>
+          <button className="text-xs font-semibold text-[#004AC6] hover:underline cursor-pointer">
+            {t('rightSidebar.seeAll')}
           </button>
         </div>
         <div className="flex flex-col gap-4">
@@ -91,8 +94,8 @@ const RightSidebar: React.FC = () => {
                   <p className="text-[11px] text-gray-400">@{user.username}</p>
                 </div>
               </div>
-              <button className="text-xs font-semibold px-4 py-1.5 rounded-full bg-[#EFF6FF] text-[#003A9F] hover:bg-blue-100 transition">
-                Theo dõi
+              <button className="text-xs font-semibold px-4 py-1.5 rounded-full bg-[#EFF6FF] text-[#003A9F] hover:bg-blue-100 transition cursor-pointer">
+                {t('rightSidebar.follow')}
               </button>
             </div>
           ))}
@@ -101,7 +104,7 @@ const RightSidebar: React.FC = () => {
 
       {/* 2. Trending Hashtags Card */}
       <section className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
-        <h4 className="font-bold text-gray-900 text-sm mb-4">Thịnh hành hôm nay</h4>
+        <h4 className="font-bold text-gray-900 text-sm mb-4">{t('rightSidebar.trending')}</h4>
         <div className="flex flex-col gap-3.5">
           {trends.map((trend) => (
             <div key={trend.rank} className="flex items-start gap-3">
@@ -121,9 +124,9 @@ const RightSidebar: React.FC = () => {
       {/* 3. Upcoming Events Card */}
       <section className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
         <div className="flex items-center justify-between mb-4">
-          <h4 className="font-bold text-gray-900 text-sm">Sự kiện sắp diễn ra</h4>
-          <button className="text-xs font-semibold text-[#004AC6] hover:underline">
-            Xem tất cả
+          <h4 className="font-bold text-gray-900 text-sm">{t('rightSidebar.upcomingEvents')}</h4>
+          <button className="text-xs font-semibold text-[#004AC6] hover:underline cursor-pointer">
+            {t('rightSidebar.seeAll')}
           </button>
         </div>
         <div className="flex flex-col gap-4">
@@ -154,15 +157,26 @@ const RightSidebar: React.FC = () => {
       {/* 4. Footer Info */}
       <footer className="px-2 text-[11px] text-gray-400 leading-relaxed">
         <div className="flex flex-wrap gap-x-2 gap-y-1 mb-1">
-          <Link to="/terms" className="hover:underline">Điều khoản</Link>
+          <Link to="/terms" className="hover:underline">
+            {language === 'vi' ? 'Điều khoản' : 'Terms'}
+          </Link>
           <span>·</span>
-          <Link to="/privacy" className="hover:underline">Quyền riêng tư</Link>
+          <Link to="/privacy" className="hover:underline">
+            {language === 'vi' ? 'Quyền riêng tư' : 'Privacy'}
+          </Link>
           <span>·</span>
-          <Link to="/help" className="hover:underline">Trợ giúp</Link>
+          <Link to="/help" className="hover:underline">
+            {language === 'vi' ? 'Trợ giúp' : 'Help'}
+          </Link>
           <span>·</span>
-          <button className="hover:underline">Ngôn ngữ</button>
+          <button
+            onClick={() => setLanguage(language === 'vi' ? 'en' : 'vi')}
+            className="hover:underline text-[#004AC6] font-medium cursor-pointer"
+          >
+            {language === 'vi' ? 'English' : 'Tiếng Việt'}
+          </button>
         </div>
-        <p>© 2024 RySocial Inc.</p>
+        <p>© 2026 Mo3Studio.</p>
       </footer>
     </div>
   );

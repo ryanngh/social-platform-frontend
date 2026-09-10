@@ -3,6 +3,7 @@ import { X, Camera, MapPin, Link2, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { userService } from '../../services/userService';
 import type { User, ProfileUpdateRequest } from '../../types';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { getAvatarUrl, getBannerUrl, DEFAULT_AVATAR_FALLBACK } from '../../utils/media';
 
 interface EditProfileModalProps {
@@ -13,6 +14,7 @@ interface EditProfileModalProps {
 }
 
 export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileModalProps) => {
+  const { t, language } = useLanguage();
   const [firstName, setFirstName] = useState(user.firstName || '');
   const [lastName, setLastName] = useState(user.lastName || '');
   const [username, setUsername] = useState(user.username || '');
@@ -88,11 +90,11 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
       const finalUser = await userService.updateProfile(updateData);
       
       onSave(finalUser);
-      toast.success('Hồ sơ đã được cập nhật thành công!');
+      toast.success(t('profile.updateSuccess'));
       onClose();
     } catch (error) {
       console.error(error);
-      toast.error('Không thể cập nhật hồ sơ. Vui lòng thử lại!');
+      toast.error(language === 'vi' ? 'Không thể cập nhật hồ sơ. Vui lòng thử lại!' : 'Could not update profile. Please try again!');
     } finally {
       setIsLoading(false);
     }
@@ -111,14 +113,14 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
           <div className="flex items-center gap-3">
             <button
               onClick={onClose}
-              aria-label="Đóng"
+              aria-label={t('common.close')}
               className="p-1.5 text-gray-500 hover:text-[#1A1C1E] hover:bg-[#EDEDF8] rounded-full transition-colors cursor-pointer"
               type="button"
             >
               <X className="w-5 h-5" />
             </button>
             <h2 className="text-base font-bold text-[#1A1C1E]" id="modal-profile-title">
-              Chỉnh sửa trang cá nhân
+              {t('profile.editModalTitle')}
             </h2>
           </div>
           <button
@@ -127,7 +129,7 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
             className="px-4 py-1.5 bg-[#004AC6] hover:bg-[#002970] text-white text-xs font-semibold rounded-full shadow-sm transition-colors cursor-pointer disabled:opacity-50"
             type="button"
           >
-            {isLoading ? 'Đang lưu...' : 'Lưu thay đổi'}
+            {isLoading ? t('profile.saving') : t('profile.saveChanges')}
           </button>
         </div>
 
@@ -146,7 +148,7 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
                 type="button"
               >
                 <Camera className="w-4 h-4" />
-                <span>Thay đổi ảnh bìa</span>
+                <span>{language === 'vi' ? 'Thay đổi ảnh bìa' : 'Change cover'}</span>
               </button>
             </div>
             <input
@@ -171,15 +173,19 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
                 />
                 <button
                   onClick={() => avatarInputRef.current?.click()}
-                  aria-label="Đổi ảnh đại diện"
+                  aria-label={language === 'vi' ? 'Đổi ảnh đại diện' : 'Change avatar'}
                   className="absolute inset-0 m-1 rounded-full bg-slate-900/50 hover:bg-slate-900/70 text-white flex flex-col items-center justify-center transition opacity-90 hover:opacity-100 cursor-pointer"
                   type="button"
                 >
                   <Camera className="w-4 h-4" />
-                  <span className="text-[10px] font-medium leading-tight mt-0.5">Đổi ảnh</span>
+                  <span className="text-[10px] font-medium leading-tight mt-0.5">
+                    {language === 'vi' ? 'Đổi ảnh' : 'Change'}
+                  </span>
                 </button>
               </div>
-              <span className="text-[11px] text-[#535F70] pb-2">Kích thước đề xuất: 400x400px JPG/PNG</span>
+              <span className="text-[11px] text-[#535F70] pb-2">
+                {language === 'vi' ? 'Kích thước đề xuất: 400x400px JPG/PNG' : 'Recommended: 400x400px JPG/PNG'}
+              </span>
             </div>
             <input
               ref={avatarInputRef}
@@ -195,7 +201,9 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
             {/* Name Fields */}
             <div className="grid grid-cols-2 gap-3.5">
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-[#1A1C1E]">Họ (Last Name)</label>
+                <label className="block text-xs font-semibold text-[#1A1C1E]">
+                  {language === 'vi' ? 'Họ' : 'Last name'}
+                </label>
                 <input
                   className="w-full px-3.5 py-2 text-xs text-[#1A1C1E] bg-[#F9F9FB] border border-[#E2E2EC] rounded-lg focus:bg-white focus:ring-2 focus:ring-[#004AC6] focus:border-[#004AC6] transition outline-none"
                   type="text"
@@ -204,7 +212,9 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-[#1A1C1E]">Tên (First Name)</label>
+                <label className="block text-xs font-semibold text-[#1A1C1E]">
+                  {language === 'vi' ? 'Tên' : 'First name'}
+                </label>
                 <input
                   className="w-full px-3.5 py-2 text-xs text-[#1A1C1E] bg-[#F9F9FB] border border-[#E2E2EC] rounded-lg focus:bg-white focus:ring-2 focus:ring-[#004AC6] focus:border-[#004AC6] transition outline-none"
                   type="text"
@@ -216,7 +226,9 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
 
             {/* Username Field */}
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-[#1A1C1E]">Tên người dùng</label>
+              <label className="block text-xs font-semibold text-[#1A1C1E]">
+                {language === 'vi' ? 'Tên người dùng' : 'Username'}
+              </label>
               <div className="relative">
                 <input
                   className="w-full px-3.5 py-2 text-xs text-[#1A1C1E] bg-[#F9F9FB] border border-[#E2E2EC] rounded-lg focus:bg-white focus:ring-2 focus:ring-[#004AC6] focus:border-[#004AC6] transition outline-none"
@@ -230,7 +242,9 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
             {/* Bio Field with counter */}
             <div className="space-y-1.5">
               <div className="flex justify-between items-center">
-                <label className="block text-xs font-semibold text-[#1A1C1E]">Tiểu sử (Bio)</label>
+                <label className="block text-xs font-semibold text-[#1A1C1E]">
+                  {language === 'vi' ? 'Tiểu sử' : 'Bio'}
+                </label>
                 <span className="text-[11px] text-[#535F70]">{bio.length}/160</span>
               </div>
               <textarea
@@ -245,7 +259,9 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
             {/* Location & Website 2-Column */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-[#1A1C1E]">Vị trí</label>
+                <label className="block text-xs font-semibold text-[#1A1C1E]">
+                  {language === 'vi' ? 'Vị trí' : 'Location'}
+                </label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-2.5 w-3.5 h-3.5 text-[#535F70]" />
                   <input
@@ -258,7 +274,9 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-[#1A1C1E]">Liên kết website</label>
+                <label className="block text-xs font-semibold text-[#1A1C1E]">
+                  {language === 'vi' ? 'Liên kết website' : 'Website'}
+                </label>
                 <div className="relative">
                   <Link2 className="absolute left-3 top-2.5 w-3.5 h-3.5 text-[#535F70]" />
                   <input
@@ -274,7 +292,7 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
             {/* Interests Field */}
             <div className="space-y-2 pt-1">
               <label className="block text-xs font-semibold text-[#1A1C1E]">
-                Sở thích &amp; Chuyên môn (Interests)
+                {language === 'vi' ? 'Sở thích & Chuyên môn' : 'Interests & Specialties'}
               </label>
               <div className="flex flex-wrap gap-1.5 items-center">
                 {interests.map((tag) => (
@@ -299,7 +317,7 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
                     <input
                       type="text"
                       autoFocus
-                      placeholder="Nhập sở thích..."
+                      placeholder={language === 'vi' ? 'Nhập sở thích...' : 'Enter interest...'}
                       value={newInterestInput}
                       onChange={(e) => setNewInterestInput(e.target.value)}
                       onKeyDown={(e) => {
@@ -317,7 +335,7 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
                       className="text-xs bg-[#004AC6] text-white px-2 py-1 rounded-full cursor-pointer"
                       type="button"
                     >
-                      Thêm
+                      {language === 'vi' ? 'Thêm' : 'Add'}
                     </button>
                   </div>
                 ) : (
@@ -327,7 +345,7 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
                     type="button"
                   >
                     <Plus className="w-3 h-3" />
-                    <span>+ Thêm sở thích</span>
+                    <span>{language === 'vi' ? '+ Thêm sở thích' : '+ Add interest'}</span>
                   </button>
                 )}
               </div>
@@ -342,7 +360,7 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
             className="px-4 py-2 border border-[#E2E2EC] rounded-full text-xs font-semibold text-[#1A1C1E] hover:bg-[#EDEDF8] transition cursor-pointer"
             type="button"
           >
-            Hủy
+            {t('common.cancel')}
           </button>
           <button
             onClick={() => handleSubmit()}
@@ -350,7 +368,7 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
             className="px-5 py-2 bg-[#004AC6] hover:bg-[#002970] text-white text-xs font-semibold rounded-full shadow transition cursor-pointer disabled:opacity-50"
             type="button"
           >
-            {isLoading ? 'Đang lưu...' : 'Lưu thay đổi'}
+            {isLoading ? t('profile.saving') : t('profile.saveChanges')}
           </button>
         </div>
       </div>

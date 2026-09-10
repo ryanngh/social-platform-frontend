@@ -1,18 +1,36 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Bell, Mail, MessageSquare } from 'lucide-react';
+import { Search, Bell, Mail, MessageSquare, Globe, User as UserIcon, LogOut } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-
+import { useLanguage } from '../../contexts/LanguageContext';
 import { getAvatarUrl, DEFAULT_AVATAR_FALLBACK } from '../../utils/media';
+import clsx from 'clsx';
 
 const TopNavBar: React.FC = () => {
   const { user, logout } = useAuth();
+  const { language, setLanguage, t } = useLanguage();
   const [showUserMenu, setShowUserMenu] = React.useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const displayName = user?.firstName
     ? `${user.firstName} ${user.lastName || ''}`.trim()
-    : user?.username || 'Người dùng';
+    : user?.username || t('topNav.userFallback');
   const username = user?.username || 'user';
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
+      }
+    };
+    if (showUserMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showUserMenu]);
 
   return (
     <header className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200/80 z-50 shadow-sm flex items-center justify-between px-4 sm:px-6">
@@ -27,7 +45,7 @@ const TopNavBar: React.FC = () => {
           </span>
           <input
             className="w-full pl-10 pr-4 py-2 text-sm bg-gray-100/90 border border-transparent rounded-full focus:bg-white focus:border-[#004AC6] focus:ring-1 focus:ring-[#004AC6] transition placeholder-gray-400 outline-none"
-            placeholder="Tìm kiếm..."
+            placeholder={t('topNav.searchPlaceholder')}
             type="text"
           />
         </div>
@@ -38,7 +56,7 @@ const TopNavBar: React.FC = () => {
         {/* Notification Icon */}
         <button
           className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition relative"
-          title="Thông báo"
+          title={t('topNav.notifications')}
         >
           <Bell className="w-5 h-5" />
           <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border border-white"></span>
@@ -47,7 +65,7 @@ const TopNavBar: React.FC = () => {
         {/* Messages Icon */}
         <button
           className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition hidden sm:flex"
-          title="Hộp thư"
+          title={t('topNav.inbox')}
         >
           <Mail className="w-5 h-5" />
         </button>
@@ -55,7 +73,7 @@ const TopNavBar: React.FC = () => {
         {/* Chat Bubble Icon */}
         <button
           className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition"
-          title="Tin nhắn"
+          title={t('topNav.messages')}
         >
           <MessageSquare className="w-5 h-5" />
         </button>
@@ -64,7 +82,7 @@ const TopNavBar: React.FC = () => {
         <div className="h-6 w-px bg-gray-200 mx-1"></div>
 
         {/* User Info & Switch */}
-        <div className="relative">
+        <div className="relative" ref={menuRef}>
           <div
             onClick={() => setShowUserMenu(!showUserMenu)}
             className="flex items-center gap-2.5 cursor-pointer pl-1 py-1 hover:bg-gray-50 rounded-full sm:rounded-xl transition"
@@ -83,7 +101,7 @@ const TopNavBar: React.FC = () => {
                 {displayName}
               </p>
               <button className="text-xs text-[#004AC6] font-medium hover:underline text-left">
-                Switch
+                {t('topNav.switch')}
               </button>
             </div>
           </div>
@@ -91,24 +109,70 @@ const TopNavBar: React.FC = () => {
           {showUserMenu && (
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-lg border border-gray-100 py-2 z-50 animate-fadeIn">
               <div className="px-4 py-2 border-b border-gray-100">
-                <p className="text-xs font-semibold text-gray-800">{displayName}</p>
-                <p className="text-[11px] text-gray-400">@{username}</p>
+                <p className="text-xs font-semibold text-gray-800 truncate">{displayName}</p>
+                <p className="text-[11px] text-gray-400 truncate">@{username}</p>
               </div>
+
               <Link
                 to="/profile"
                 onClick={() => setShowUserMenu(false)}
-                className="block px-4 py-2 text-xs text-gray-700 hover:bg-[#EFF6FF] hover:text-[#004AC6]"
+                className="flex items-center gap-2 px-4 py-2 text-xs text-gray-700 hover:bg-[#EFF6FF] hover:text-[#004AC6] transition"
               >
-                Trang cá nhân
+                <UserIcon className="w-3.5 h-3.5 text-gray-500" />
+                <span>{t('userMenu.profile')}</span>
               </Link>
+
+              {/* Language Switcher Button Group */}
+              <div className="px-4 py-2 border-t border-b border-gray-100 flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs text-gray-700">
+                  <Globe className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+                  <span className="font-medium">{t('userMenu.language')}</span>
+                </div>
+                <div className="flex items-center bg-gray-100 rounded-lg p-0.5 text-[11px] font-semibold">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setLanguage('vi');
+                    }}
+                    className={clsx(
+                      'px-2 py-0.5 rounded-md transition cursor-pointer',
+                      language === 'vi'
+                        ? 'bg-white text-[#004AC6] shadow-xs font-bold'
+                        : 'text-gray-500 hover:text-gray-900'
+                    )}
+                    title={t('userMenu.vietnamese')}
+                  >
+                    VI
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setLanguage('en');
+                    }}
+                    className={clsx(
+                      'px-2 py-0.5 rounded-md transition cursor-pointer',
+                      language === 'en'
+                        ? 'bg-white text-[#004AC6] shadow-xs font-bold'
+                        : 'text-gray-500 hover:text-gray-900'
+                    )}
+                    title={t('userMenu.english')}
+                  >
+                    EN
+                  </button>
+                </div>
+              </div>
+
               <button
                 onClick={() => {
                   setShowUserMenu(false);
                   logout();
                 }}
-                className="w-full text-left px-4 py-2 text-xs text-red-600 hover:bg-red-50"
+                className="w-full flex items-center gap-2 text-left px-4 py-2 text-xs text-red-600 hover:bg-red-50 transition cursor-pointer"
               >
-                Đăng xuất
+                <LogOut className="w-3.5 h-3.5" />
+                <span>{t('userMenu.logout')}</span>
               </button>
             </div>
           )}
