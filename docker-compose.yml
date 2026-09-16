@@ -11,3 +11,5 @@ services:
       - /app/node_modules
     environment:
       - NODE_ENV=development
+      - VITE_BACKEND_URL=http://host.docker.internal:8080
+      - VITE_MINIO_URL=http://host.docker.internal:9000

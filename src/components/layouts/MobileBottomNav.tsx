@@ -1,15 +1,18 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { Home, Compass, PlusCircle, Bell, User } from 'lucide-react';
+import { useLanguage } from '../../contexts/LanguageContext';
 import clsx from 'clsx';
 
 const MobileBottomNav: React.FC = () => {
+  const { t } = useLanguage();
+
   const navItems = [
-    { name: 'Trang chủ', icon: Home, path: '/feed' },
-    { name: 'Khám phá', icon: Compass, path: '/explore' },
-    { name: 'Tạo bài', icon: PlusCircle, path: '/feed' },
-    { name: 'Thông báo', icon: Bell, path: '/notifications', badge: '3' },
-    { name: 'Cá nhân', icon: User, path: '/profile' },
+    { key: 'mobileNav.home', name: t('mobileNav.home'), icon: Home, path: '/feed' },
+    { key: 'mobileNav.explore', name: t('mobileNav.explore'), icon: Compass, path: '/explore' },
+    { key: 'mobileNav.create', name: t('mobileNav.create'), icon: PlusCircle, path: '/feed' },
+    { key: 'mobileNav.notifications', name: t('mobileNav.notifications'), icon: Bell, path: '/notifications', badge: '3' },
+    { key: 'mobileNav.profile', name: t('mobileNav.profile'), icon: User, path: '/profile' },
   ];
 
   return (

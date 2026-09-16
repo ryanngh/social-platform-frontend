@@ -1,8 +1,11 @@
 import React from 'react';
 import { Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 const FeedAllCaughtUpState: React.FC = () => {
+  const { t, language } = useLanguage();
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -16,10 +19,10 @@ const FeedAllCaughtUpState: React.FC = () => {
 
       {/* Heading & Subtitle */}
       <h3 className="text-base font-bold text-gray-900 mb-1.5">
-        Bạn đã xem hết tin mới hôm nay! 🎉
+        {t('feed.allCaughtUp')} 🎉
       </h3>
       <p className="text-xs text-gray-500 max-w-md mx-auto leading-relaxed mb-6">
-        Bạn đã bắt kịp mọi bài viết từ bạn bè và các nhóm bạn tham gia trong 24 giờ qua.
+        {t('feed.allCaughtUpDesc')}
       </p>
 
       {/* Action Buttons */}
@@ -28,13 +31,13 @@ const FeedAllCaughtUpState: React.FC = () => {
           to="/saved"
           className="bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-semibold px-5 py-2.5 rounded-2xl transition"
         >
-          Xem các bài viết đã lưu
+          {language === 'vi' ? 'Xem các bài viết đã lưu' : 'View saved posts'}
         </Link>
         <Link
           to="/explore"
           className="border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-semibold px-5 py-2.5 rounded-2xl transition"
         >
-          Khám phá chủ đề xu hướng
+          {language === 'vi' ? 'Khám phá chủ đề xu hướng' : 'Explore trending topics'}
         </Link>
       </div>
 
@@ -44,7 +47,7 @@ const FeedAllCaughtUpState: React.FC = () => {
           onClick={scrollToTop}
           className="text-xs font-semibold text-[#004AC6] hover:underline flex items-center gap-1 cursor-pointer"
         >
-          Quay lại đầu trang ↑
+          {language === 'vi' ? 'Quay lại đầu trang ↑' : 'Back to top ↑'}
         </button>
       </div>
     </div>

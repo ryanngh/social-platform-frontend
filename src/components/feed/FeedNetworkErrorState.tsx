@@ -1,5 +1,6 @@
 import React from 'react';
 import { WifiOff, RotateCw } from 'lucide-react';
+import { useLanguage } from '../../contexts/LanguageContext';
 import toast from 'react-hot-toast';
 
 interface FeedNetworkErrorStateProps {
@@ -7,6 +8,7 @@ interface FeedNetworkErrorStateProps {
 }
 
 const FeedNetworkErrorState: React.FC<FeedNetworkErrorStateProps> = ({ onRetry }) => {
+  const { t, language } = useLanguage();
   const [retrying, setRetrying] = React.useState(false);
 
   const handleRetry = () => {
@@ -16,7 +18,7 @@ const FeedNetworkErrorState: React.FC<FeedNetworkErrorStateProps> = ({ onRetry }
       if (onRetry) {
         onRetry();
       } else {
-        toast.success('Đã kết nối lại thành công!');
+        toast.success(language === 'vi' ? 'Đã kết nối lại thành công!' : 'Reconnected successfully!');
       }
     }, 800);
   };
@@ -30,15 +32,15 @@ const FeedNetworkErrorState: React.FC<FeedNetworkErrorStateProps> = ({ onRetry }
 
       {/* Heading & Subtitle */}
       <h3 className="text-xl font-bold text-gray-900 mb-2">
-        Không thể kết nối đến máy chủ
+        {t('feed.networkError')}
       </h3>
       <p className="text-sm text-gray-500 max-w-md mx-auto mb-4 leading-relaxed">
-        Đã xảy ra sự cố khi tải dữ liệu bài viết mới. Vui lòng kiểm tra lại đường truyền internet của bạn hoặc thử lại sau vài phút.
+        {t('feed.networkErrorDesc')}
       </p>
 
       {/* Error code badge */}
       <span className="inline-block px-3 py-1 bg-gray-100 text-gray-500 text-xs font-medium rounded-full mb-6">
-        Mã lỗi: ERR_NETWORK_CONNECTION_TIMEOUT
+        {language === 'vi' ? 'Mã lỗi: ERR_NETWORK_CONNECTION_TIMEOUT' : 'Error code: ERR_NETWORK_CONNECTION_TIMEOUT'}
       </span>
 
       {/* Action buttons */}
@@ -49,13 +51,13 @@ const FeedNetworkErrorState: React.FC<FeedNetworkErrorStateProps> = ({ onRetry }
           className="flex items-center gap-2 bg-[#004AC6] text-white px-6 py-2.5 rounded-xl font-medium text-sm shadow-sm hover:bg-blue-700 disabled:opacity-60 transition cursor-pointer"
         >
           <RotateCw className={`w-4 h-4 ${retrying ? 'animate-spin' : ''}`} />
-          <span>{retrying ? 'Đang kết nối lại...' : 'Thử lại ngay'}</span>
+          <span>{retrying ? (language === 'vi' ? 'Đang kết nối lại...' : 'Reconnecting...') : t('feed.retry')}</span>
         </button>
         <button
-          onClick={() => toast('Tất cả hệ thống đang hoạt động bình thường (99.98% uptime)', { icon: '🟢' })}
+          onClick={() => toast(language === 'vi' ? 'Tất cả hệ thống đang hoạt động bình thường (99.98% uptime)' : 'All systems operational (99.98% uptime)', { icon: '🟢' })}
           className="border border-gray-200 text-gray-700 px-6 py-2.5 rounded-xl font-medium text-sm hover:bg-gray-50 transition cursor-pointer"
         >
-          Kiểm tra trạng thái hệ thống
+          {language === 'vi' ? 'Kiểm tra trạng thái hệ thống' : 'Check system status'}
         </button>
       </div>
     </div>

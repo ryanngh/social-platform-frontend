@@ -44,3 +44,20 @@ export const getAvatarUrl = (path?: string | null): string => {
 export const getBannerUrl = (path?: string | null): string => {
   return getMediaUrl(path, '');
 };
+
+/**
+ * Checks if a media item is a video by type or URL extension
+ */
+export const isVideoMedia = (mediaUrl?: string | null, mediaType?: string | null): boolean => {
+  if (mediaType?.toUpperCase() === 'VIDEO') return true;
+  if (!mediaUrl) return false;
+  const cleanUrl = mediaUrl.split('?')[0].toLowerCase();
+  return (
+    cleanUrl.endsWith('.mp4') ||
+    cleanUrl.endsWith('.webm') ||
+    cleanUrl.endsWith('.mov') ||
+    cleanUrl.endsWith('.ogg') ||
+    cleanUrl.endsWith('.mkv')
+  );
+};
+

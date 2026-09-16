@@ -15,22 +15,24 @@ import {
   Layers 
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { getAvatarUrl, DEFAULT_AVATAR_FALLBACK } from '../../utils/media';
 import clsx from 'clsx';
 
 const LeftSidebar: React.FC = () => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const location = useLocation();
 
   const navItems = [
-    { name: 'Trang chủ', icon: Home, path: '/feed' },
-    { name: 'Khám phá', icon: Compass, path: '/explore' },
-    { name: 'Thông báo', icon: Bell, path: '/notifications', badge: '3' },
-    { name: 'Tin nhắn', icon: MessageSquare, path: '/messages' },
-    { name: 'Bạn bè', icon: Users, path: '/friends' },
-    { name: 'Nhóm', icon: UsersRound, path: '/groups' },
-    { name: 'Sự kiện', icon: Calendar, path: '/events' },
-    { name: 'Đã lưu', icon: Bookmark, path: '/saved' },
+    { key: 'leftNav.home', name: t('leftNav.home'), icon: Home, path: '/feed' },
+    { key: 'leftNav.explore', name: t('leftNav.explore'), icon: Compass, path: '/explore' },
+    { key: 'leftNav.notifications', name: t('leftNav.notifications'), icon: Bell, path: '/notifications', badge: '3' },
+    { key: 'leftNav.messages', name: t('leftNav.messages'), icon: MessageSquare, path: '/messages' },
+    { key: 'leftNav.friends', name: t('leftNav.friends'), icon: Users, path: '/friends' },
+    { key: 'leftNav.groups', name: t('leftNav.groups'), icon: UsersRound, path: '/groups' },
+    { key: 'leftNav.events', name: t('leftNav.events'), icon: Calendar, path: '/events' },
+    { key: 'leftNav.saved', name: t('leftNav.saved'), icon: Bookmark, path: '/saved' },
   ];
 
   const shortcuts = [
@@ -41,7 +43,7 @@ const LeftSidebar: React.FC = () => {
 
   const displayName = user?.firstName
     ? `${user.firstName} ${user.lastName || ''}`.trim()
-    : user?.username || 'Người dùng';
+    : user?.username || t('topNav.userFallback');
   const username = user?.username || 'user';
 
   return (
@@ -99,13 +101,13 @@ const LeftSidebar: React.FC = () => {
             <p className="font-bold text-gray-900 text-base">
               {user?.followingCount ?? 0}
             </p>
-            <p className="text-[11px] text-gray-500 font-normal">Bạn theo dõi</p>
+            <p className="text-[11px] text-gray-500 font-normal">{t('leftNav.following')}</p>
           </div>
           <div className="px-1">
             <p className="font-bold text-gray-900 text-base">
               {user?.followersCount ?? 0}
             </p>
-            <p className="text-[11px] text-gray-500 font-normal">Lượt theo dõi</p>
+            <p className="text-[11px] text-gray-500 font-normal">{t('leftNav.followers')}</p>
           </div>
         </div>
 
@@ -113,15 +115,15 @@ const LeftSidebar: React.FC = () => {
           to="/profile"
           className="w-full mt-4 py-2.5 rounded-2xl bg-[#EFF6FF] text-[#003A9F] text-xs font-semibold hover:bg-blue-100 transition block text-center"
         >
-          Xem trang cá nhân
+          {t('leftNav.viewProfile')}
         </Link>
       </section>
 
       {/* 3. Shortcuts Card */}
       <section className="bg-white rounded-3xl p-4 shadow-sm border border-gray-100">
         <div className="flex items-center justify-between px-2 mb-3">
-          <h4 className="font-semibold text-gray-900 text-sm">Lối tắt</h4>
-          <button className="text-gray-400 hover:text-gray-600 transition" title="Thêm lối tắt">
+          <h4 className="font-semibold text-gray-900 text-sm">{t('leftNav.shortcuts')}</h4>
+          <button className="text-gray-400 hover:text-gray-600 transition" title={t('leftNav.addShortcut')}>
             <Plus className="w-4 h-4" />
           </button>
         </div>

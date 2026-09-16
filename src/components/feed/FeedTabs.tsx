@@ -1,5 +1,6 @@
 import React from 'react';
 import { SlidersHorizontal } from 'lucide-react';
+import { useLanguage } from '../../contexts/LanguageContext';
 import clsx from 'clsx';
 
 interface FeedTabsProps {
@@ -8,11 +9,13 @@ interface FeedTabsProps {
 }
 
 const FeedTabs: React.FC<FeedTabsProps> = ({ activeTab, onTabChange }) => {
+  const { t } = useLanguage();
+
   const tabs = [
-    { id: 'for-you', label: 'Dành cho bạn' },
-    { id: 'following', label: 'Đang theo dõi' },
-    { id: 'friends', label: 'Bạn bè' },
-    { id: 'groups', label: 'Nhóm' },
+    { id: 'for-you', label: t('feed.tabForYou') },
+    { id: 'following', label: t('feed.tabFollowing') },
+    { id: 'friends', label: t('feed.tabFriends') },
+    { id: 'groups', label: t('feed.tabGroups') },
   ];
 
   return (
@@ -43,7 +46,7 @@ const FeedTabs: React.FC<FeedTabsProps> = ({ activeTab, onTabChange }) => {
       {/* Filter / Tuning Icon */}
       <button 
         className="text-gray-800 hover:text-gray-600 transition p-1 cursor-pointer shrink-0 ml-2" 
-        title="Bộ lọc"
+        title={t('feed.filter')}
       >
         <SlidersHorizontal className="w-5 h-5 text-gray-800" />
       </button>
