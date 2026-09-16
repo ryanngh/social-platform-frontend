@@ -1,5 +1,6 @@
 import { MapPin, Link2, Calendar, UserPlus, MessageCircle, MoreHorizontal } from 'lucide-react';
 import type { User } from '../../types';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { getAvatarUrl, getBannerUrl, DEFAULT_AVATAR_FALLBACK } from '../../utils/media';
 
 interface ProfileHeaderProps {
@@ -12,8 +13,6 @@ interface ProfileHeaderProps {
   onFollowToggle?: () => void;
 }
 
-const TABS = ['Posts', 'Replies', 'Reposts', 'Media', 'Likes'];
-
 export const ProfileHeader = ({
   user,
   isOwnProfile,
@@ -23,10 +22,19 @@ export const ProfileHeader = ({
   isFollowing = false,
   onFollowToggle,
 }: ProfileHeaderProps) => {
-  const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ') || user.username || 'User';
+  const { t, language } = useLanguage();
+  const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ') || user.username || t('topNav.userFallback');
   const joinedDate = user.createdAt
-    ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-    : 'October 2021';
+    ? new Date(user.createdAt).toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', { month: 'long', year: 'numeric' })
+    : language === 'vi' ? 'Tháng 10, 2021' : 'October 2021';
+
+  const tabs = [
+    { id: 'Posts', label: t('profile.tabs.posts') },
+    { id: 'Replies', label: t('profile.tabs.replies') },
+    { id: 'Reposts', label: t('profile.tabs.reposts') },
+    { id: 'Media', label: t('profile.tabs.media') },
+    { id: 'Likes', label: t('profile.tabs.likes') },
+  ];
 
   return (
     <section className="bg-white border border-[#E2E2EC] rounded-xl overflow-hidden shadow-card">
@@ -69,7 +77,7 @@ export const ProfileHeader = ({
                 className="px-4 py-1.5 border border-[#E2E2EC] rounded-full text-xs font-semibold text-[#1A1C1E] hover:bg-[#EDEDF8] transition shadow-sm cursor-pointer"
                 type="button"
               >
-                Edit profile
+                {t('profile.editProfile')}
               </button>
             ) : (
               <div className="flex items-center gap-2">
@@ -83,14 +91,14 @@ export const ProfileHeader = ({
                   type="button"
                 >
                   <UserPlus className="w-3.5 h-3.5" />
-                  <span>{isFollowing ? 'Following' : 'Follow'}</span>
+                  <span>{isFollowing ? t('profile.following') : t('profile.follow')}</span>
                 </button>
                 <button
                   className="px-3.5 py-1.5 border border-[#E2E2EC] hover:bg-[#EDEDF8] text-[#1A1C1E] text-xs font-semibold rounded-full transition cursor-pointer flex items-center gap-1"
                   type="button"
                 >
                   <MessageCircle className="w-3.5 h-3.5" />
-                  <span>Message</span>
+                  <span>{t('profile.message')}</span>
                 </button>
                 <button
                   className="p-1.5 border border-[#E2E2EC] hover:bg-[#EDEDF8] text-[#1A1C1E] rounded-full transition cursor-pointer"
@@ -138,7 +146,7 @@ export const ProfileHeader = ({
 
             <span className="flex items-center gap-1">
               <Calendar className="w-3.5 h-3.5 text-[#535F70] shrink-0" />
-              <span>Tham gia {joinedDate}</span>
+              <span>{t('profile.joined', { date: joinedDate })}</span>
             </span>
           </div>
 
@@ -149,7 +157,9 @@ export const ProfileHeader = ({
             </p>
           ) : isOwnProfile ? (
             <p className="text-xs text-gray-400 italic pt-1 leading-relaxed">
-              Chưa có tiểu sử. Bấm "Edit profile" để cập nhật giới thiệu về bản thân.
+              {language === 'vi' 
+                ? 'Chưa có tiểu sử. Bấm "Chỉnh sửa" để cập nhật giới thiệu về bản thân.' 
+                : 'No bio yet. Click "Edit profile" to introduce yourself.'}
             </p>
           ) : null}
 
@@ -159,13 +169,13 @@ export const ProfileHeader = ({
               <span className="font-bold text-[#1A1C1E]">
                 {user.followingCount ?? 0}
               </span>
-              <span className="text-[#535F70]">Đang theo dõi</span>
+              <span className="text-[#535F70]">{t('leftNav.following')}</span>
             </div>
             <div className="flex items-center gap-1">
               <span className="font-bold text-[#1A1C1E]">
                 {user.followersCount ?? 0}
               </span>
-              <span className="text-[#535F70]">Người theo dõi</span>
+              <span className="text-[#535F70]">{t('leftNav.followers')}</span>
             </div>
           </div>
         </div>
@@ -173,18 +183,18 @@ export const ProfileHeader = ({
 
       {/* Profile Tabs */}
       <nav aria-label="Profile navigation" className="flex border-t border-[#E2E2EC] text-xs font-semibold text-[#535F70] px-2 overflow-x-auto custom-scrollbar">
-        {TABS.map((tab) => (
+        {tabs.map((tab) => (
           <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
             className={`py-3 px-4 transition border-b-2 whitespace-nowrap cursor-pointer ${
-              activeTab === tab
+              activeTab === tab.id
                 ? 'border-[#004AC6] text-[#004AC6] font-bold'
                 : 'border-transparent hover:text-[#1A1C1E]'
             }`}
             type="button"
           >
-            {tab}
+            {tab.label}
           </button>
         ))}
       </nav>
