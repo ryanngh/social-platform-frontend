@@ -38,6 +38,21 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+const ProfileRouteWrapper = () => {
+  const { user, isLoading } = useAuth();
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#FAFAFB]">
+        <div className="w-10 h-10 border-4 border-[#004AC6] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+  if (user?.username) {
+    return <Navigate to={`/profile/${user.username}`} replace />;
+  }
+  return <ProfilePage />;
+};
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -55,8 +70,8 @@ function App() {
                 <Route path="/" element={<Navigate to="/feed" replace />} />
               </Route>
 
-              {/* Profile Page with its dedicated 3-Column Layout matching Stitch UI */}
-              <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+              {/* Profile Page with dynamic /profile/:identifier */}
+              <Route path="/profile" element={<ProtectedRoute><ProfileRouteWrapper /></ProtectedRoute>} />
               <Route path="/profile/:identifier" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
               
               <Route path="*" element={<Navigate to="/feed" replace />} />

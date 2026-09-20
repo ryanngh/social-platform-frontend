@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Edit3,
   Plus,
@@ -17,13 +17,11 @@ import {
   Image as ImageIcon,
   Play,
   Sparkles,
-  Send,
   Loader2,
   ChevronDown,
-  X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import type { User, PostResponse, PostVisibility, CommentResponse } from '../../types';
+import type { User, PostResponse, PostVisibility, CommentResponse, CommentMediaRequest } from '../../types';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { postService } from '../../services/postService';
@@ -32,7 +30,9 @@ import { getAvatarUrl, getMediaUrl, isVideoMedia, DEFAULT_AVATAR_FALLBACK } from
 import { getContentWithoutHashtags, extractHashtags } from '../../utils/text';
 import PostMediaLightbox from '../post/PostMediaLightbox';
 import PostMoreMenu from '../post/PostMoreMenu';
+import EditPostModal from '../post/EditPostModal';
 import CommentItem from '../post/CommentItem';
+import { CommentInput } from '../post/CommentInput';
 import LikersModal from '../post/LikersModal';
 import PostComposer from '../feed/PostComposer';
 import CreatePostModal from '../feed/CreatePostModal';
@@ -97,6 +97,7 @@ const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(post.content);
   const [isSaving, setIsSaving] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Inline comments state
   const [comments, setComments] = useState<CommentResponse[]>([]);
@@ -108,14 +109,12 @@ const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
   const [hasMoreComments, setHasMoreComments] = useState((post.commentCount ?? 0) > 1);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [showInlineComments, setShowInlineComments] = useState((post.commentCount ?? 0) > 0);
-  const [quickCommentText, setQuickCommentText] = useState('');
   const [isPostingComment, setIsPostingComment] = useState(false);
   const [replyingTo, setReplyingTo] = useState<{
     commentId: string;
     parentCommentId: string;
     username: string;
   } | null>(null);
-  const quickInputRef = useRef<HTMLInputElement>(null);
 
   const handleStartReply = (
     parentComment: CommentResponse,
@@ -128,9 +127,7 @@ const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
       parentCommentId: parentComment.id,
       username: targetUsername,
     });
-    setQuickCommentText(`@${targetUsername} `);
     setShowInlineComments(true);
-    setTimeout(() => quickInputRef.current?.focus(), 50);
   };
 
   // Sync state when post props change
@@ -240,15 +237,14 @@ const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
     }
   };
 
-  const handlePostQuickComment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!quickCommentText.trim() || isPostingComment) return;
-
+  const handleCommentSubmit = async (trimmed: string, uploadedMedia?: CommentMediaRequest[]) => {
     setIsPostingComment(true);
     try {
+      const mediaList = uploadedMedia && uploadedMedia.length > 0 ? uploadedMedia : undefined;
       if (replyingTo) {
         await commentService.createReply(replyingTo.commentId, {
-          content: quickCommentText.trim(),
+          content: trimmed,
+          media: mediaList,
         });
         setComments((prev) =>
           prev.map((c) =>
@@ -257,7 +253,6 @@ const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
         );
         const newCount = commentCount + 1;
         setCommentCount(newCount);
-        setQuickCommentText('');
         setReplyingTo(null);
         toast.success(t('postDetail.replyPosted'));
         onPostUpdated({
@@ -266,12 +261,12 @@ const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
         });
       } else {
         const created = await commentService.createComment(post.id, {
-          content: quickCommentText.trim(),
+          content: trimmed,
+          media: mediaList,
         });
         setComments((prev) => [created, ...prev]);
         const newCount = commentCount + 1;
         setCommentCount(newCount);
-        setQuickCommentText('');
         toast.success(t('postDetail.commentPosted'));
         onPostUpdated({
           ...post,
@@ -453,10 +448,7 @@ const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
             currentVisibility={post.visibility}
             isOpen={isMenuOpen}
             onClose={() => setIsMenuOpen(false)}
-            onEdit={() => {
-              setIsEditing(true);
-              setEditContent(post.content);
-            }}
+            onEdit={() => setIsEditModalOpen(true)}
             onChangeVisibility={handleChangeVisibility}
             onDelete={handleDeletePost}
           />
@@ -499,10 +491,10 @@ const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
         <p className="text-sm text-gray-800 mb-3 whitespace-pre-line">{cleanContent}</p>
       ) : null}
 
-      {/* Media Attachment */}
+      {/* Media Attachment (Instagram aspect ratio) */}
       {post.media.length > 0 && (
         <div
-          className="relative rounded-2xl overflow-hidden mb-3 border border-gray-100 cursor-pointer group"
+          className="relative rounded-2xl overflow-hidden mb-3 border border-gray-100 cursor-pointer group bg-black/5 dark:bg-zinc-900 aspect-square sm:aspect-[4/5] max-h-[580px] w-full flex items-center justify-center"
           onClick={() => onOpenLightbox(post, 0)}
         >
           {post.media.length > 1 && (
@@ -511,10 +503,10 @@ const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
             </span>
           )}
           {isVideoMedia(post.media[0].mediaUrl, post.media[0].mediaType) ? (
-            <div className="relative w-full h-80 bg-black flex items-center justify-center">
+            <div className="relative w-full h-full bg-black flex items-center justify-center">
               <video
                 src={getMediaUrl(post.media[0].mediaUrl)}
-                className="w-full h-80 object-cover"
+                className="w-full h-full object-cover"
                 muted
                 preload="metadata"
               />
@@ -527,7 +519,7 @@ const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
           ) : (
             <img
               alt={`${authorName} post`}
-              className="w-full h-80 object-cover group-hover:scale-[1.02] transition-transform duration-300"
+              className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
               src={getMediaUrl(post.media[0].mediaUrl)}
             />
           )}
@@ -727,58 +719,21 @@ const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
             </div>
           )}
 
-          {/* Replying Banner */}
-          {replyingTo && (
-            <div className="flex items-center justify-between bg-[#F4F4FB] px-3 py-1.5 rounded-lg text-xs text-[#004AC6] font-medium border border-[#E2E2EC]">
-              <span>{t('postDetail.replyTo', { name: replyingTo.username })}</span>
-              <button
-                type="button"
-                onClick={() => {
-                  setReplyingTo(null);
-                  setQuickCommentText('');
-                }}
-                className="p-1 hover:text-red-500 rounded transition-colors cursor-pointer"
-                title={t('postDetail.cancelReply')}
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          )}
-
           {/* Quick Comment Input */}
-          <form onSubmit={handlePostQuickComment} className="flex items-center gap-2 pt-1">
-            <img
-              src={getAvatarUrl(currentUser?.avatarUrl)}
-              alt="me"
-              className="w-7 h-7 rounded-full object-cover border border-gray-200 flex-shrink-0"
-              onError={(e) => {
-                e.currentTarget.onerror = null;
-                e.currentTarget.src = DEFAULT_AVATAR_FALLBACK;
-              }}
-            />
-            <div className="flex-1 relative flex items-center">
-              <input
-                ref={quickInputRef}
-                type="text"
-                value={quickCommentText}
-                onChange={(e) => setQuickCommentText(e.target.value)}
-                placeholder={t('postDetail.writeQuickComment')}
-                className="w-full bg-[#F4F4FB] text-xs text-gray-800 rounded-full py-2 pl-3.5 pr-9 border border-transparent focus:border-[#004AC6] focus:bg-white outline-none transition"
-              />
-              <button
-                type="submit"
-                disabled={!quickCommentText.trim() || isPostingComment}
-                className="absolute right-1.5 w-6 h-6 rounded-full bg-[#004AC6] text-white flex items-center justify-center hover:bg-[#003A9F] transition disabled:opacity-30 disabled:hover:bg-[#004AC6] cursor-pointer"
-                title={t('postDetail.sendComment')}
-              >
-                {isPostingComment ? (
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                ) : (
-                  <Send className="w-3 h-3 ml-0.5" />
-                )}
-              </button>
-            </div>
-          </form>
+          <CommentInput
+            authorName={post.author.username}
+            onSubmit={handleCommentSubmit}
+            isSubmitting={isPostingComment}
+            placeholder={t('postDetail.writeQuickComment')}
+            replyingTo={
+              replyingTo
+                ? {
+                    username: replyingTo.username,
+                    onCancel: () => setReplyingTo(null),
+                  }
+                : null
+            }
+          />
         </div>
       )}
 
@@ -789,6 +744,17 @@ const ProfilePostCard: React.FC<ProfilePostCardProps> = ({
         targetId={likersTarget.id}
         type={likersTarget.type}
         totalLikes={likersTarget.totalLikes}
+      />
+
+      {/* Edit Post Modal with Drag and Drop Media */}
+      <EditPostModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        post={post}
+        onPostUpdated={(updated) => {
+          onPostUpdated(updated);
+          setIsEditModalOpen(false);
+        }}
       />
     </article>
   );

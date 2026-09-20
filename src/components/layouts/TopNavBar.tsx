@@ -114,7 +114,7 @@ const TopNavBar: React.FC = () => {
               </div>
 
               <Link
-                to="/profile"
+                to={username ? `/profile/${username}` : '/profile'}
                 onClick={() => setShowUserMenu(false)}
                 className="flex items-center gap-2 px-4 py-2 text-xs text-gray-700 hover:bg-[#EFF6FF] hover:text-[#004AC6] transition"
               >

@@ -2,16 +2,24 @@ import React from 'react';
 import { MapPin, Link2, Calendar } from 'lucide-react';
 import type { User } from '../../types';
 import { getAvatarUrl, DEFAULT_AVATAR_FALLBACK } from '../../utils/media';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface ProfileInfoCardProps {
   user: User;
 }
 
 export const ProfileInfoCard: React.FC<ProfileInfoCardProps> = ({ user }) => {
-  const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ') || user.username || 'Người dùng';
-  const joinedDate = user.createdAt
-    ? new Date(user.createdAt).toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' })
-    : 'Vừa tham gia';
+  const { t, language } = useLanguage();
+
+  const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ') || user.username || t('topNav.userFallback');
+  
+  const formattedDate = user.createdAt
+    ? new Date(user.createdAt).toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', { month: 'long', year: 'numeric' })
+    : null;
+
+  const joinedText = formattedDate
+    ? t('profile.joinedDate', { date: formattedDate })
+    : t('profile.justJoined');
 
   const userInterests: string[] = user.interests || [];
   const userGroups: { name: string }[] = user.groups || [];
@@ -37,7 +45,9 @@ export const ProfileInfoCard: React.FC<ProfileInfoCardProps> = ({ user }) => {
 
       {/* Personal Info List */}
       <div className="py-4 border-b border-[#E2E2EC] space-y-2.5 text-xs text-[#535F70]">
-        <h3 className="text-xs font-bold text-[#1A1C1E] uppercase tracking-wider mb-2">Thông tin cá nhân</h3>
+        <h3 className="text-xs font-bold text-[#1A1C1E] uppercase tracking-wider mb-2">
+          {t('profile.personalInfo')}
+        </h3>
 
         {user.location && (
           <div className="flex items-center gap-2.5 text-[#1A1C1E]">
@@ -62,17 +72,21 @@ export const ProfileInfoCard: React.FC<ProfileInfoCardProps> = ({ user }) => {
 
         <div className="flex items-center gap-2.5 text-[#535F70]">
           <Calendar className="w-4 h-4 text-[#535F70] shrink-0" />
-          <span>Tham gia {joinedDate}</span>
+          <span>{joinedText}</span>
         </div>
 
         {!user.location && !user.websiteUrl && (
-          <p className="text-xs text-gray-400 italic pt-1">Chưa cập nhật vị trí & website</p>
+          <p className="text-xs text-gray-400 italic pt-1">
+            {t('profile.unspecifiedLocationWebsite')}
+          </p>
         )}
       </div>
 
       {/* Interests Tags */}
       <div className="py-4 border-b border-[#E2E2EC]">
-        <h3 className="text-xs font-bold text-[#1A1C1E] uppercase tracking-wider mb-2.5">Sở thích</h3>
+        <h3 className="text-xs font-bold text-[#1A1C1E] uppercase tracking-wider mb-2.5">
+          {t('profile.interests')}
+        </h3>
         {userInterests.length > 0 ? (
           <div className="flex flex-wrap gap-1.5">
             {userInterests.map((interest) => (
@@ -85,13 +99,15 @@ export const ProfileInfoCard: React.FC<ProfileInfoCardProps> = ({ user }) => {
             ))}
           </div>
         ) : (
-          <p className="text-xs text-gray-400 italic">Chưa có sở thích nào</p>
+          <p className="text-xs text-gray-400 italic">{t('profile.noInterests')}</p>
         )}
       </div>
 
       {/* Groups Section */}
       <div className="pt-4">
-        <h3 className="text-xs font-bold text-[#1A1C1E] uppercase tracking-wider mb-3">Nhóm tham gia</h3>
+        <h3 className="text-xs font-bold text-[#1A1C1E] uppercase tracking-wider mb-3">
+          {t('profile.groups')}
+        </h3>
         {userGroups.length > 0 ? (
           <ul className="space-y-3">
             {userGroups.map((group) => (
@@ -106,7 +122,7 @@ export const ProfileInfoCard: React.FC<ProfileInfoCardProps> = ({ user }) => {
             ))}
           </ul>
         ) : (
-          <p className="text-xs text-gray-400 italic">Chưa tham gia nhóm nào</p>
+          <p className="text-xs text-gray-400 italic">{t('profile.noGroups')}</p>
         )}
       </div>
     </section>

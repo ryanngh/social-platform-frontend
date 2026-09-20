@@ -11,7 +11,6 @@ import {
   Bookmark, 
   Plus, 
   Palette, 
-  Code, 
   Layers 
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -35,11 +34,7 @@ const LeftSidebar: React.FC = () => {
     { key: 'leftNav.saved', name: t('leftNav.saved'), icon: Bookmark, path: '/saved' },
   ];
 
-  const shortcuts = [
-    { name: 'Digital Artists', icon: Palette, bg: 'bg-blue-50 text-blue-600' },
-    { name: 'UI/UX Front-end', icon: Code, bg: 'bg-indigo-50 text-indigo-600' },
-    { name: 'Design Systems Co.', icon: Layers, bg: 'bg-purple-50 text-purple-600' },
-  ];
+  const shortcuts: { name: string; icon: typeof Palette; bg: string }[] = [];
 
   const displayName = user?.firstName
     ? `${user.firstName} ${user.lastName || ''}`.trim()
@@ -112,7 +107,7 @@ const LeftSidebar: React.FC = () => {
         </div>
 
         <Link
-          to="/profile"
+          to={user?.username ? `/profile/${user.username}` : '/profile'}
           className="w-full mt-4 py-2.5 rounded-2xl bg-[#EFF6FF] text-[#003A9F] text-xs font-semibold hover:bg-blue-100 transition block text-center"
         >
           {t('leftNav.viewProfile')}
@@ -127,24 +122,31 @@ const LeftSidebar: React.FC = () => {
             <Plus className="w-4 h-4" />
           </button>
         </div>
-        <div className="flex flex-col gap-2">
-          {shortcuts.map((shortcut, i) => {
-            const Icon = shortcut.icon;
-            return (
-              <div
-                key={i}
-                className="flex items-center gap-3 p-2 rounded-2xl hover:bg-gray-50 transition cursor-pointer"
-              >
-                <div className={clsx('w-7 h-7 rounded-xl flex items-center justify-center shrink-0', shortcut.bg)}>
-                  <Icon className="w-4 h-4" />
+        {shortcuts.length > 0 ? (
+          <div className="flex flex-col gap-2">
+            {shortcuts.map((shortcut, i) => {
+              const Icon = shortcut.icon;
+              return (
+                <div
+                  key={i}
+                  className="flex items-center gap-3 p-2 rounded-2xl hover:bg-gray-50 transition cursor-pointer"
+                >
+                  <div className={clsx('w-7 h-7 rounded-xl flex items-center justify-center shrink-0', shortcut.bg)}>
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs font-medium text-gray-700 truncate">
+                    {shortcut.name}
+                  </span>
                 </div>
-                <span className="text-xs font-medium text-gray-700 truncate">
-                  {shortcut.name}
-                </span>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="py-5 text-center text-gray-400">
+            <Layers className="w-6 h-6 mx-auto mb-1.5 text-gray-300 stroke-[1.5]" />
+            <p className="text-xs text-gray-400 italic">{t('leftNav.noShortcuts')}</p>
+          </div>
+        )}
       </section>
     </div>
   );

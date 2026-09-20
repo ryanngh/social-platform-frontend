@@ -1,52 +1,35 @@
-import { useState } from 'react';
+import { Users, TrendingUp } from 'lucide-react';
+import { useLanguage } from '../../contexts/LanguageContext';
+
+interface SuggestionItem {
+  id: number;
+  name: string;
+  handle: string;
+  avatar: string;
+}
+
+interface TrendItem {
+  category: string;
+  tag: string;
+  count: string;
+}
 
 export const ProfileRightSidebar = () => {
-  const [followingMap, setFollowingMap] = useState<Record<number, boolean>>({});
+  const { t } = useLanguage();
 
-  const toggleFollow = (id: number) => {
-    setFollowingMap((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
-
-  const suggestions = [
-    {
-      id: 1,
-      name: 'David Chen',
-      handle: '@dchen_ux',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-    },
-    {
-      id: 2,
-      name: 'Sarah Jenkins',
-      handle: '@sarahcodes',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
-    },
-    {
-      id: 3,
-      name: 'Tech Digest',
-      handle: '@techdigest',
-      avatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150&auto=format&fit=crop&q=80',
-    },
-  ];
-
-  const trends = [
-    { category: 'Design · Trending', tag: '#UIDesign', count: '15.2k posts' },
-    { category: 'Technology · Trending', tag: '#DesignSystem', count: '8,432 posts' },
-    { category: 'Development · Trending', tag: '#WebDev', count: '24.1k posts' },
-    { category: 'UX · Trending', tag: '#Accessibility', count: '5,210 posts' },
-    { category: 'Tools · Trending', tag: '#FigmaTips', count: '11.8k posts' },
-  ];
+  const suggestions: SuggestionItem[] = [];
+  const trends: TrendItem[] = [];
 
   return (
     <aside className="hidden lg:block lg:col-span-3 space-y-4" data-purpose="right-sidebar">
       {/* Suggestions For You Card */}
       <section aria-labelledby="suggestions-heading" className="bg-white border border-[#E2E2EC] rounded-xl p-5 shadow-card">
-        <h2 id="suggestions-heading" className="text-sm font-bold text-[#1A1C1E] mb-4">
-          Suggestions for you
+        <h2 id="suggestions-heading" className="text-sm font-bold text-[#1A1C1E] mb-3">
+          {t('rightSidebar.suggestions')}
         </h2>
-        <div className="space-y-4">
-          {suggestions.map((item) => {
-            const isFollowing = !!followingMap[item.id];
-            return (
+        {suggestions.length > 0 ? (
+          <div className="space-y-4">
+            {suggestions.map((item) => (
               <div key={item.id} className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <img
@@ -59,42 +42,40 @@ export const ProfileRightSidebar = () => {
                     <p className="text-[11px] text-[#535F70] truncate">{item.handle}</p>
                   </div>
                 </div>
-                <button
-                  onClick={() => toggleFollow(item.id)}
-                  className={`px-3.5 py-1 text-xs font-semibold rounded-full transition shrink-0 cursor-pointer ${
-                    isFollowing
-                      ? 'bg-[#EFF4FF] text-[#004AC6]'
-                      : 'bg-[#EDEDF8] hover:bg-slate-200 text-[#1A1C1E]'
-                  }`}
-                  type="button"
-                >
-                  {isFollowing ? 'Following' : 'Follow'}
-                </button>
               </div>
-            );
-          })}
-        </div>
-        <a className="block text-xs font-semibold text-[#004AC6] hover:underline mt-4" href="#">
-          Show more
-        </a>
+            ))}
+          </div>
+        ) : (
+          <div className="py-6 text-center text-gray-400">
+            <Users className="w-7 h-7 mx-auto mb-2 text-gray-300 stroke-[1.5]" />
+            <p className="text-xs text-gray-400 italic">{t('profile.noSuggestions')}</p>
+          </div>
+        )}
       </section>
 
       {/* Trending Hashtags Card */}
       <section aria-labelledby="trending-heading" className="bg-white border border-[#E2E2EC] rounded-xl p-5 shadow-card">
-        <h2 id="trending-heading" className="text-sm font-bold text-[#1A1C1E] mb-4">
-          Trending Hashtags
+        <h2 id="trending-heading" className="text-sm font-bold text-[#1A1C1E] mb-3">
+          {t('rightSidebar.trending')}
         </h2>
-        <div className="space-y-3.5">
-          {trends.map((trend) => (
-            <div key={trend.tag}>
-              <p className="text-[11px] text-[#535F70]">{trend.category}</p>
-              <p className="text-xs font-bold text-[#1A1C1E] hover:underline cursor-pointer">
-                {trend.tag}
-              </p>
-              <p className="text-[11px] text-[#535F70]">{trend.count}</p>
-            </div>
-          ))}
-        </div>
+        {trends.length > 0 ? (
+          <div className="space-y-3.5">
+            {trends.map((trend) => (
+              <div key={trend.tag}>
+                <p className="text-[11px] text-[#535F70]">{trend.category}</p>
+                <p className="text-xs font-bold text-[#1A1C1E] hover:underline cursor-pointer">
+                  {trend.tag}
+                </p>
+                <p className="text-[11px] text-[#535F70]">{trend.count}</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="py-6 text-center text-gray-400">
+            <TrendingUp className="w-7 h-7 mx-auto mb-2 text-gray-300 stroke-[1.5]" />
+            <p className="text-xs text-gray-400 italic">{t('profile.noTrending')}</p>
+          </div>
+        )}
       </section>
 
       {/* Site Footer Meta Links */}

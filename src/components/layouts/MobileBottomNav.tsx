@@ -1,10 +1,12 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { Home, Compass, PlusCircle, Bell, User } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import clsx from 'clsx';
 
 const MobileBottomNav: React.FC = () => {
+  const { user } = useAuth();
   const { t } = useLanguage();
 
   const navItems = [
@@ -12,7 +14,7 @@ const MobileBottomNav: React.FC = () => {
     { key: 'mobileNav.explore', name: t('mobileNav.explore'), icon: Compass, path: '/explore' },
     { key: 'mobileNav.create', name: t('mobileNav.create'), icon: PlusCircle, path: '/feed' },
     { key: 'mobileNav.notifications', name: t('mobileNav.notifications'), icon: Bell, path: '/notifications', badge: '3' },
-    { key: 'mobileNav.profile', name: t('mobileNav.profile'), icon: User, path: '/profile' },
+    { key: 'mobileNav.profile', name: t('mobileNav.profile'), icon: User, path: user?.username ? `/profile/${user.username}` : '/profile' },
   ];
 
   return (

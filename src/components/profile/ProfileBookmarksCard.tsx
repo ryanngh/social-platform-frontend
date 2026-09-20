@@ -1,5 +1,6 @@
 import React from 'react';
 import { Bookmark } from 'lucide-react';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface BookmarkItem {
   id: string | number;
@@ -8,12 +9,14 @@ interface BookmarkItem {
 }
 
 export const ProfileBookmarksCard: React.FC<{ bookmarks?: BookmarkItem[] }> = ({ bookmarks = [] }) => {
+  const { t } = useLanguage();
+
   return (
     <section aria-labelledby="bookmarks-heading" className="bg-white border border-[#E2E2EC] rounded-xl p-5 shadow-card">
       <div className="flex items-center gap-2 mb-3.5">
         <Bookmark className="w-4 h-4 text-[#004AC6]" fill="#004AC6" />
         <h2 id="bookmarks-heading" className="text-xs font-bold text-[#1A1C1E] uppercase tracking-wider">
-          Mục đã lưu
+          {t('profile.savedItems')}
         </h2>
       </div>
 
@@ -34,7 +37,7 @@ export const ProfileBookmarksCard: React.FC<{ bookmarks?: BookmarkItem[] }> = ({
           ))}
         </div>
       ) : (
-        <p className="text-xs text-gray-400 italic py-1">Chưa có bài viết hay mục nào được lưu</p>
+        <p className="text-xs text-gray-400 italic py-1">{t('profile.noBookmarks')}</p>
       )}
     </section>
   );
