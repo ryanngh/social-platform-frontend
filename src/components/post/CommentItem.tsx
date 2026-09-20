@@ -8,12 +8,15 @@ import {
   Trash2, 
   Pin, 
   PinOff,
-  Loader2
+  Loader2,
+  Play,
+  Maximize2
 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { getAvatarUrl, getMediaUrl, isVideoMedia } from '../../utils/media';
 import { commentService } from '../../services/commentService';
 import type { CommentResponse, ReplyResponse } from '../../types';
+import CommentMediaLightbox from './CommentMediaLightbox';
 import toast from 'react-hot-toast';
 
 interface CommentItemProps {
@@ -47,6 +50,7 @@ export const CommentItem: React.FC<CommentItemProps> = ({
   const [showReplies, setShowReplies] = useState(false);
   const [replies, setReplies] = useState<ReplyResponse[]>([]);
   const [loadingReplies, setLoadingReplies] = useState(false);
+  const [lightboxMedia, setLightboxMedia] = useState<{ url: string; type: 'IMAGE' | 'VIDEO'; authorName?: string } | null>(null);
 
   // Sync like state when comment prop updates
   React.useEffect(() => {
@@ -382,20 +386,41 @@ export const CommentItem: React.FC<CommentItemProps> = ({
               {comment.media.map((item, idx) => {
                 const isVid = isVideoMedia(item.mediaUrl, item.mediaType);
                 return (
-                  <div key={item.id || idx} className="rounded-xl overflow-hidden max-h-56 max-w-xs border border-[#E2E2EC]">
+                  <div
+                    key={item.id || idx}
+                    className="relative rounded-xl overflow-hidden max-h-56 max-w-xs border border-[#E2E2EC] cursor-pointer group hover:shadow-md transition-all bg-black/5"
+                    onClick={() =>
+                      setLightboxMedia({
+                        url: item.mediaUrl,
+                        type: isVid ? 'VIDEO' : 'IMAGE',
+                        authorName: comment.author.username,
+                      })
+                    }
+                  >
                     {isVid ? (
-                      <video
-                        src={getMediaUrl(item.mediaUrl)}
-                        controls
-                        playsInline
-                        className="max-h-56 w-auto object-contain bg-black"
-                      />
+                      <div className="relative">
+                        <video
+                          src={getMediaUrl(item.mediaUrl)}
+                          playsInline
+                          className="max-h-56 w-auto object-contain bg-black"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/35 transition-colors">
+                          <div className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-xs flex items-center justify-center text-white shadow group-hover:scale-110 transition-transform">
+                            <Play className="w-5 h-5 fill-white ml-0.5" />
+                          </div>
+                        </div>
+                      </div>
                     ) : (
-                      <img
-                        src={getMediaUrl(item.mediaUrl)}
-                        alt={`media-${idx}`}
-                        className="max-h-56 w-auto object-cover"
-                      />
+                      <div className="relative">
+                        <img
+                          src={getMediaUrl(item.mediaUrl)}
+                          alt={`media-${idx}`}
+                          className="max-h-56 w-auto object-cover group-hover:scale-[1.02] transition-transform duration-200"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors flex items-center justify-center">
+                          <Maximize2 className="w-6 h-6 text-white opacity-0 group-hover:opacity-90 drop-shadow transition-opacity" />
+                        </div>
+                      </div>
                     )}
                   </div>
                 );
@@ -509,6 +534,7 @@ export const CommentItem: React.FC<CommentItemProps> = ({
                           });
                         }}
                         onReplyDeleted={handleReplyItemDeleted}
+                        onOpenMedia={setLightboxMedia}
                       />
                     </div>
                   );
@@ -557,6 +583,14 @@ export const CommentItem: React.FC<CommentItemProps> = ({
           </div>
         )}
       </div>
+
+      {/* Comment Media Lightbox */}
+      <CommentMediaLightbox
+        isOpen={!!lightboxMedia}
+        onClose={() => setLightboxMedia(null)}
+        media={lightboxMedia}
+        authorName={lightboxMedia?.authorName}
+      />
     </div>
   );
 };
@@ -569,6 +603,7 @@ interface ReplyItemProps {
   onOpenLikers?: (targetId: string, type: 'post' | 'comment', totalLikes?: number) => void;
   onReplyToChild?: (reply: ReplyResponse) => void;
   onReplyDeleted?: (replyId: string) => void;
+  onOpenMedia?: (media: { url: string; type: 'IMAGE' | 'VIDEO'; authorName?: string }) => void;
 }
 
 const ReplyItem: React.FC<ReplyItemProps> = ({ 
@@ -577,7 +612,8 @@ const ReplyItem: React.FC<ReplyItemProps> = ({
   postAuthorId, 
   onOpenLikers, 
   onReplyToChild,
-  onReplyDeleted 
+  onReplyDeleted,
+  onOpenMedia
 }) => {
   const { t, language } = useLanguage();
   const [isLiked, setIsLiked] = useState(reply.isLiked ?? reply.liked ?? false);
@@ -797,20 +833,41 @@ const ReplyItem: React.FC<ReplyItemProps> = ({
               {reply.media.map((item, idx) => {
                 const isVid = isVideoMedia(item.mediaUrl, item.mediaType);
                 return (
-                  <div key={item.id || idx} className="rounded-lg overflow-hidden max-h-40 max-w-[200px] border border-[#E2E2EC]">
+                  <div
+                    key={item.id || idx}
+                    className="relative rounded-lg overflow-hidden max-h-40 max-w-[200px] border border-[#E2E2EC] cursor-pointer group hover:shadow-md transition-all bg-black/5"
+                    onClick={() =>
+                      onOpenMedia?.({
+                        url: item.mediaUrl,
+                        type: isVid ? 'VIDEO' : 'IMAGE',
+                        authorName: reply.author.username,
+                      })
+                    }
+                  >
                     {isVid ? (
-                      <video
-                        src={getMediaUrl(item.mediaUrl)}
-                        controls
-                        playsInline
-                        className="max-h-40 w-auto object-contain bg-black"
-                      />
+                      <div className="relative">
+                        <video
+                          src={getMediaUrl(item.mediaUrl)}
+                          playsInline
+                          className="max-h-40 w-auto object-contain bg-black"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/35 transition-colors">
+                          <div className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-xs flex items-center justify-center text-white shadow group-hover:scale-110 transition-transform">
+                            <Play className="w-4 h-4 fill-white ml-0.5" />
+                          </div>
+                        </div>
+                      </div>
                     ) : (
-                      <img
-                        src={getMediaUrl(item.mediaUrl)}
-                        alt={`reply-media-${idx}`}
-                        className="max-h-40 w-auto object-cover"
-                      />
+                      <div className="relative">
+                        <img
+                          src={getMediaUrl(item.mediaUrl)}
+                          alt={`reply-media-${idx}`}
+                          className="max-h-40 w-auto object-cover group-hover:scale-[1.02] transition-transform duration-200"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors flex items-center justify-center">
+                          <Maximize2 className="w-5 h-5 text-white opacity-0 group-hover:opacity-90 drop-shadow transition-opacity" />
+                        </div>
+                      </div>
                     )}
                   </div>
                 );

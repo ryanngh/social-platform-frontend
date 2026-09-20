@@ -36,6 +36,8 @@ import PostMoreMenu from './PostMoreMenu';
 import CommentItem from './CommentItem';
 import CommentInput from './CommentInput';
 import LikersModal from './LikersModal';
+import EditPostModal from './EditPostModal';
+import CustomVideoPlayer from '../media/CustomVideoPlayer';
 
 // ============================================================
 // Props
@@ -107,6 +109,10 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const panStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isEditPostModalOpen, setIsEditPostModalOpen] = useState(false);
 
   const MIN_ZOOM = 0.5;
   const MAX_ZOOM = 3;
@@ -211,6 +217,33 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
   const resetMediaTransform = () => {
     setZoom(1);
     setRotation(0);
+    setPan({ x: 0, y: 0 });
+    setIsPanning(false);
+  };
+
+  useEffect(() => {
+    const handleGlobalMouseUp = () => setIsPanning(false);
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
+  }, []);
+
+  const handleMouseDownPan = (e: React.MouseEvent) => {
+    if (zoom <= 1) return;
+    e.preventDefault();
+    setIsPanning(true);
+    panStartRef.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
+  };
+
+  const handleMouseMovePan = (e: React.MouseEvent) => {
+    if (!isPanning || zoom <= 1) return;
+    setPan({
+      x: e.clientX - panStartRef.current.x,
+      y: e.clientY - panStartRef.current.y,
+    });
+  };
+
+  const handleMouseUpPan = () => {
+    setIsPanning(false);
   };
 
   const selectMedia = (index: number) => {
@@ -564,7 +597,11 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
               </button>
               <button
                 type="button"
-                onClick={() => setZoom((value) => Math.max(MIN_ZOOM, value - ZOOM_STEP))}
+                onClick={() => {
+                  const next = Math.max(MIN_ZOOM, zoom - ZOOM_STEP);
+                  setZoom(next);
+                  if (next <= 1) setPan({ x: 0, y: 0 });
+                }}
                 disabled={zoom <= MIN_ZOOM}
                 className="p-1.5 hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-40 rounded-lg transition-colors"
                 title={t('postDetail.zoomOut')}
@@ -595,7 +632,7 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
           </div>
 
           {/* Main Image Stage */}
-          <div className="flex-1 flex items-center justify-center relative w-full h-full overflow-hidden p-6 md:p-10">
+          <div className="flex-1 flex items-center justify-center relative w-full h-full overflow-hidden p-6 md:p-10 select-none">
             {/* Left Arrow */}
             {totalMedia > 1 && currentIndex > 0 && (
               <button
@@ -612,24 +649,42 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
             {currentMedia && (
               <div className="relative max-h-full max-w-full flex items-center justify-center">
                 {isVideoMedia(currentMedia.mediaUrl, currentMedia.mediaType) ? (
-                  <video
-                    src={getMediaUrl(currentMedia.mediaUrl)}
-                    controls
-                    autoPlay
-                    playsInline
-                    className={`max-h-[72vh] w-auto max-w-full rounded-xl shadow-2xl object-contain transition-transform duration-300 ${
+                  <div
+                    onMouseDown={handleMouseDownPan}
+                    onMouseMove={handleMouseMovePan}
+                    onMouseUp={handleMouseUpPan}
+                    className={`max-h-[72vh] w-auto max-w-full rounded-xl shadow-2xl overflow-hidden ${
                       isFullscreen ? 'max-h-[calc(100vh-8rem)]' : ''
                     }`}
-                    style={{ transform: `scale(${zoom}) rotate(${rotation}deg)` }}
-                  />
+                    style={{
+                      transform: `translate3d(${pan.x}px, ${pan.y}px, 0px) scale(${zoom}) rotate(${rotation}deg)`,
+                      cursor: zoom > 1 ? (isPanning ? 'grabbing' : 'grab') : 'default',
+                      transition: isPanning ? 'none' : 'transform 200ms ease-out',
+                    }}
+                  >
+                    <CustomVideoPlayer
+                      src={getMediaUrl(currentMedia.mediaUrl)}
+                      autoPlay
+                      title={authorName}
+                      subtitle={currentPost.content ? currentPost.content.slice(0, 60) : undefined}
+                      className="max-h-[72vh] w-auto max-w-full aspect-video rounded-xl"
+                    />
+                  </div>
                 ) : (
                   <img
                     src={getMediaUrl(currentMedia.mediaUrl)}
                     alt={`${authorName} - ${currentIndex + 1}`}
-                    className={`max-h-[72vh] w-auto object-contain rounded-xl shadow-2xl transition-transform duration-300 select-none ${
+                    onMouseDown={handleMouseDownPan}
+                    onMouseMove={handleMouseMovePan}
+                    onMouseUp={handleMouseUpPan}
+                    className={`max-h-[72vh] w-auto object-contain rounded-xl shadow-2xl select-none ${
                       isFullscreen ? 'max-h-[calc(100vh-8rem)]' : ''
                     }`}
-                    style={{ transform: `scale(${zoom}) rotate(${rotation}deg)` }}
+                    style={{
+                      transform: `translate3d(${pan.x}px, ${pan.y}px, 0px) scale(${zoom}) rotate(${rotation}deg)`,
+                      cursor: zoom > 1 ? (isPanning ? 'grabbing' : 'grab') : 'default',
+                      transition: isPanning ? 'none' : 'transform 200ms ease-out',
+                    }}
                     draggable={false}
                   />
                 )}
@@ -753,10 +808,7 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
                 currentVisibility={currentPost.visibility}
                 isOpen={isMoreMenuOpen}
                 onClose={() => setIsMoreMenuOpen(false)}
-                onEdit={() => {
-                  setIsEditingPost(true);
-                  setEditedPostContent(currentPost.content);
-                }}
+                onEdit={() => setIsEditPostModalOpen(true)}
                 onChangeVisibility={handleChangeVisibility}
                 onDelete={handleDeletePost}
               />
@@ -1032,6 +1084,21 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
         targetId={likersTarget.id}
         type={likersTarget.type}
         totalLikes={likersTarget.totalLikes}
+      />
+
+      {/* Edit Post Modal with Drag and Drop Media */}
+      <EditPostModal
+        isOpen={isEditPostModalOpen}
+        onClose={() => setIsEditPostModalOpen(false)}
+        post={currentPost}
+        onPostUpdated={(updated) => {
+          setCurrentPost(updated);
+          setIsEditPostModalOpen(false);
+          onPostUpdated?.(updated);
+          if (currentIndex >= updated.media.length) {
+            setCurrentIndex(Math.max(0, updated.media.length - 1));
+          }
+        }}
       />
     </div>
   );
