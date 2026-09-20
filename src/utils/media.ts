@@ -3,32 +3,31 @@
  */
 import defaultAvatar from '../assets/default-avatar.png';
 
-export const MINIO_URL = (import.meta.env.VITE_MINIO_URL || 'http://localhost:9000/social-media/').replace(/\/+$/, '') + '/';
+const resolveMinioBase = (): string => {
+  const envVal = import.meta.env.VITE_MINIO_URL;
+  if (!envVal || envVal.includes('host.docker.internal')) {
+    return '/social-media';
+  }
+  const clean = envVal.replace(/\/+$/, '');
+  return clean.endsWith('/social-media') ? clean : `${clean}/social-media`;
+};
+
+export const MINIO_URL = `${resolveMinioBase()}/`;
 
 export const DEFAULT_AVATAR_FALLBACK = defaultAvatar || '/default-avatar.png';
 
 /**
- * Resolves a media path (avatar, banner, post media) to an absolute URL.
- * - If path is already http://, https://, blob:, or data:, returns it as is.
- * - If path is relative (e.g. 'avatars/uuid/file.jpg'), prefixes with MINIO_URL.
- * - If path is null or empty, returns fallbackUrl.
+ * Resolves a media path (avatar, banner, post media) to an accessible URL.
  */
 export const getMediaUrl = (path?: string | null, fallbackUrl: string = ''): string => {
-  if (!path || !path.trim()) {
-    return fallbackUrl;
-  }
-  if (
-    path.startsWith('http://') ||
-    path.startsWith('https://') ||
-    path.startsWith('data:') ||
-    path.startsWith('blob:')
-  ) {
-    return path;
-  }
+  if (!path || !path.trim()) return fallbackUrl;
+  if (path.startsWith('data:') || path.startsWith('blob:')) return path;
 
-  const cleanBase = MINIO_URL.replace(/\/+$/, '');
-  const cleanPath = path.replace(/^\/+/, '');
-  return `${cleanBase}/${cleanPath}`;
+  let clean = path.trim().replace(/^https?:\/\/(host\.docker\.internal|localhost):9000\/?/, '');
+  if (clean.startsWith('http://') || clean.startsWith('https://')) return clean;
+
+  clean = clean.replace(/^\/+/, '').replace(/^social-media\/?/, '');
+  return `${resolveMinioBase()}/${clean}`;
 };
 
 /**
@@ -60,4 +59,3 @@ export const isVideoMedia = (mediaUrl?: string | null, mediaType?: string | null
     cleanUrl.endsWith('.mkv')
   );
 };
-

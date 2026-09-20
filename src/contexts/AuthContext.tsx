@@ -24,7 +24,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchUser = useCallback(async () => {
     try {
       const token = localStorage.getItem('accessToken');
-      if (!token) {
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (!token && !refreshToken) {
         setUser(null);
         return;
       }
@@ -43,7 +44,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const initAuth = async () => {
       try {
         const token = localStorage.getItem('accessToken');
-        if (token) {
+        const refreshToken = localStorage.getItem('refreshToken');
+        if (token || refreshToken) {
           const profile = await userService.getMyProfile();
           if (isMounted) setUser(profile);
         }

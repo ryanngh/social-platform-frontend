@@ -9,6 +9,59 @@ const api = axios.create({
   },
 });
 
+// Shared Promise mutex ngăn chặn việc gửi nhiều request /auth/refresh cùng lúc khi có nhiều API 401 đồng thời
+let refreshPromise: Promise<string> | null = null;
+
+/**
+ * Hàm gọi request đổi refresh token lấy access token mới
+ */
+export const refreshAccessToken = async (): Promise<string> => {
+  if (refreshPromise) {
+    return refreshPromise;
+  }
+
+  refreshPromise = (async () => {
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (!refreshToken) {
+      throw new Error('No refresh token available');
+    }
+
+    const refreshUrl = API_BASE_URL ? `${API_BASE_URL}/auth/refresh` : '/auth/refresh';
+    const response = await axios.post(refreshUrl, {
+      refreshToken,
+    });
+
+    const { accessToken, refreshToken: newRefreshToken } = response.data;
+    if (!accessToken) {
+      throw new Error('Invalid refresh response');
+    }
+
+    localStorage.setItem('accessToken', accessToken);
+    if (newRefreshToken) {
+      localStorage.setItem('refreshToken', newRefreshToken);
+    }
+
+    return accessToken;
+  })()
+    .catch((err) => {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      if (
+        typeof window !== 'undefined' &&
+        window.location.pathname !== '/signin' &&
+        window.location.pathname !== '/signup'
+      ) {
+        window.location.href = '/signin';
+      }
+      throw err;
+    })
+    .finally(() => {
+      refreshPromise = null;
+    });
+
+  return refreshPromise;
+};
+
 // Request interceptor: attach auth token
 api.interceptors.request.use(
   (config) => {
@@ -21,37 +74,45 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor: handle 401 with token refresh
+// Response interceptor: xử lý 401 và 403 bằng token refresh
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    const isAuthEndpoint =
+      originalRequest?.url?.includes('/auth/login') ||
+      originalRequest?.url?.includes('/auth/register') ||
+      originalRequest?.url?.includes('/auth/refresh');
+
+    // Bắt cả 401 lẫn 403 (khi token hết hạn hoặc chưa xác thực)
+    const isAuthError =
+      (error.response?.status === 401 || error.response?.status === 403) &&
+      !originalRequest?._retry &&
+      !isAuthEndpoint;
+
+    if (isAuthError) {
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (!refreshToken) {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        if (
+          typeof window !== 'undefined' &&
+          window.location.pathname !== '/signin' &&
+          window.location.pathname !== '/signup'
+        ) {
+          window.location.href = '/signin';
+        }
+        return Promise.reject(error);
+      }
+
       originalRequest._retry = true;
 
       try {
-        const refreshToken = localStorage.getItem('refreshToken');
-        if (!refreshToken) {
-          throw new Error('No refresh token');
-        }
-
-        const refreshUrl = API_BASE_URL ? `${API_BASE_URL}/auth/refresh` : '/auth/refresh';
-        const response = await axios.post(refreshUrl, {
-          refreshToken,
-        });
-
-        const { accessToken, refreshToken: newRefreshToken } = response.data;
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', newRefreshToken);
-
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        const newAccessToken = await refreshAccessToken();
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         return api(originalRequest);
       } catch (refreshError) {
-        // Refresh failed — clear tokens and redirect to login
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        window.location.href = '/signin';
         return Promise.reject(refreshError);
       }
     }
