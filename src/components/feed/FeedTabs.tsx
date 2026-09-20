@@ -1,5 +1,4 @@
 import React from 'react';
-import { SlidersHorizontal } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import clsx from 'clsx';
 
@@ -14,13 +13,11 @@ const FeedTabs: React.FC<FeedTabsProps> = ({ activeTab, onTabChange }) => {
   const tabs = [
     { id: 'for-you', label: t('feed.tabForYou') },
     { id: 'following', label: t('feed.tabFollowing') },
-    { id: 'friends', label: t('feed.tabFriends') },
-    { id: 'groups', label: t('feed.tabGroups') },
   ];
 
   return (
-    <section className="bg-white rounded-3xl px-6 sm:px-8 py-3.5 shadow-sm border border-gray-100 flex items-center justify-between">
-      <div className="flex items-center gap-6 sm:gap-10 text-[15px] overflow-x-auto custom-scrollbar">
+    <section className="sticky top-20 z-20 bg-white/95 backdrop-blur-md rounded-3xl px-4 py-2 shadow-sm border border-gray-100 flex items-center justify-center">
+      <div className="grid grid-cols-2 w-full max-w-md mx-auto text-[15px]">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
@@ -28,28 +25,20 @@ const FeedTabs: React.FC<FeedTabsProps> = ({ activeTab, onTabChange }) => {
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
               className={clsx(
-                'relative pb-2 pt-1 transition whitespace-nowrap cursor-pointer',
+                'relative py-2 text-center transition cursor-pointer flex flex-col items-center justify-center',
                 isActive
                   ? 'font-bold text-[#004AC6]'
-                  : 'font-medium text-gray-600 hover:text-gray-900'
+                  : 'font-medium text-gray-500 hover:text-gray-900'
               )}
             >
               <span>{tab.label}</span>
               {isActive && (
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#004AC6] rounded-full"></div>
+                <div className="absolute bottom-0 w-16 h-1 bg-[#004AC6] rounded-full"></div>
               )}
             </button>
           );
         })}
       </div>
-
-      {/* Filter / Tuning Icon */}
-      <button 
-        className="text-gray-800 hover:text-gray-600 transition p-1 cursor-pointer shrink-0 ml-2" 
-        title={t('feed.filter')}
-      >
-        <SlidersHorizontal className="w-5 h-5 text-gray-800" />
-      </button>
     </section>
   );
 };

@@ -13,32 +13,7 @@ interface Story {
 const StoriesCarousel: React.FC = () => {
   const { user } = useAuth();
 
-  const stories: Story[] = [
-    {
-      id: 2,
-      name: 'Maya Patel',
-      avatar: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=150&auto=format&fit=crop&q=80',
-      gradient: 'from-yellow-400 via-rose-500 to-purple-600',
-    },
-    {
-      id: 3,
-      name: 'David Chen',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-      gradient: 'from-yellow-400 via-rose-500 to-purple-600',
-    },
-    {
-      id: 4,
-      name: 'Sarah Jenkins',
-      avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
-      gradient: 'from-cyan-400 via-blue-500 to-indigo-600',
-    },
-    {
-      id: 5,
-      name: 'Tech Digest',
-      avatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150&auto=format&fit=crop&q=80',
-      gradient: 'from-blue-400 via-indigo-500 to-amber-500',
-    },
-  ];
+  const stories: Story[] = [];
 
   return (
     <section className="bg-white rounded-3xl p-4 shadow-sm border border-gray-100 flex items-center overflow-x-auto custom-scrollbar">

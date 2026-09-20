@@ -22,6 +22,8 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { getAvatarUrl, DEFAULT_AVATAR_FALLBACK } from '../../utils/media';
 import { mediaService } from '../../services/mediaService';
 import type { PostMediaRequest, PostVisibility } from '../../types';
+import EmojiPickerPopover from '../common/EmojiPickerPopover';
+import GifPickerPopover from '../common/GifPickerPopover';
 import toast from 'react-hot-toast';
 
 interface CreatePostModalProps {
@@ -31,9 +33,11 @@ interface CreatePostModalProps {
 }
 
 interface FilePreview {
+  id: string;
   url: string;
   type: string;
   name: string;
+  file: File;
 }
 
 const CreatePostModal: React.FC<CreatePostModalProps> = ({
@@ -52,6 +56,10 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
   const [isDragging, setIsDragging] = useState(false);
+  const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
+  const [isGifPickerOpen, setIsGifPickerOpen] = useState(false);
+  const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const dragCounter = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -60,14 +68,37 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
     : user?.username || t('topNav.userFallback');
   const firstName = user?.firstName || user?.username || t('topNav.userFallback');
 
-  // Dọn dẹp object URLs khi component unmount hoặc khi previews thay đổi
+  // Ref lưu previews hiện tại để dọn dẹp CHỈ KHI component unmount (không revoke khi đổi thứ tự)
+  const previewsRef = useRef(previews);
   useEffect(() => {
-    return () => {
-      previews.forEach((p) => URL.revokeObjectURL(p.url));
-    };
+    previewsRef.current = previews;
   }, [previews]);
 
-  // Xử lý nạp danh sách files (dùng chung cho cả FilePicker lẫn Drag & Drop)
+  useEffect(() => {
+    return () => {
+      previewsRef.current.forEach((p) => {
+        try {
+          URL.revokeObjectURL(p.url);
+        } catch {
+          // ignore
+        }
+      });
+    };
+  }, []);
+
+  // Đổi vị trí ảnh/video mượt mà không làm mất URL
+  const reorderMedia = (fromIdx: number, toIdx: number) => {
+    if (fromIdx === toIdx) return;
+    setPreviews((prev) => {
+      const nextPreviews = [...prev];
+      const [moved] = nextPreviews.splice(fromIdx, 1);
+      nextPreviews.splice(toIdx, 0, moved);
+      setSelectedFiles(nextPreviews.map((p) => p.file));
+      return nextPreviews;
+    });
+  };
+
+  // Xử lý nạp danh sách files mới (chỉ tạo URL mới cho file mới thêm, giữ nguyên URL cũ)
   const processNewFiles = (files: File[]) => {
     if (files.length === 0) return;
 
@@ -82,20 +113,27 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
 
     if (validFiles.length === 0) return;
 
-    if (selectedFiles.length + validFiles.length > 30) {
-      toast.error(t('feed.maxFilesExceeded'));
-    }
+    setPreviews((prev) => {
+      if (prev.length + validFiles.length > 30) {
+        toast.error(t('feed.maxFilesExceeded'));
+      }
 
-    // Giới hạn tối đa 30 files như backend quy định
-    const newFiles = [...selectedFiles, ...validFiles].slice(0, 30);
-    setSelectedFiles(newFiles);
+      const availableSlots = 30 - prev.length;
+      if (availableSlots <= 0) return prev;
 
-    const newPreviews = newFiles.map((file) => ({
-      url: URL.createObjectURL(file),
-      type: file.type,
-      name: file.name,
-    }));
-    setPreviews(newPreviews);
+      const filesToAdd = validFiles.slice(0, availableSlots);
+      const addedPreviews: FilePreview[] = filesToAdd.map((file) => ({
+        id: `media-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        url: URL.createObjectURL(file),
+        type: file.type,
+        name: file.name,
+        file,
+      }));
+
+      const nextPreviews = [...prev, ...addedPreviews];
+      setSelectedFiles(nextPreviews.map((p) => p.file));
+      return nextPreviews;
+    });
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -109,15 +147,35 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
   };
 
   const handleRemoveFile = (index: number) => {
-    URL.revokeObjectURL(previews[index].url);
-    const newFiles = selectedFiles.filter((_, i) => i !== index);
-    const newPreviews = previews.filter((_, i) => i !== index);
-    setSelectedFiles(newFiles);
-    setPreviews(newPreviews);
+    setPreviews((prev) => {
+      const removed = prev[index];
+      if (removed) {
+        try {
+          URL.revokeObjectURL(removed.url);
+        } catch {
+          // ignore
+        }
+      }
+      const nextPreviews = prev.filter((_, i) => i !== index);
+      setSelectedFiles(nextPreviews.map((p) => p.file));
+      return nextPreviews;
+    });
   };
 
-  // Drag and drop event handlers
+  const handleSelectGif = async (gifUrl: string) => {
+    try {
+      const res = await fetch(gifUrl);
+      const blob = await res.blob();
+      const file = new File([blob], `gif-${Date.now()}.gif`, { type: 'image/gif' });
+      processNewFiles([file]);
+    } catch {
+      toast.error('Không thể tải file GIF, vui lòng thử lại');
+    }
+  };
+
+  // Drag and drop event handlers cho toàn bộ modal (thêm file mới)
   const handleDragEnter = (e: React.DragEvent) => {
+    if (draggedIdx !== null || e.dataTransfer.types.includes('application/x-reorder-media')) return;
     e.preventDefault();
     e.stopPropagation();
     dragCounter.current += 1;
@@ -127,6 +185,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
   };
 
   const handleDragOver = (e: React.DragEvent) => {
+    if (draggedIdx !== null || e.dataTransfer.types.includes('application/x-reorder-media')) return;
     e.preventDefault();
     e.stopPropagation();
     if (e.dataTransfer.types && Array.from(e.dataTransfer.types).includes('Files')) {
@@ -136,6 +195,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
+    if (draggedIdx !== null || e.dataTransfer.types.includes('application/x-reorder-media')) return;
     e.preventDefault();
     e.stopPropagation();
     dragCounter.current -= 1;
@@ -146,6 +206,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
   };
 
   const handleDrop = (e: React.DragEvent) => {
+    if (draggedIdx !== null || e.dataTransfer.types.includes('application/x-reorder-media')) return;
     e.preventDefault();
     e.stopPropagation();
     dragCounter.current = 0;
@@ -170,7 +231,8 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
 
   const handlePublish = React.useCallback(async () => {
     const hasText = !!content.trim();
-    const hasMedia = selectedFiles.length > 0;
+    const currentFiles = previews.map((p) => p.file);
+    const hasMedia = currentFiles.length > 0;
 
     if (!hasText && !hasMedia) {
       toast.error(t('feed.postEmptyError'));
@@ -182,13 +244,22 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
       let uploadedMedia: PostMediaRequest[] = [];
       if (hasMedia) {
         setUploadStatus(t('feed.uploadingMedia'));
-        uploadedMedia = await mediaService.uploadPostMediaBatch(selectedFiles);
+        uploadedMedia = await mediaService.uploadPostMediaBatch(currentFiles);
       }
 
       setUploadStatus(t('feed.publishing'));
       if (onSubmitPost) {
         await onSubmitPost(content, uploadedMedia, visibility);
       }
+
+      // Thu dọn object URLs sau khi publish xong
+      previews.forEach((p) => {
+        try {
+          URL.revokeObjectURL(p.url);
+        } catch {
+          // ignore
+        }
+      });
 
       setContent('');
       setSelectedFiles([]);
@@ -200,7 +271,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
       setIsSubmitting(false);
       setUploadStatus('');
     }
-  }, [content, selectedFiles, visibility, onSubmitPost, onClose, t]);
+  }, [content, previews, visibility, onSubmitPost, onClose, t]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -394,11 +465,94 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
           {/* Media Previews Gallery */}
           {previews.length > 0 && (
             <div className="border border-gray-200 rounded-2xl p-3 bg-gray-50/70">
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5 max-h-56 overflow-y-auto custom-scrollbar p-1">
+              <div className="flex items-center justify-between mb-2 px-1">
+                <span className="text-[11px] font-semibold text-gray-500">
+                  {previews.length} / 30 ảnh & video
+                </span>
+                <span className="text-[11px] text-[#004AC6] font-medium">
+                  {t('profile.dragToReorder')}
+                </span>
+              </div>
+              <div
+                className="grid grid-cols-3 sm:grid-cols-4 gap-2.5 max-h-56 overflow-y-auto custom-scrollbar p-1"
+                onDragOver={(e) => {
+                  if (draggedIdx !== null) {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                  }
+                }}
+                onDragLeave={(e) => {
+                  if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+                  setDragOverIdx(null);
+                }}
+                onDrop={(e) => {
+                  if (draggedIdx !== null) {
+                    e.preventDefault();
+                    setDragOverIdx(null);
+                    setDraggedIdx(null);
+                  }
+                }}
+              >
                 {previews.map((preview, idx) => (
-                  <div key={idx} className="relative group aspect-square rounded-xl overflow-hidden bg-black/5 border border-gray-200 shadow-xs">
+                  <div
+                    key={preview.id}
+                    draggable
+                    onDragStart={(e) => {
+                      e.stopPropagation();
+                      setDraggedIdx(idx);
+                      e.dataTransfer.setData('text/plain', idx.toString());
+                      e.dataTransfer.setData('application/x-reorder-media', 'true');
+                      e.dataTransfer.effectAllowed = 'move';
+                    }}
+                    onDragOver={(e) => {
+                      if (e.dataTransfer.types.includes('application/x-reorder-media') || draggedIdx !== null) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.dataTransfer.dropEffect = 'move';
+                        if (draggedIdx !== null && draggedIdx !== idx && dragOverIdx !== idx) {
+                          setDragOverIdx(idx);
+                        }
+                      }
+                    }}
+                    onDragLeave={(e) => {
+                      e.stopPropagation();
+                      if (e.currentTarget.contains(e.relatedTarget as Node)) {
+                        return;
+                      }
+                      if (dragOverIdx === idx) {
+                        setDragOverIdx(null);
+                      }
+                    }}
+                    onDrop={(e) => {
+                      if (e.dataTransfer.types.includes('application/x-reorder-media') || draggedIdx !== null) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (draggedIdx !== null && draggedIdx !== idx) {
+                          reorderMedia(draggedIdx, idx);
+                        }
+                        setDraggedIdx(null);
+                        setDragOverIdx(null);
+                      }
+                    }}
+                    onDragEnd={() => {
+                      setDraggedIdx(null);
+                      setDragOverIdx(null);
+                    }}
+                    className={`relative group aspect-square rounded-xl overflow-hidden bg-black/5 border select-none transition-[border-color,box-shadow,opacity] cursor-grab active:cursor-grabbing ${
+                      draggedIdx === idx
+                        ? 'opacity-30 border-dashed border-[#004AC6]'
+                        : dragOverIdx === idx
+                        ? 'border-[#004AC6] ring-2 ring-[#004AC6] shadow-md bg-blue-50/20'
+                        : 'border-gray-200 shadow-xs'
+                    }`}
+                  >
+                    {/* Index badge */}
+                    <div className="absolute top-1.5 left-1.5 w-5 h-5 rounded-full bg-black/60 backdrop-blur-xs text-white text-[10px] font-bold flex items-center justify-center pointer-events-none z-10">
+                      {idx + 1}
+                    </div>
+
                     {preview.type.startsWith('video/') ? (
-                      <div className="w-full h-full flex flex-col items-center justify-center bg-gray-800 text-white p-2">
+                      <div className="w-full h-full flex flex-col items-center justify-center bg-gray-800 text-white p-2 pointer-events-none">
                         <Play className="w-7 h-7 text-white fill-white/80 mb-1" />
                         <span className="text-[10px] text-gray-300 truncate w-full text-center">{preview.name}</span>
                       </div>
@@ -406,16 +560,24 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
                       <img
                         src={preview.url}
                         alt={preview.name}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover pointer-events-none"
+                        draggable={false}
                       />
                     )}
                     <button
                       type="button"
-                      onClick={() => handleRemoveFile(idx)}
-                      className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center transition-transform hover:scale-105 active:scale-95 shadow-md"
+                      draggable={false}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemoveFile(idx);
+                      }}
+                      className={`absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center transition-transform hover:scale-105 active:scale-95 shadow-md z-10 cursor-pointer ${
+                        draggedIdx !== null ? 'pointer-events-none' : ''
+                      }`}
                       title={t('common.delete')}
                     >
-                      <X className="w-3.5 h-3.5" />
+                      <X className="w-3.5 h-3.5 pointer-events-none" />
                     </button>
                   </div>
                 ))}
@@ -450,7 +612,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
             <span className="text-xs font-semibold text-gray-700 pl-1">
               {t('feed.addToPost')}
             </span>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 relative">
               {/* Photo/Video */}
               <button 
                 type="button" 
@@ -460,6 +622,57 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
               >
                 <ImagePlay className="w-5 h-5" />
               </button>
+
+              {/* GIF Button */}
+              <div className="relative">
+                <button 
+                  type="button" 
+                  className={`px-2 py-1 rounded-xl text-xs font-black transition cursor-pointer ${
+                    isGifPickerOpen ? 'bg-[#004AC6] text-white' : 'hover:bg-purple-50 text-purple-600 bg-purple-50/60'
+                  }`}
+                  title={t('profile.addGif')}
+                  onClick={() => {
+                    setIsGifPickerOpen(!isGifPickerOpen);
+                    setIsEmojiPickerOpen(false);
+                  }}
+                >
+                  GIF
+                </button>
+                {isGifPickerOpen && (
+                  <GifPickerPopover
+                    isOpen={isGifPickerOpen}
+                    onClose={() => setIsGifPickerOpen(false)}
+                    onSelectGif={handleSelectGif}
+                    className="absolute right-0 bottom-full mb-3"
+                  />
+                )}
+              </div>
+
+              {/* Emoji Button */}
+              <div className="relative">
+                <button 
+                  type="button" 
+                  className={`p-2 rounded-xl transition cursor-pointer ${
+                    isEmojiPickerOpen ? 'bg-amber-100 text-amber-600' : 'hover:bg-amber-50 text-amber-500'
+                  }`}
+                  title={t('feed.feelingActivity')}
+                  onClick={() => {
+                    setIsEmojiPickerOpen(!isEmojiPickerOpen);
+                    setIsGifPickerOpen(false);
+                  }}
+                >
+                  <Smile className="w-5 h-5" />
+                </button>
+                {isEmojiPickerOpen && (
+                  <EmojiPickerPopover
+                    isOpen={isEmojiPickerOpen}
+                    onClose={() => setIsEmojiPickerOpen(false)}
+                    onSelectEmoji={(emoji) => setContent((prev) => prev + emoji)}
+                    className="absolute right-0 bottom-full mb-3"
+                  />
+                )}
+              </div>
+
               {/* Poll */}
               <button 
                 type="button" 
@@ -469,15 +682,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
               >
                 <BarChart2 className="w-5 h-5" />
               </button>
-              {/* Feeling/Activity */}
-              <button 
-                type="button" 
-                className="p-2 hover:bg-amber-50 rounded-xl transition text-amber-500 cursor-pointer" 
-                title={t('feed.feelingActivity')}
-                onClick={() => toast(t('feed.feelingToast'), { icon: '😊' })}
-              >
-                <Smile className="w-5 h-5" />
-              </button>
+
               {/* Location Pin */}
               <button 
                 type="button" 
@@ -487,6 +692,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
               >
                 <MapPin className="w-5 h-5" />
               </button>
+
               {/* Tag Friends */}
               <button 
                 type="button" 

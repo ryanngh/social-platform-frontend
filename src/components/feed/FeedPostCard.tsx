@@ -64,21 +64,23 @@ export const ImageFeedPost: React.FC = () => {
         Building a design system, one component at a time. 🎨
       </p>
 
-      {/* Media Attachment */}
-      <div className="relative rounded-2xl overflow-hidden mb-3 border border-gray-100 bg-amber-50">
-        <span className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white text-[11px] font-medium px-2.5 py-0.5 rounded-full">
+      {/* Media Attachment (Instagram aspect ratio) */}
+      <div className="relative rounded-2xl overflow-hidden mb-3 border border-gray-100 bg-amber-50 aspect-square sm:aspect-[4/5] max-h-[580px] w-full flex flex-col justify-end">
+        <span className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white text-[11px] font-medium px-2.5 py-0.5 rounded-full z-10">
           1/5
         </span>
-        <img
-          alt="Workspace and coffee"
-          className="w-full h-80 object-cover"
-          src="https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800&auto=format&fit=crop&q=80"
-          onError={(e) => {
-            e.currentTarget.onerror = null;
-            e.currentTarget.src = "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&auto=format&fit=crop&q=80";
-          }}
-        />
-        <div className="p-3 bg-white border-t border-gray-100 text-xs text-gray-600">
+        <div className="flex-1 w-full overflow-hidden">
+          <img
+            alt="Workspace and coffee"
+            className="w-full h-full object-cover"
+            src="https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800&auto=format&fit=crop&q=80"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&auto=format&fit=crop&q=80";
+            }}
+          />
+        </div>
+        <div className="p-3 bg-white border-t border-gray-100 text-xs text-gray-600 flex-shrink-0">
           <p className="italic text-[11px] text-gray-500 leading-relaxed">
             Morning essentials to start the day right! ☕✨ So productive with my brew from @elevatecoffee_co y favorite workspace. What's fueling your creativity today? #ElevateYourDay #CoffeeLover #WorkFromAnywhere #CafeVibes #MorningRoutine #Productivity #ElevateCoffeeCo
           </p>
