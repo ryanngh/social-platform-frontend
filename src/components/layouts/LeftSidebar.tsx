@@ -1,155 +1,170 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { 
-  Home, 
-  Compass, 
-  Bell, 
-  MessageSquare, 
-  Users, 
-  UsersRound, 
-  Calendar, 
-  Bookmark, 
-  Plus, 
-  Palette, 
-  Layers 
+import {Link, useLocation} from 'react-router-dom';
+import {
+    Home,
+    Compass,
+    Bell,
+    MessageSquare,
+    Calendar,
+    Bookmark,
+    Plus,
+    Palette,
+    Layers
 } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import { useLanguage } from '../../contexts/LanguageContext';
-import { getAvatarUrl, DEFAULT_AVATAR_FALLBACK } from '../../utils/media';
+import {useAuth} from '../../contexts/AuthContext';
+import {useLanguage} from '../../contexts/LanguageContext';
+import {getAvatarUrl, DEFAULT_AVATAR_FALLBACK} from '../../utils/media';
+import {getProfileUrl} from '../../utils/user';
+import { Cloud, Store } from 'lucide-react';
 import clsx from 'clsx';
 
 const LeftSidebar: React.FC = () => {
-  const { user } = useAuth();
-  const { t } = useLanguage();
-  const location = useLocation();
+    const {user} = useAuth();
+    const {t} = useLanguage();
+    const location = useLocation();
 
-  const navItems = [
-    { key: 'leftNav.home', name: t('leftNav.home'), icon: Home, path: '/feed' },
-    { key: 'leftNav.explore', name: t('leftNav.explore'), icon: Compass, path: '/explore' },
-    { key: 'leftNav.notifications', name: t('leftNav.notifications'), icon: Bell, path: '/notifications', badge: '3' },
-    { key: 'leftNav.messages', name: t('leftNav.messages'), icon: MessageSquare, path: '/messages' },
-    { key: 'leftNav.friends', name: t('leftNav.friends'), icon: Users, path: '/friends' },
-    { key: 'leftNav.groups', name: t('leftNav.groups'), icon: UsersRound, path: '/groups' },
-    { key: 'leftNav.events', name: t('leftNav.events'), icon: Calendar, path: '/events' },
-    { key: 'leftNav.saved', name: t('leftNav.saved'), icon: Bookmark, path: '/saved' },
-  ];
+    const navItems = [
+        {key: 'leftNav.home', name: t('leftNav.home'), icon: Home, path: '/feed'},
+        {key: 'leftNav.explore', name: t('leftNav.explore'), icon: Compass, path: '/explore'},
+        {
+            key: 'leftNav.notifications',
+            name: t('leftNav.notifications'),
+            icon: Bell,
+            path: '/notifications',
+            badge: '3'
+        },
+        {key: 'leftNav.messages', name: t('leftNav.messages'), icon: MessageSquare, path: '/messages'},
+        {key: 'leftNav.storage', name: t('leftNav.storage'), icon: Cloud, path: '/drive'},
+        {key: 'leftNav.marketplace', name: t('leftNav.marketplace'), icon: Store, path: '/marketplace'},
+        {key: 'leftNav.events', name: t('leftNav.events'), icon: Calendar, path: '/events'},
+        {key: 'leftNav.saved', name: t('leftNav.saved'), icon: Bookmark, path: '/saved'},
+    ];
 
-  const shortcuts: { name: string; icon: typeof Palette; bg: string }[] = [];
+    const shortcuts: { name: string; icon: typeof Palette; bg: string }[] = [];
 
-  const displayName = user?.firstName
-    ? `${user.firstName} ${user.lastName || ''}`.trim()
-    : user?.username || t('topNav.userFallback');
-  const username = user?.username || 'user';
+    const displayName = user?.firstName
+        ? `${user.firstName} ${user.lastName || ''}`.trim()
+        : user?.username || t('topNav.userFallback');
+    const username = user?.username || 'user';
 
-  return (
-    <div className="flex flex-col gap-4">
-      {/* 1. Navigation Menu Card */}
-      <nav className="bg-white rounded-3xl p-3 shadow-sm border border-gray-100 flex flex-col gap-1 text-[15px]">
-        {navItems.map((item) => {
-          const isActive = location.pathname.startsWith(item.path);
-          const Icon = item.icon;
+    return (
+        <div className="flex flex-col gap-4">
+            {/* 1. Navigation Menu Card */}
+            <nav className="bg-white rounded-3xl p-3 shadow-sm border border-gray-100 flex flex-col gap-1 text-[15px]">
+                {navItems.map((item) => {
+                    const isActive = location.pathname.startsWith(item.path);
+                    const Icon = item.icon;
 
-          return (
-            <Link
-              key={item.name}
-              to={item.path}
-              className={clsx(
-                'flex items-center justify-between px-4 py-2.5 rounded-2xl transition-all',
-                isActive
-                  ? 'bg-[#EFF6FF] text-[#003A9F] font-semibold'
-                  : 'text-gray-700 hover:bg-gray-50'
-              )}
-            >
-              <div className="flex items-center gap-3.5">
-                <Icon className={clsx('w-5 h-5', isActive ? 'text-[#003A9F]' : 'text-gray-500')} />
-                <span>{item.name}</span>
-              </div>
-              {item.badge && (
-                <span className="w-5 h-5 flex items-center justify-center text-xs font-bold text-white bg-rose-500 rounded-full">
+                    return (
+                        <Link
+                            key={item.name}
+                            to={item.path}
+                            className={clsx(
+                                'flex items-center justify-between px-4 py-2.5 rounded-2xl transition-all',
+                                isActive
+                                    ? 'bg-[#EFF6FF] text-[#003A9F] font-semibold'
+                                    : 'text-gray-700 hover:bg-gray-50'
+                            )}
+                        >
+                            <div className="flex items-center gap-3.5">
+                                <Icon className={clsx('w-5 h-5', isActive ? 'text-[#003A9F]' : 'text-gray-500')}/>
+                                <span>{item.name}</span>
+                            </div>
+                            {item.badge && (
+                                <span
+                                    className="w-5 h-5 flex items-center justify-center text-xs font-bold text-white bg-rose-500 rounded-full">
                   {item.badge}
                 </span>
-              )}
-            </Link>
-          );
-        })}
-      </nav>
+                            )}
+                        </Link>
+                    );
+                })}
+            </nav>
 
-      {/* 2. Mini Profile Card */}
-      <section className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 text-center flex flex-col items-center">
-        <img
-          alt={displayName}
-          className="w-14 h-14 rounded-full object-cover mb-2 border-2 border-white shadow"
-          src={getAvatarUrl(user?.avatarUrl)}
-          onError={(e) => {
-            e.currentTarget.onerror = null;
-            e.currentTarget.src = DEFAULT_AVATAR_FALLBACK;
-          }}
-        />
-        <h3 className="font-bold text-gray-900 text-base leading-tight">
-          {displayName}
-        </h3>
-        <p className="text-xs text-gray-400 mb-4">@{username}</p>
+            {/* 2. Mini Profile Card */}
+            <section
+                className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 text-center flex flex-col items-center">
+                <Link to={getProfileUrl(user)} className="cursor-pointer hover:opacity-90 transition mb-2">
+                    <img
+                        alt={displayName}
+                        className="w-14 h-14 rounded-full object-cover border-2 border-white shadow"
+                        src={getAvatarUrl(user?.avatarUrl)}
+                        onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = DEFAULT_AVATAR_FALLBACK;
+                        }}
+                    />
+                </Link>
+                <Link to={getProfileUrl(user)} className="cursor-pointer">
+                    <h3 className="font-bold text-gray-900 text-base leading-tight hover:underline hover:text-[#004AC6] transition-colors">
+                        {displayName}
+                    </h3>
+                </Link>
+                <Link to={getProfileUrl(user)} className="text-xs text-gray-400 mb-4 hover:underline hover:text-[#004AC6] transition-colors cursor-pointer">
+                    @{username}
+                </Link>
 
-        {/* Stats Container */}
-        <div className="grid grid-cols-2 w-full py-3 border-y border-gray-100 text-center">
-          <div className="px-1 border-r border-gray-100">
-            <p className="font-bold text-gray-900 text-base">
-              {user?.followingCount ?? 0}
-            </p>
-            <p className="text-[11px] text-gray-500 font-normal">{t('leftNav.following')}</p>
-          </div>
-          <div className="px-1">
-            <p className="font-bold text-gray-900 text-base">
-              {user?.followersCount ?? 0}
-            </p>
-            <p className="text-[11px] text-gray-500 font-normal">{t('leftNav.followers')}</p>
-          </div>
-        </div>
+                {/* Stats Container */}
+                <div className="grid grid-cols-2 w-full py-3 border-y border-gray-100 text-center">
+                    <div className="px-1 border-r border-gray-100">
+                        <p className="font-bold text-gray-900 text-base">
+                            {user?.followingCount ?? 0}
+                        </p>
+                        <p className="text-[11px] text-gray-500 font-normal">{t('leftNav.following')}</p>
+                    </div>
+                    <div className="px-1">
+                        <p className="font-bold text-gray-900 text-base">
+                            {user?.followersCount ?? 0}
+                        </p>
+                        <p className="text-[11px] text-gray-500 font-normal">{t('leftNav.followers')}</p>
+                    </div>
+                </div>
 
-        <Link
-          to={user?.username ? `/profile/${user.username}` : '/profile'}
-          className="w-full mt-4 py-2.5 rounded-2xl bg-[#EFF6FF] text-[#003A9F] text-xs font-semibold hover:bg-blue-100 transition block text-center"
-        >
-          {t('leftNav.viewProfile')}
-        </Link>
-      </section>
-
-      {/* 3. Shortcuts Card */}
-      <section className="bg-white rounded-3xl p-4 shadow-sm border border-gray-100">
-        <div className="flex items-center justify-between px-2 mb-3">
-          <h4 className="font-semibold text-gray-900 text-sm">{t('leftNav.shortcuts')}</h4>
-          <button className="text-gray-400 hover:text-gray-600 transition" title={t('leftNav.addShortcut')}>
-            <Plus className="w-4 h-4" />
-          </button>
-        </div>
-        {shortcuts.length > 0 ? (
-          <div className="flex flex-col gap-2">
-            {shortcuts.map((shortcut, i) => {
-              const Icon = shortcut.icon;
-              return (
-                <div
-                  key={i}
-                  className="flex items-center gap-3 p-2 rounded-2xl hover:bg-gray-50 transition cursor-pointer"
+                <Link
+                    to={getProfileUrl(user)}
+                    className="w-full mt-4 py-2.5 rounded-2xl bg-[#EFF6FF] text-[#003A9F] text-xs font-semibold hover:bg-blue-100 transition block text-center"
                 >
-                  <div className={clsx('w-7 h-7 rounded-xl flex items-center justify-center shrink-0', shortcut.bg)}>
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <span className="text-xs font-medium text-gray-700 truncate">
+                    {t('leftNav.viewProfile')}
+                </Link>
+            </section>
+
+            {/* 3. Shortcuts Card */}
+            <section className="bg-white rounded-3xl p-4 shadow-sm border border-gray-100">
+                <div className="flex items-center justify-between px-2 mb-3">
+                    <h4 className="font-semibold text-gray-900 text-sm">{t('leftNav.shortcuts')}</h4>
+                    <button className="text-gray-400 hover:text-gray-600 transition" title={t('leftNav.addShortcut')}>
+                        <Plus className="w-4 h-4"/>
+                    </button>
+                </div>
+                {shortcuts.length > 0 ? (
+                    <div className="flex flex-col gap-2">
+                        {shortcuts.map((shortcut, i) => {
+                            const Icon = shortcut.icon;
+                            return (
+                                <div
+                                    key={i}
+                                    className="flex items-center gap-3 p-2 rounded-2xl hover:bg-gray-50 transition cursor-pointer"
+                                >
+                                    <div
+                                        className={clsx('w-7 h-7 rounded-xl flex items-center justify-center shrink-0', shortcut.bg)}>
+                                        <Icon className="w-4 h-4"/>
+                                    </div>
+                                    <span className="text-xs font-medium text-gray-700 truncate">
                     {shortcut.name}
                   </span>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="py-5 text-center text-gray-400">
-            <Layers className="w-6 h-6 mx-auto mb-1.5 text-gray-300 stroke-[1.5]" />
-            <p className="text-xs text-gray-400 italic">{t('leftNav.noShortcuts')}</p>
-          </div>
-        )}
-      </section>
-    </div>
-  );
+                                </div>
+                            );
+                        })}
+                    </div>
+                ) : (
+                    <div className="py-5 text-center text-gray-400">
+                        <Layers className="w-6 h-6 mx-auto mb-1.5 text-gray-300 stroke-[1.5]"/>
+                        <p className="text-xs text-gray-400 italic">{t('leftNav.noShortcuts')}</p>
+                    </div>
+                )}
+            </section>
+        </div>
+    );
 };
 
 export default LeftSidebar;

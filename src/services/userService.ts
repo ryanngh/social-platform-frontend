@@ -1,5 +1,5 @@
 import api from '../lib/axios';
-import type { User, ProfileUpdateRequest, UserAccount } from '../types';
+import type { User, ProfileUpdateRequest, UserAccount, UserSummary, PaginatedResponse, PaginationParams } from '../types';
 
 export const userService = {
   async getMyProfile(): Promise<User> {
@@ -51,5 +51,27 @@ export const userService = {
 
   async deleteAccount(): Promise<void> {
     await api.delete('/users/me');
+  },
+
+  async followUser(userId: string): Promise<void> {
+    await api.post(`/users/${userId}/follow`);
+  },
+
+  async unfollowUser(userId: string): Promise<void> {
+    await api.delete(`/users/${userId}/follow`);
+  },
+
+  async getFollowers(userId: string, params?: PaginationParams): Promise<PaginatedResponse<UserSummary>> {
+    const response = await api.get<PaginatedResponse<UserSummary>>(`/users/${userId}/followers`, {
+      params,
+    });
+    return response.data;
+  },
+
+  async getFollowing(userId: string, params?: PaginationParams): Promise<PaginatedResponse<UserSummary>> {
+    const response = await api.get<PaginatedResponse<UserSummary>>(`/users/${userId}/following`, {
+      params,
+    });
+    return response.data;
   },
 };

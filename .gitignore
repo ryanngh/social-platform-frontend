@@ -26,3 +26,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# AI Agents & Tooling
+.agents/
+graphify-out/

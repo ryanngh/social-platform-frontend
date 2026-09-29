@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Users, TrendingUp, Calendar } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { getProfileUrl } from '../../utils/user';
 
 interface SuggestionItem {
   id: number;
@@ -50,14 +51,26 @@ const RightSidebar: React.FC = () => {
             {suggestions.map((user) => (
               <div key={user.id} className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <img
-                    alt={user.name}
-                    className="w-10 h-10 rounded-full object-cover border border-gray-100"
-                    src={user.avatar}
-                  />
+                  <Link to={getProfileUrl(user)} className="flex-shrink-0 hover:opacity-90 transition cursor-pointer">
+                    <img
+                      alt={user.name}
+                      className="w-10 h-10 rounded-full object-cover border border-gray-100"
+                      src={user.avatar}
+                    />
+                  </Link>
                   <div className="leading-tight">
-                    <p className="text-xs font-bold text-gray-900">{user.name}</p>
-                    <p className="text-[11px] text-gray-400">@{user.username}</p>
+                    <Link
+                      to={getProfileUrl(user)}
+                      className="text-xs font-bold text-gray-900 hover:underline hover:text-[#004AC6] transition-colors cursor-pointer block"
+                    >
+                      {user.name}
+                    </Link>
+                    <Link
+                      to={getProfileUrl(user)}
+                      className="text-[11px] text-gray-400 hover:underline hover:text-[#004AC6] transition-colors cursor-pointer block"
+                    >
+                      @{user.username}
+                    </Link>
                   </div>
                 </div>
                 <button className="text-xs font-semibold px-4 py-1.5 rounded-full bg-[#EFF6FF] text-[#003A9F] hover:bg-blue-100 transition cursor-pointer">

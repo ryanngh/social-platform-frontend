@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   MessageSquare, 
   Repeat2, 
@@ -6,14 +7,27 @@ import {
   BarChart2, 
   Bookmark, 
   Share2, 
-  MoreHorizontal 
+  MoreHorizontal,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { copyToClipboard } from '../../utils/share';
+import { DEFAULT_AVATAR_FALLBACK } from '../../utils/media';
+
+const MOCK_POST_IMAGES = [
+  'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&auto=format&fit=crop&q=80',
+];
 
 export const ImageFeedPost: React.FC = () => {
   const [isLiked, setIsLiked] = useState(true);
   const [likeCount, setLikeCount] = useState(285);
   const [isBookmarked, setIsBookmarked] = useState(false);
+  const [activeImageIdx, setActiveImageIdx] = useState(0);
 
   const toggleLike = () => {
     if (isLiked) {
@@ -38,20 +52,25 @@ export const ImageFeedPost: React.FC = () => {
       {/* Author Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
-          <img
-            alt="Maya Patel"
-            className="w-10 h-10 rounded-full object-cover"
-            src="https://images.unsplash.com/photo-1534447677768-be436bb09401?w=150&auto=format&fit=crop&q=80"
-            onError={(e) => {
-              e.currentTarget.onerror = null;
-              e.currentTarget.src = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80";
-            }}
-          />
+          <Link to="/mayadesigns" className="flex-shrink-0 hover:opacity-90 transition cursor-pointer">
+            <img
+              alt="Maya Patel"
+              className="w-10 h-10 rounded-full object-cover"
+              src={DEFAULT_AVATAR_FALLBACK}
+            />
+          </Link>
           <div>
             <div className="flex items-center gap-1.5 leading-tight">
-              <h4 className="font-bold text-gray-900 text-sm">Maya Patel</h4>
+              <Link to="/mayadesigns" className="font-bold text-gray-900 text-sm hover:underline hover:text-[#004AC6] transition-colors cursor-pointer">
+                Maya Patel
+              </Link>
             </div>
-            <p className="text-xs text-gray-400">@mayadesigns · 1 giờ</p>
+            <p className="text-xs text-gray-400">
+              <Link to="/mayadesigns" className="hover:underline hover:text-gray-700 transition-colors cursor-pointer">
+                @mayadesigns
+              </Link>
+              <span> · 1 giờ</span>
+            </p>
           </div>
         </div>
         <button className="text-gray-400 hover:text-gray-600 transition" title="Tùy chọn">
@@ -65,21 +84,69 @@ export const ImageFeedPost: React.FC = () => {
       </p>
 
       {/* Media Attachment (Instagram aspect ratio) */}
-      <div className="relative rounded-2xl overflow-hidden mb-3 border border-gray-100 bg-amber-50 aspect-square sm:aspect-[4/5] max-h-[580px] w-full flex flex-col justify-end">
-        <span className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white text-[11px] font-medium px-2.5 py-0.5 rounded-full z-10">
-          1/5
+      <div className="relative rounded-2xl overflow-hidden mb-3 border border-gray-100 bg-amber-50 aspect-square sm:aspect-[4/5] max-h-[580px] w-full flex flex-col justify-end select-none group">
+        {/* Media Counter Badge */}
+        <span className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white text-[11px] font-medium px-2.5 py-0.5 rounded-full z-10 pointer-events-none">
+          {activeImageIdx + 1}/{MOCK_POST_IMAGES.length}
         </span>
-        <div className="flex-1 w-full overflow-hidden">
+
+        {/* Previous Arrow */}
+        {activeImageIdx > 0 && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveImageIdx((prev) => Math.max(0, prev - 1));
+            }}
+            className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-black/60 hover:bg-black/85 text-white flex items-center justify-center backdrop-blur-md shadow-lg border border-white/20 transition-all hover:scale-110 active:scale-95 cursor-pointer opacity-90 group-hover:opacity-100"
+            title="Ảnh trước"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+        )}
+
+        {/* Next Arrow */}
+        {activeImageIdx < MOCK_POST_IMAGES.length - 1 && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveImageIdx((prev) => Math.min(MOCK_POST_IMAGES.length - 1, prev + 1));
+            }}
+            className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-black/60 hover:bg-black/85 text-white flex items-center justify-center backdrop-blur-md shadow-lg border border-white/20 transition-all hover:scale-110 active:scale-95 cursor-pointer opacity-90 group-hover:opacity-100"
+            title="Ảnh tiếp theo"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        )}
+
+        <div className="flex-1 w-full overflow-hidden relative">
           <img
+            key={MOCK_POST_IMAGES[activeImageIdx]}
             alt="Workspace and coffee"
-            className="w-full h-full object-cover"
-            src="https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800&auto=format&fit=crop&q=80"
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+            src={MOCK_POST_IMAGES[activeImageIdx]}
             onError={(e) => {
               e.currentTarget.onerror = null;
-              e.currentTarget.src = "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&auto=format&fit=crop&q=80";
+              (e.currentTarget as HTMLElement).style.display = 'none';
             }}
           />
+
+          {/* Dots Indicator */}
+          <div className="absolute bottom-2 inset-x-0 flex items-center justify-center gap-1.5 z-10 pointer-events-none">
+            {MOCK_POST_IMAGES.map((_, dotIdx) => (
+              <div
+                key={dotIdx}
+                className={`rounded-full transition-all duration-200 ${
+                  dotIdx === activeImageIdx
+                    ? 'w-4 h-1.5 bg-white shadow-sm'
+                    : 'w-1.5 h-1.5 bg-white/50 backdrop-blur-xs'
+                }`}
+              />
+            ))}
+          </div>
         </div>
+
         <div className="p-3 bg-white border-t border-gray-100 text-xs text-gray-600 flex-shrink-0">
           <p className="italic text-[11px] text-gray-500 leading-relaxed">
             Morning essentials to start the day right! ☕✨ So productive with my brew from @elevatecoffee_co y favorite workspace. What's fueling your creativity today? #ElevateYourDay #CoffeeLover #WorkFromAnywhere #CafeVibes #MorningRoutine #Productivity #ElevateCoffeeCo
@@ -127,7 +194,10 @@ export const ImageFeedPost: React.FC = () => {
             <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-[#004AC6] text-[#004AC6]' : ''}`} />
           </button>
           <button 
-            onClick={() => toast.success('Đã sao chép liên kết bài viết!')}
+            onClick={async () => {
+              await copyToClipboard(`${window.location.origin}/posts/mock-image-post`);
+              toast.success('Đã sao chép liên kết vào bộ nhớ tạm!');
+            }}
             className="hover:text-gray-600 transition" 
             title="Chia sẻ"
           >
@@ -168,20 +238,25 @@ export const PollFeedPost: React.FC = () => {
       {/* Author Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
-          <img
-            alt="Tech Digest"
-            className="w-10 h-10 rounded-full object-cover"
-            src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150&auto=format&fit=crop&q=80"
-            onError={(e) => {
-              e.currentTarget.onerror = null;
-              e.currentTarget.src = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80";
-            }}
-          />
+          <Link to="/techdigest" className="flex-shrink-0 hover:opacity-90 transition cursor-pointer">
+            <img
+              alt="Tech Digest"
+              className="w-10 h-10 rounded-full object-cover"
+              src={DEFAULT_AVATAR_FALLBACK}
+            />
+          </Link>
           <div>
             <div className="flex items-center gap-1.5 leading-tight">
-              <h4 className="font-bold text-gray-900 text-sm">Tech Digest</h4>
+              <Link to="/techdigest" className="font-bold text-gray-900 text-sm hover:underline hover:text-[#004AC6] transition-colors cursor-pointer">
+                Tech Digest
+              </Link>
             </div>
-            <p className="text-xs text-gray-400">@techdigest · 4 giờ</p>
+            <p className="text-xs text-gray-400">
+              <Link to="/techdigest" className="hover:underline hover:text-gray-700 transition-colors cursor-pointer">
+                @techdigest
+              </Link>
+              <span> · 4 giờ</span>
+            </p>
           </div>
         </div>
         <button className="text-gray-400 hover:text-gray-600 transition" title="Tùy chọn">
@@ -272,7 +347,10 @@ export const PollFeedPost: React.FC = () => {
             <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-[#004AC6] text-[#004AC6]' : ''}`} />
           </button>
           <button 
-            onClick={() => toast.success('Đã sao chép liên kết!')}
+            onClick={async () => {
+              await copyToClipboard(`${window.location.origin}/posts/mock-poll-post`);
+              toast.success('Đã sao chép liên kết vào bộ nhớ tạm!');
+            }}
             className="hover:text-gray-600 transition"
           >
             <Share2 className="w-4 h-4" />

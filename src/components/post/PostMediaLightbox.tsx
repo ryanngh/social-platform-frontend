@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import {
   X,
   ArrowLeft,
@@ -28,10 +29,12 @@ import toast from 'react-hot-toast';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { getAvatarUrl, getMediaUrl, isVideoMedia } from '../../utils/media';
+import { getProfileUrl } from '../../utils/user';
 import { commentService } from '../../services/commentService';
 import { postService } from '../../services/postService';
 import type { PostResponse, CommentResponse, CommentMediaRequest, PostVisibility } from '../../types';
 import { getContentWithoutHashtags } from '../../utils/text';
+import { handleCopyAndSharePost } from '../../utils/share';
 import PostMoreMenu from './PostMoreMenu';
 import CommentItem from './CommentItem';
 import CommentInput from './CommentInput';
@@ -121,6 +124,7 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
   // Post interactions (optimistic)
   const [isLiked, setIsLiked] = useState(initialPost.isLiked ?? initialPost.liked ?? false);
   const [likeCount, setLikeCount] = useState(currentPost.reactionCount);
+  const [shareCount, setShareCount] = useState(initialPost.shareCount ?? 0);
   const [isLiking, setIsLiking] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
 
@@ -171,6 +175,7 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
       setIsBookmarked(false);
       setComments([]);
       setCommentCount(initialPost.commentCount);
+      setShareCount(initialPost.shareCount ?? 0);
       loadComments();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -329,9 +334,17 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
     toast.success(t('postDetail.repostedToast'));
   };
 
-  const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href).catch(() => {});
-    toast.success(t('postDetail.copiedToast'));
+  const handleShare = async () => {
+    await handleCopyAndSharePost(currentPost.id, {
+      onShareCountUpdated: (newCount) => {
+        setShareCount(newCount);
+        const updated = { ...currentPost, shareCount: newCount };
+        setCurrentPost(updated);
+        onPostUpdated?.(updated);
+      },
+      successMessage: t('postDetail.copiedToast'),
+      errorMessage: t('postDetail.copyLinkFailed'),
+    });
   };
 
   // --- Post Author Actions ---
@@ -388,10 +401,11 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
   const handleSubmitComment = async (content: string, media?: CommentMediaRequest[]) => {
     setIsSubmittingComment(true);
     try {
+      const payloadContent = content.trim() || undefined;
       if (replyingTo) {
         // Gửi reply cho comment được chọn (chung cây với parentComment)
         await commentService.createReply(replyingTo.commentId, {
-          content,
+          content: payloadContent,
           media: media || [],
         });
         const parentId = replyingTo.parentCommentId || replyingTo.commentId;
@@ -410,7 +424,7 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
       } else {
         // Gửi comment gốc
         const newComment = await commentService.createComment(currentPost.id, {
-          content,
+          content: payloadContent,
           media: media || [],
         });
         setComments((prev) => [newComment, ...prev]);
@@ -765,23 +779,39 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
           <header className="px-5 py-4 border-b border-[#E2E2EC] flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-3">
               {/* Author Avatar */}
-              <div className="relative">
-                <div className="p-[2px] rounded-full bg-gradient-to-tr from-[#004AC6] to-[#7EB0FF]">
-                  <img
-                    src={getAvatarUrl(currentPost.author.avatarUrl)}
-                    alt={authorName}
-                    className="w-10 h-10 rounded-full object-cover border-2 border-white"
-                  />
+              <Link
+                to={getProfileUrl(currentPost.author)}
+                onClick={onClose}
+                className="hover:opacity-90 transition cursor-pointer"
+              >
+                <div className="relative">
+                  <div className="p-[2px] rounded-full bg-gradient-to-tr from-[#004AC6] to-[#7EB0FF]">
+                    <img
+                      src={getAvatarUrl(currentPost.author.avatarUrl)}
+                      alt={authorName}
+                      className="w-10 h-10 rounded-full object-cover border-2 border-white"
+                    />
+                  </div>
                 </div>
-              </div>
+              </Link>
               <div className="flex flex-col">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[15px] font-bold text-[#1A1C1E] hover:underline cursor-pointer">
+                  <Link
+                    to={getProfileUrl(currentPost.author)}
+                    onClick={onClose}
+                    className="text-[15px] font-bold text-[#1A1C1E] hover:underline hover:text-[#004AC6] transition-colors cursor-pointer"
+                  >
                     {authorName}
-                  </span>
+                  </Link>
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-[#535F70]">
-                  <span>@{currentPost.author.username}</span>
+                  <Link
+                    to={getProfileUrl(currentPost.author)}
+                    onClick={onClose}
+                    className="hover:underline hover:text-gray-600 transition-colors cursor-pointer"
+                  >
+                    @{currentPost.author.username}
+                  </Link>
                   <span>·</span>
                   <span>{formatRelativeTime(currentPost.createdAt, language)}</span>
                   <span>·</span>
@@ -803,6 +833,7 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
                 <MoreHorizontal className="w-5 h-5" />
               </button>
               <PostMoreMenu
+                postId={currentPost.id}
                 authorUsername={currentPost.author.username}
                 isAuthor={isAuthor}
                 currentVisibility={currentPost.visibility}
@@ -811,6 +842,7 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
                 onEdit={() => setIsEditPostModalOpen(true)}
                 onChangeVisibility={handleChangeVisibility}
                 onDelete={handleDeletePost}
+                onCopyLink={handleShare}
               />
               <button
                 type="button"
@@ -959,10 +991,11 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
                 <button
                   type="button"
                   onClick={handleShare}
-                  className="hover:text-[#004AC6] transition-colors p-1 cursor-pointer"
+                  className="flex items-center gap-1.5 hover:text-[#004AC6] transition-colors p-1 cursor-pointer group"
                   title={t('postDetail.shareButton')}
                 >
-                  <Share2 className="w-4 h-4" />
+                  <Share2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                  <span>{formatCount(shareCount)}</span>
                 </button>
               </div>
             </div>

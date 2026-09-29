@@ -13,9 +13,26 @@ export default defineConfig({
     },
     proxy: {
       ...Object.fromEntries(
-        ['/auth', '/users', '/posts', '/comments', '/media', '/friend-requests'].map((path) => [
+        ['/auth',
+            '/users',
+            '/posts',
+            '/comments',
+            '/media',
+            '/friend-requests',
+            '/close-friends',
+            '/relationships']
+            .map((path) => [
           path,
-          { target: 'http://host.docker.internal:8080', changeOrigin: true },
+          {
+            target: 'http://host.docker.internal:8080',
+            changeOrigin: true,
+            bypass: (req: import('http').IncomingMessage) => {
+              // Nếu browser gửi request điều hướng trang (Accept: text/html), không proxy mà phục vụ index.html của SPA
+              if (req.headers.accept?.includes('text/html')) {
+                return '/index.html';
+              }
+            },
+          },
         ])
       ),
       '/social-media': {

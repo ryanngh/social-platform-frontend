@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -10,6 +10,7 @@ import FeedPage from './pages/FeedPage';
 import SignInPage from './pages/SignInPage';
 import SignUpPage from './pages/SignUpPage';
 import ProfilePage from './pages/ProfilePage';
+import PostDetailPage from './pages/PostDetailPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -48,9 +49,14 @@ const ProfileRouteWrapper = () => {
     );
   }
   if (user?.username) {
-    return <Navigate to={`/profile/${user.username}`} replace />;
+    return <Navigate to={`/${user.username}`} replace />;
   }
-  return <ProfilePage />;
+  return <Navigate to="/feed" replace />;
+};
+
+const ProfileIdentifierRedirect = () => {
+  const { identifier } = useParams<{ identifier: string }>();
+  return <Navigate to={identifier ? `/${identifier}` : '/feed'} replace />;
 };
 
 function App() {
@@ -64,15 +70,19 @@ function App() {
               <Route path="/signin" element={<SignInPage />} />
               <Route path="/signup" element={<SignUpPage />} />
               
-              {/* Feed Page with Feed 3-Column Layout */}
+              {/* Feed Page and Post Details with 3-Column Layout */}
               <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
                 <Route path="/feed" element={<FeedPage />} />
+                <Route path="/posts/:postId" element={<PostDetailPage />} />
                 <Route path="/" element={<Navigate to="/feed" replace />} />
               </Route>
 
-              {/* Profile Page with dynamic /profile/:identifier */}
+              {/* Backward compatibility for /profile */}
               <Route path="/profile" element={<ProtectedRoute><ProfileRouteWrapper /></ProtectedRoute>} />
-              <Route path="/profile/:identifier" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+              <Route path="/profile/:identifier" element={<ProtectedRoute><ProfileIdentifierRedirect /></ProtectedRoute>} />
+              
+              {/* Root parameter profile route */}
+              <Route path="/:identifier" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
               
               <Route path="*" element={<Navigate to="/feed" replace />} />
             </Routes>

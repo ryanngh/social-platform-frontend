@@ -47,10 +47,38 @@ export interface User {
   pronunciation?: string;
   followingCount?: number;
   followersCount?: number;
+  followerCount?: number;
+  isFollowing?: boolean;
+  isCloseFriend?: boolean;
+  isBlocked?: boolean;
+  isBlockedBy?: boolean;
+  isOwner?: boolean;
+  isVerified?: boolean;
   interests?: string[];
   groups?: { name: string }[];
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface CloseFriendResponse {
+  id: string;
+  friend: UserSummary;
+  addedAt: string;
+}
+
+export interface UserBlockResponse {
+  id: string;
+  blocked: UserSummary;
+  blockedAt: string;
+}
+
+export interface UserSummary {
+  id: string;
+  username: string;
+  firstName?: string;
+  lastName?: string;
+  fullName?: string;
+  avatarUrl?: string | null;
 }
 
 export interface UserAccount {
@@ -133,6 +161,8 @@ export interface PostMedia {
   mediaType: 'IMAGE' | 'VIDEO';
   thumbnailUrl: string | null;
   displayOrder: number;
+  width?: number | null;
+  height?: number | null;
 }
 
 export type PostVisibility = 'PUBLIC' | 'FRIENDS' | 'CLOSE_FRIENDS' | 'PRIVATE';
@@ -147,16 +177,26 @@ export interface PostResponse {
   taggedUsers: PostAuthor[];
   reactionCount: number;
   commentCount: number;
+  shareCount?: number;
   isLiked?: boolean;
   liked?: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
+export interface PostShareResponse {
+  counted: boolean;
+  shareCount: number;
+  algorithmEligible: boolean;
+  message: string;
+}
+
 export interface PostMediaRequest {
   mediaUrl: string;
   mediaType: 'IMAGE' | 'VIDEO';
   thumbnailUrl?: string | null;
+  width?: number | null;
+  height?: number | null;
 }
 
 export interface CreatePostRequest {
@@ -179,6 +219,7 @@ export interface CreatePostResponse {
   updatedAt: string;
   reactionCount?: number;
   commentCount?: number;
+  shareCount?: number;
   isLiked?: boolean;
   liked?: boolean;
 }
@@ -212,7 +253,7 @@ export interface CommentResponse {
   postId: string;
   parentCommentId: string | null;
   author: PostAuthor;
-  content: string;
+  content: string | null;
   media: PostMedia[];
   mentions: PostAuthor[];
   likeCount: number;
@@ -233,7 +274,7 @@ export interface ReplyResponse {
   parentCommentId: string;
   author: PostAuthor;
   replyToUser: PostAuthor | null;
-  content: string;
+  content: string | null;
   media: PostMedia[];
   mentions: PostAuthor[];
   likeCount: number;
@@ -252,20 +293,20 @@ export interface CommentMediaRequest {
 }
 
 export interface CreateCommentRequest {
-  content?: string;
+  content?: string | null;
   parentCommentId?: string | null;
   media?: CommentMediaRequest[];
   mentionedUserIds?: string[];
 }
 
 export interface UpdateCommentRequest {
-  content?: string;
+  content?: string | null;
   media?: CommentMediaRequest[];
   mentionedUserIds?: string[];
 }
 
 export interface CreateReplyRequest {
-  content: string;
+  content?: string | null;
   media?: CommentMediaRequest[];
   mentionedUserIds?: string[];
 }

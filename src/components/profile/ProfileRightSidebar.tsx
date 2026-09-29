@@ -21,7 +21,7 @@ export const ProfileRightSidebar = () => {
   const trends: TrendItem[] = [];
 
   return (
-    <aside className="hidden lg:block lg:col-span-3 space-y-4" data-purpose="right-sidebar">
+    <aside className="hidden lg:block lg:col-span-3 space-y-4 sticky top-20 self-start max-h-[calc(100vh-6rem)] overflow-y-auto custom-scrollbar" data-purpose="right-sidebar">
       {/* Suggestions For You Card */}
       <section aria-labelledby="suggestions-heading" className="bg-white border border-[#E2E2EC] rounded-xl p-5 shadow-card">
         <h2 id="suggestions-heading" className="text-sm font-bold text-[#1A1C1E] mb-3">

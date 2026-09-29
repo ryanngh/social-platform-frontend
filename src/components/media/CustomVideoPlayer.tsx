@@ -3,6 +3,7 @@ import {
   Play,
   Pause,
   Volume2,
+  Volume1,
   VolumeX,
   Maximize2,
   Minimize,
@@ -10,7 +11,20 @@ import {
   Check,
   PictureInPicture2,
   RotateCcw,
+  SlidersHorizontal,
+  ChevronRight,
+  ChevronLeft,
+  Gauge,
 } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { useLanguage } from '../../contexts/LanguageContext';
+
+export interface VideoQualityOption {
+  label: string; // 'Auto' | '1080p' | '720p' | '480p' | '360p'
+  src?: string;
+  description?: string;
+  isHd?: boolean;
+}
 
 interface CustomVideoPlayerProps {
   src: string;
@@ -25,6 +39,8 @@ interface CustomVideoPlayerProps {
   style?: React.CSSProperties;
   onEnded?: () => void;
   hideTopControls?: boolean;
+  qualities?: VideoQualityOption[];
+  onQualityChange?: (quality: string) => void;
 }
 
 // Rewind 15s icon with circular arrow and '15' in center
@@ -108,11 +124,16 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
   style,
   onEnded,
   hideTopControls = false,
+  qualities,
+  onQualityChange,
 }) => {
+  const { language = 'vi' } = useLanguage();
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const volumeHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -124,10 +145,26 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
   const [playbackRate, setPlaybackRate] = useState(1);
   const [isLooping, setIsLooping] = useState(loop);
 
+  // Quality state
+  const qualityOptions: VideoQualityOption[] =
+    qualities && qualities.length > 0
+      ? qualities
+      : [
+          { label: 'Auto', description: language === 'vi' ? 'Tự động' : 'Auto' },
+          { label: '1080p', description: 'Full HD', isHd: true },
+          { label: '720p', description: 'HD', isHd: true },
+          { label: '480p', description: language === 'vi' ? 'Tiêu chuẩn (SD)' : 'SD' },
+          { label: '360p', description: language === 'vi' ? 'Tiết kiệm' : 'Data saver' },
+        ];
+  const [selectedQuality, setSelectedQuality] = useState<string>('Auto');
+  const [detectedResolution, setDetectedResolution] = useState<string>('');
+
   // UI state
   const [showControls, setShowControls] = useState(true);
   const [isHoveringVolume, setIsHoveringVolume] = useState(false);
+  const [isDraggingVolume, setIsDraggingVolume] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [menuView, setMenuView] = useState<'main' | 'speed' | 'quality'>('main');
   const [hoverTime, setHoverTime] = useState<number | null>(null);
   const [hoverPos, setHoverPos] = useState<number>(0);
   const [isScrubbing, setIsScrubbing] = useState(false);
@@ -138,20 +175,46 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
     if (hideTimeoutRef.current) {
       clearTimeout(hideTimeoutRef.current);
     }
-    // Only auto-hide if playing and menu is closed and not scrubbing
-    if (isPlaying && !isMenuOpen && !isHoveringVolume && !isScrubbing) {
+    // Only auto-hide if playing, menu is closed, volume not hovering/dragging, and not scrubbing
+    if (isPlaying && !isMenuOpen && !isHoveringVolume && !isDraggingVolume && !isScrubbing) {
       hideTimeoutRef.current = setTimeout(() => {
         setShowControls(false);
       }, 2500);
     }
-  }, [isPlaying, isMenuOpen, isHoveringVolume, isScrubbing]);
+  }, [isPlaying, isMenuOpen, isHoveringVolume, isDraggingVolume, isScrubbing]);
 
   useEffect(() => {
     resetHideTimer();
     return () => {
       if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
     };
-  }, [isPlaying, resetHideTimer]);
+  }, [isPlaying, isHoveringVolume, isDraggingVolume, isMenuOpen, resetHideTimer]);
+
+  // Window mouseup / touchend for volume drag
+  useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      setIsDraggingVolume(false);
+    };
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    window.addEventListener('touchend', handleGlobalMouseUp);
+    return () => {
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+      window.removeEventListener('touchend', handleGlobalMouseUp);
+    };
+  }, []);
+
+  // Handle menu click outside
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsMenuOpen(false);
+        setMenuView('main');
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isMenuOpen]);
 
   // Handle Fullscreen change
   useEffect(() => {
@@ -178,6 +241,16 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
   const handleLoadedMetadata = () => {
     if (!videoRef.current) return;
     setDuration(videoRef.current.duration);
+    const height = videoRef.current.videoHeight;
+    if (height >= 1080) {
+      setDetectedResolution('1080p');
+    } else if (height >= 720) {
+      setDetectedResolution('720p');
+    } else if (height >= 480) {
+      setDetectedResolution('480p');
+    } else if (height > 0) {
+      setDetectedResolution('360p');
+    }
     if (autoPlay) {
       videoRef.current.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
     }
@@ -223,6 +296,22 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
     resetHideTimer();
   };
 
+  // Volume hover handlers with graceful debounce
+  const handleVolumeMouseEnter = () => {
+    if (volumeHideTimerRef.current) {
+      clearTimeout(volumeHideTimerRef.current);
+      volumeHideTimerRef.current = null;
+    }
+    setIsHoveringVolume(true);
+  };
+
+  const handleVolumeMouseLeave = () => {
+    if (isDraggingVolume) return;
+    volumeHideTimerRef.current = setTimeout(() => {
+      setIsHoveringVolume(false);
+    }, 300);
+  };
+
   // Volume change
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseFloat(e.target.value);
@@ -230,8 +319,39 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
     if (videoRef.current) {
       videoRef.current.volume = val;
       videoRef.current.muted = val === 0;
-      setIsMuted(val === 0);
     }
+    setIsMuted(val === 0);
+    resetHideTimer();
+  };
+
+  // Quality change
+  const handleQualityChange = (qualityLabel: string) => {
+    setSelectedQuality(qualityLabel);
+    setMenuView('main');
+    setIsMenuOpen(false);
+
+    const matchedOption = qualityOptions.find((q) => q.label === qualityLabel);
+    if (matchedOption?.src && videoRef.current && matchedOption.src !== videoRef.current.src) {
+      const savedTime = videoRef.current.currentTime;
+      const wasPlaying = !videoRef.current.paused;
+      videoRef.current.src = matchedOption.src;
+      videoRef.current.currentTime = savedTime;
+      if (wasPlaying) {
+        videoRef.current.play().catch(console.error);
+      }
+    }
+
+    onQualityChange?.(qualityLabel);
+
+    const isVi = language === 'vi';
+    const qualityName =
+      qualityLabel === 'Auto'
+        ? `${isVi ? 'Tự động' : 'Auto'}${detectedResolution ? ` (${detectedResolution})` : ''}`
+        : qualityLabel;
+    toast.success(`${isVi ? 'Chất lượng video' : 'Video quality'}: ${qualityName}`, {
+      id: 'video-quality-toast',
+      duration: 2000,
+    });
   };
 
   // Fullscreen toggle
@@ -335,8 +455,37 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
     } else if (e.key === 'm') {
       e.preventDefault();
       toggleMute();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setVolume((prev) => {
+        const next = Math.min(1, Math.round((prev + 0.1) * 10) / 10);
+        if (videoRef.current) {
+          videoRef.current.volume = next;
+          videoRef.current.muted = false;
+        }
+        setIsMuted(false);
+        return next;
+      });
+      resetHideTimer();
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setVolume((prev) => {
+        const next = Math.max(0, Math.round((prev - 0.1) * 10) / 10);
+        if (videoRef.current) {
+          videoRef.current.volume = next;
+          videoRef.current.muted = next === 0;
+        }
+        setIsMuted(next === 0);
+        return next;
+      });
+      resetHideTimer();
     }
   };
+
+  const isCurrentHd =
+    selectedQuality === '1080p' ||
+    selectedQuality === '720p' ||
+    (selectedQuality === 'Auto' && (detectedResolution === '1080p' || detectedResolution === '720p'));
 
   const playedPct = duration > 0 ? (currentTime / duration) * 100 : 0;
   const bufferedPct = duration > 0 ? (buffered / duration) * 100 : 0;
@@ -385,114 +534,286 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
         <div className="absolute bottom-0 inset-x-0 h-32 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
       </div>
 
-      {/* Top Controls (Right Aligned Glass Buttons matching Image 2) */}
+      {/* Top Controls (Right Aligned Glass Buttons) */}
       {!hideTopControls && (
         <div
           className={`absolute top-4 right-4 z-20 flex items-center gap-2.5 transition-opacity duration-300 ${
             showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
+          onMouseDown={(e) => e.stopPropagation()}
         >
           {/* Fullscreen Button */}
           <button
             type="button"
             onClick={toggleFullscreen}
             className="w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/15 text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg cursor-pointer"
-            title={isFullscreen ? 'Exit Fullscreen (f)' : 'Fullscreen (f)'}
+            title={isFullscreen ? (language === 'vi' ? 'Thoát toàn màn hình (f)' : 'Exit Fullscreen (f)') : (language === 'vi' ? 'Toàn màn hình (f)' : 'Fullscreen (f)')}
           >
             {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
           </button>
 
-          {/* Sound / Volume with flyout */}
+          {/* Sound / Volume Pill Container */}
           <div
-            className="relative"
-            onMouseEnter={() => setIsHoveringVolume(true)}
-            onMouseLeave={() => setIsHoveringVolume(false)}
+            className={`h-10 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/15 text-white flex items-center shadow-lg transition-all duration-300 ${
+              isHoveringVolume || isDraggingVolume ? 'px-2.5 gap-2 w-auto' : 'w-10 justify-center'
+            }`}
+            onMouseEnter={handleVolumeMouseEnter}
+            onMouseLeave={handleVolumeMouseLeave}
+            onMouseDown={(e) => e.stopPropagation()}
           >
             <button
               type="button"
               onClick={toggleMute}
-              className="w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/15 text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg cursor-pointer"
-              title={isMuted ? 'Unmute (m)' : 'Mute (m)'}
+              className="w-6 h-6 flex items-center justify-center hover:scale-110 active:scale-90 transition-transform cursor-pointer flex-shrink-0"
+              title={
+                isMuted || volume === 0
+                  ? language === 'vi'
+                    ? 'Bật âm thanh (m)'
+                    : 'Unmute (m)'
+                  : language === 'vi'
+                  ? 'Tắt âm thanh (m)'
+                  : 'Mute (m)'
+              }
             >
               {isMuted || volume === 0 ? (
                 <VolumeX className="w-5 h-5" />
+              ) : volume < 0.5 ? (
+                <Volume1 className="w-5 h-5" />
               ) : (
                 <Volume2 className="w-5 h-5" />
               )}
             </button>
 
-            {/* Volume slider popover on hover */}
-            {isHoveringVolume && (
-              <div className="absolute right-0 top-12 p-3 bg-black/70 backdrop-blur-md border border-white/15 rounded-2xl shadow-xl flex items-center gap-2 animate-fadeIn z-30">
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.05"
-                  value={isMuted ? 0 : volume}
-                  onChange={handleVolumeChange}
-                  className="w-24 h-1.5 bg-white/30 rounded-lg appearance-none cursor-pointer accent-white"
-                />
-                <span className="text-[11px] text-white/90 font-mono w-7 text-right">
-                  {Math.round((isMuted ? 0 : volume) * 100)}%
-                </span>
-              </div>
-            )}
+            <div
+              className={`flex items-center gap-2 overflow-hidden transition-all duration-300 ${
+                isHoveringVolume || isDraggingVolume
+                  ? 'w-28 sm:w-32 opacity-100'
+                  : 'w-0 opacity-0 pointer-events-none'
+              }`}
+            >
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.02"
+                value={isMuted ? 0 : volume}
+                onChange={handleVolumeChange}
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  setIsDraggingVolume(true);
+                }}
+                onTouchStart={(e) => {
+                  e.stopPropagation();
+                  setIsDraggingVolume(true);
+                }}
+                className="w-20 sm:w-24 h-1.5 bg-white/30 rounded-lg appearance-none cursor-pointer accent-white hover:bg-white/40"
+              />
+              <span className="text-[11px] text-white/90 font-mono w-7 text-right flex-shrink-0 select-none">
+                {Math.round((isMuted ? 0 : volume) * 100)}%
+              </span>
+            </div>
           </div>
 
-          {/* More Options / Settings Dropdown */}
-          <div className="relative">
+          {/* Quick HD Quality Badge / Switcher (Temporarily hidden until HLS / qualities is supported) */}
+          {qualities && qualities.length > 0 && (
             <button
               type="button"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              onClick={() => {
+                setIsMenuOpen((prev) => !prev || menuView !== 'quality');
+                setMenuView('quality');
+              }}
+              className="h-10 px-3 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/15 text-white flex items-center justify-center gap-1.5 hover:scale-105 active:scale-95 transition-all shadow-lg cursor-pointer text-xs font-semibold"
+              title={language === 'vi' ? 'Chất lượng video' : 'Video Quality'}
+            >
+              {isCurrentHd && (
+                <span className="px-1 py-0.5 rounded text-[10px] font-bold bg-[#004AC6] text-white leading-none">
+                  HD
+                </span>
+              )}
+              <span className="font-mono text-[11px] text-white/90">
+                {selectedQuality === 'Auto'
+                  ? detectedResolution
+                    ? `Auto (${detectedResolution})`
+                    : 'Auto'
+                  : selectedQuality}
+              </span>
+            </button>
+          )}
+
+          {/* More Options / Settings Dropdown */}
+          <div className="relative" ref={menuRef}>
+            <button
+              type="button"
+              onClick={() => {
+                setIsMenuOpen(!isMenuOpen);
+                setMenuView('main');
+              }}
               className="w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/15 text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg cursor-pointer"
-              title="More settings"
+              title={language === 'vi' ? 'Cài đặt video' : 'Video Settings'}
             >
               <MoreVertical className="w-5 h-5" />
             </button>
 
             {isMenuOpen && (
-              <div className="absolute right-0 top-12 w-48 py-2 bg-black/85 backdrop-blur-lg border border-white/15 rounded-2xl shadow-2xl z-30 text-xs text-white divide-y divide-white/10 animate-scaleIn">
-                <div className="px-3 py-1.5 font-semibold text-white/60 text-[10px] uppercase tracking-wider">
-                  Playback Speed
-                </div>
-                <div className="py-1">
-                  {[0.5, 0.75, 1, 1.25, 1.5, 2].map((speed) => (
-                    <button
-                      key={speed}
-                      type="button"
-                      onClick={() => handleSpeedChange(speed)}
-                      className="w-full px-3 py-1.5 flex items-center justify-between hover:bg-white/15 transition-colors cursor-pointer text-left"
-                    >
-                      <span>{speed === 1 ? 'Normal' : `${speed}x`}</span>
-                      {playbackRate === speed && <Check className="w-4 h-4 text-[#4378FF]" />}
-                    </button>
-                  ))}
-                </div>
+              <div className="absolute right-0 top-12 min-w-52 py-2 bg-black/85 backdrop-blur-lg border border-white/15 rounded-2xl shadow-2xl z-30 text-xs text-white animate-scaleIn">
+                {/* MENU VIEW: MAIN */}
+                {menuView === 'main' && (
+                  <div className="divide-y divide-white/10">
+                    <div className="py-1">
+                      {/* Quality item (Only show if multiple qualities / HLS available) */}
+                      {qualities && qualities.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setMenuView('quality')}
+                          className="w-full px-3 py-2 flex items-center justify-between hover:bg-white/15 transition-colors cursor-pointer text-left"
+                        >
+                          <span className="flex items-center gap-2 text-white/90 font-medium">
+                            <SlidersHorizontal className="w-4 h-4 text-white/70" />
+                            <span>{language === 'vi' ? 'Chất lượng' : 'Quality'}</span>
+                          </span>
+                          <span className="flex items-center gap-1 text-white/60 font-mono text-[11px]">
+                            <span>
+                              {selectedQuality === 'Auto'
+                                ? `${language === 'vi' ? 'Tự động' : 'Auto'}${detectedResolution ? ` (${detectedResolution})` : ''}`
+                                : selectedQuality}
+                            </span>
+                            {isCurrentHd && (
+                              <span className="px-1 py-0.2 rounded text-[9px] font-bold bg-[#004AC6] text-white">
+                                HD
+                              </span>
+                            )}
+                            <ChevronRight className="w-3.5 h-3.5 text-white/50" />
+                          </span>
+                        </button>
+                      )}
 
-                <div className="py-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsLooping(!isLooping);
-                      setIsMenuOpen(false);
-                    }}
-                    className="w-full px-3 py-1.5 flex items-center justify-between hover:bg-white/15 transition-colors cursor-pointer text-left"
-                  >
-                    <span className="flex items-center gap-2">
-                      <RotateCcw className="w-3.5 h-3.5" /> Loop Video
-                    </span>
-                    {isLooping && <Check className="w-4 h-4 text-[#4378FF]" />}
-                  </button>
+                      {/* Speed item */}
+                      <button
+                        type="button"
+                        onClick={() => setMenuView('speed')}
+                        className="w-full px-3 py-2 flex items-center justify-between hover:bg-white/15 transition-colors cursor-pointer text-left"
+                      >
+                        <span className="flex items-center gap-2 text-white/90 font-medium">
+                          <Gauge className="w-4 h-4 text-white/70" />
+                          <span>{language === 'vi' ? 'Tốc độ phát' : 'Playback Speed'}</span>
+                        </span>
+                        <span className="flex items-center gap-1 text-white/60 font-mono text-[11px]">
+                          <span>
+                            {playbackRate === 1 ? (language === 'vi' ? 'Chuẩn' : 'Normal') : `${playbackRate}x`}
+                          </span>
+                          <ChevronRight className="w-3.5 h-3.5 text-white/50" />
+                        </span>
+                      </button>
+                    </div>
 
-                  <button
-                    type="button"
-                    onClick={togglePiP}
-                    className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-white/15 transition-colors cursor-pointer text-left"
-                  >
-                    <PictureInPicture2 className="w-3.5 h-3.5" /> Picture in Picture
-                  </button>
-                </div>
+                    <div className="py-1">
+                      {/* Loop Video */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsLooping(!isLooping);
+                          setIsMenuOpen(false);
+                        }}
+                        className="w-full px-3 py-2 flex items-center justify-between hover:bg-white/15 transition-colors cursor-pointer text-left"
+                      >
+                        <span className="flex items-center gap-2 text-white/90 font-medium">
+                          <RotateCcw className="w-4 h-4 text-white/70" />
+                          <span>{language === 'vi' ? 'Lặp lại video' : 'Loop Video'}</span>
+                        </span>
+                        {isLooping && <Check className="w-4 h-4 text-[#4378FF]" />}
+                      </button>
+
+                      {/* Picture in Picture */}
+                      <button
+                        type="button"
+                        onClick={togglePiP}
+                        className="w-full px-3 py-2 flex items-center gap-2 text-white/90 font-medium hover:bg-white/15 transition-colors cursor-pointer text-left"
+                      >
+                        <PictureInPicture2 className="w-4 h-4 text-white/70" />
+                        <span>{language === 'vi' ? 'Hình trong hình (PiP)' : 'Picture in Picture'}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* MENU VIEW: QUALITY */}
+                {menuView === 'quality' && (
+                  <div>
+                    <div className="px-3 py-2 flex items-center gap-2 font-semibold border-b border-white/10 text-white/90">
+                      <button
+                        type="button"
+                        onClick={() => setMenuView('main')}
+                        className="p-1 hover:bg-white/15 rounded-full transition cursor-pointer -ml-1 text-white"
+                        title={language === 'vi' ? 'Quay lại' : 'Back'}
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      <span>{language === 'vi' ? 'Chất lượng video' : 'Video Quality'}</span>
+                    </div>
+                    <div className="py-1">
+                      {qualityOptions.map((q) => {
+                        const isSelected = selectedQuality === q.label;
+                        return (
+                          <button
+                            key={q.label}
+                            type="button"
+                            onClick={() => handleQualityChange(q.label)}
+                            className="w-full px-3 py-2 flex items-center justify-between hover:bg-white/15 transition-colors cursor-pointer text-left"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">
+                                {q.label === 'Auto' ? (language === 'vi' ? 'Tự động' : 'Auto') : q.label}
+                              </span>
+                              {q.isHd && (
+                                <span className="px-1 py-0.2 rounded text-[9px] font-bold bg-[#004AC6] text-white">
+                                  HD
+                                </span>
+                              )}
+                              {q.description && (
+                                <span className="text-[10px] text-white/50">
+                                  {q.label === 'Auto' && detectedResolution ? `(${detectedResolution})` : q.description}
+                                </span>
+                              )}
+                            </div>
+                            {isSelected && <Check className="w-4 h-4 text-[#4378FF]" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* MENU VIEW: SPEED */}
+                {menuView === 'speed' && (
+                  <div>
+                    <div className="px-3 py-2 flex items-center gap-2 font-semibold border-b border-white/10 text-white/90">
+                      <button
+                        type="button"
+                        onClick={() => setMenuView('main')}
+                        className="p-1 hover:bg-white/15 rounded-full transition cursor-pointer -ml-1 text-white"
+                        title={language === 'vi' ? 'Quay lại' : 'Back'}
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      <span>{language === 'vi' ? 'Tốc độ phát' : 'Playback Speed'}</span>
+                    </div>
+                    <div className="py-1">
+                      {[0.5, 0.75, 1, 1.25, 1.5, 2].map((speed) => (
+                        <button
+                          key={speed}
+                          type="button"
+                          onClick={() => handleSpeedChange(speed)}
+                          className="w-full px-3 py-2 flex items-center justify-between hover:bg-white/15 transition-colors cursor-pointer text-left"
+                        >
+                          <span>
+                            {speed === 1 ? (language === 'vi' ? 'Chuẩn' : 'Normal') : `${speed}x`}
+                          </span>
+                          {playbackRate === speed && <Check className="w-4 h-4 text-[#4378FF]" />}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

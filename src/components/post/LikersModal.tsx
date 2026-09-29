@@ -3,6 +3,7 @@ import { X, Heart, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { getAvatarUrl, DEFAULT_AVATAR_FALLBACK } from '../../utils/media';
+import { getProfileUrl } from '../../utils/user';
 import { postService } from '../../services/postService';
 import { commentService } from '../../services/commentService';
 import type { LikerResponse } from '../../types';
@@ -192,7 +193,7 @@ export const LikersModal: React.FC<LikersModalProps> = ({
                 return (
                   <Link
                     key={`${user.id}-${idx}`}
-                    to={`/profile/${user.username || user.id}`}
+                    to={getProfileUrl(user)}
                     onClick={onClose}
                     className="flex items-center justify-between p-2 rounded-2xl hover:bg-gray-50 transition-colors group cursor-pointer"
                   >

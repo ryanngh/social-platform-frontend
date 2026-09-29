@@ -48,7 +48,7 @@ const StoriesCarousel: React.FC = () => {
                   src={story.avatar}
                   onError={(e) => {
                     e.currentTarget.onerror = null;
-                    e.currentTarget.src = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80";
+                    e.currentTarget.src = DEFAULT_AVATAR_FALLBACK;
                   }}
                 />
               </div>

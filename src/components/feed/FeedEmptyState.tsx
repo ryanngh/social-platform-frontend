@@ -3,24 +3,34 @@ import { Newspaper, UserPlus, Hash } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import toast from 'react-hot-toast';
 
+interface SuggestedUser {
+  name: string;
+  handle: string;
+  initials: string;
+  bgGradient: string;
+}
+
 const FeedEmptyState: React.FC = () => {
   const { t, language } = useLanguage();
 
-  const suggestedFollows = [
+  const suggestedFollows: SuggestedUser[] = [
     {
       name: 'Maya Patel',
       handle: '@mayadesigns',
-      avatar: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=150&auto=format&fit=crop&q=80',
+      initials: 'MP',
+      bgGradient: 'from-pink-500 to-rose-600',
     },
     {
       name: 'David Chen',
       handle: '@dchen_vn',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+      initials: 'DC',
+      bgGradient: 'from-blue-600 to-indigo-600',
     },
     {
       name: 'Sarah Jenkins',
       handle: '@sarahcodes',
-      avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
+      initials: 'SJ',
+      bgGradient: 'from-emerald-500 to-teal-600',
     },
   ];
 
@@ -81,15 +91,11 @@ const FeedEmptyState: React.FC = () => {
               key={idx}
               className="border border-gray-100 rounded-2xl p-3 flex flex-col items-center text-center bg-gray-50/50 hover:bg-gray-50 transition"
             >
-              <img
-                alt={user.name}
-                className="w-11 h-11 rounded-full object-cover mb-2 border border-white shadow-sm"
-                src={user.avatar}
-                onError={(e) => {
-                  e.currentTarget.onerror = null;
-                  e.currentTarget.src = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80";
-                }}
-              />
+              <div
+                className={`w-11 h-11 rounded-full bg-gradient-to-tr ${user.bgGradient} text-white font-bold text-xs flex items-center justify-center mb-2 border-2 border-white shadow-xs select-none`}
+              >
+                {user.initials}
+              </div>
               <p className="text-xs font-bold text-gray-900 truncate w-full">{user.name}</p>
               <p className="text-[11px] text-gray-400 mb-3 truncate w-full">{user.handle}</p>
               <button

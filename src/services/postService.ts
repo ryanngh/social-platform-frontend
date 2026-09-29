@@ -1,5 +1,5 @@
 import api from '../lib/axios';
-import type { PostResponse, SliceResponse } from '../types';
+import type { PostResponse, PostShareResponse, SliceResponse } from '../types';
 
 export interface PostPaginationParams {
   page?: number;
@@ -26,6 +26,7 @@ export const postService = {
       ...response.data,
       reactionCount: response.data.reactionCount ?? 0,
       commentCount: response.data.commentCount ?? 0,
+      shareCount: response.data.shareCount ?? 0,
     };
   },
 
@@ -65,6 +66,11 @@ export const postService = {
 
   async getPostLikers(postId: string, params?: { page?: number; size?: number }): Promise<SliceResponse<import('../types').LikerResponse>> {
     const response = await api.get<SliceResponse<import('../types').LikerResponse>>(`/posts/${postId}/reactions`, { params });
+    return response.data;
+  },
+
+  async sharePost(postId: string): Promise<PostShareResponse> {
+    const response = await api.post<PostShareResponse>(`/posts/${postId}/shares`);
     return response.data;
   },
 };

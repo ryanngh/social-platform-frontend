@@ -16,8 +16,10 @@ import {
 import toast from 'react-hot-toast';
 import { useLanguage } from '../../contexts/LanguageContext';
 import type { PostVisibility } from '../../types';
+import { copyToClipboard, handleCopyAndSharePost } from '../../utils/share';
 
 interface PostMoreMenuProps {
+  postId?: string;
   authorUsername: string;
   isAuthor: boolean;
   currentVisibility?: PostVisibility;
@@ -26,9 +28,11 @@ interface PostMoreMenuProps {
   onEdit?: () => void;
   onChangeVisibility?: (visibility: PostVisibility) => void;
   onDelete?: () => void;
+  onCopyLink?: () => void;
 }
 
 export const PostMoreMenu: React.FC<PostMoreMenuProps> = ({
+  postId,
   authorUsername,
   isAuthor,
   currentVisibility = 'PUBLIC',
@@ -37,6 +41,7 @@ export const PostMoreMenu: React.FC<PostMoreMenuProps> = ({
   onEdit,
   onChangeVisibility,
   onDelete,
+  onCopyLink,
 }) => {
   const { t } = useLanguage();
   const menuRef = useRef<HTMLDivElement>(null);
@@ -63,9 +68,18 @@ export const PostMoreMenu: React.FC<PostMoreMenuProps> = ({
     onClose();
   };
 
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(window.location.href).catch(() => {});
-    toast.success(t('postDetail.copiedToast'));
+  const handleCopyLink = async () => {
+    if (onCopyLink) {
+      onCopyLink();
+    } else if (postId) {
+      await handleCopyAndSharePost(postId, {
+        successMessage: t('postDetail.copiedToast'),
+        errorMessage: t('postDetail.copyLinkFailed'),
+      });
+    } else {
+      await copyToClipboard(window.location.href);
+      toast.success(t('postDetail.copiedToast'));
+    }
     onClose();
   };
 

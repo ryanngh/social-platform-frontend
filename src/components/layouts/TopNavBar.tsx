@@ -4,6 +4,7 @@ import { Search, Bell, Mail, MessageSquare, Globe, User as UserIcon, LogOut } fr
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { getAvatarUrl, DEFAULT_AVATAR_FALLBACK } from '../../utils/media';
+import { getProfileUrl } from '../../utils/user';
 import clsx from 'clsx';
 
 const TopNavBar: React.FC = () => {
@@ -97,10 +98,21 @@ const TopNavBar: React.FC = () => {
               }}
             />
             <div className="text-left leading-tight hidden md:block">
-              <p className="text-sm font-semibold text-gray-900 truncate max-w-[120px]">
+              <Link
+                to={getProfileUrl(user)}
+                onClick={(e) => e.stopPropagation()}
+                className="text-sm font-semibold text-gray-900 truncate max-w-[120px] hover:underline hover:text-[#004AC6] transition-colors block cursor-pointer"
+              >
                 {displayName}
-              </p>
-              <button className="text-xs text-[#004AC6] font-medium hover:underline text-left">
+              </Link>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowUserMenu(!showUserMenu);
+                }}
+                className="text-xs text-[#004AC6] font-medium hover:underline text-left cursor-pointer"
+              >
                 {t('topNav.switch')}
               </button>
             </div>
@@ -108,13 +120,17 @@ const TopNavBar: React.FC = () => {
 
           {showUserMenu && (
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-lg border border-gray-100 py-2 z-50 animate-fadeIn">
-              <div className="px-4 py-2 border-b border-gray-100">
-                <p className="text-xs font-semibold text-gray-800 truncate">{displayName}</p>
+              <Link
+                to={getProfileUrl(user)}
+                onClick={() => setShowUserMenu(false)}
+                className="block px-4 py-2 border-b border-gray-100 hover:bg-gray-50 transition cursor-pointer"
+              >
+                <p className="text-xs font-semibold text-gray-800 truncate hover:text-[#004AC6] transition-colors">{displayName}</p>
                 <p className="text-[11px] text-gray-400 truncate">@{username}</p>
-              </div>
+              </Link>
 
               <Link
-                to={username ? `/profile/${username}` : '/profile'}
+                to={getProfileUrl(user)}
                 onClick={() => setShowUserMenu(false)}
                 className="flex items-center gap-2 px-4 py-2 text-xs text-gray-700 hover:bg-[#EFF6FF] hover:text-[#004AC6] transition"
               >

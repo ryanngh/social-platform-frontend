@@ -203,10 +203,15 @@ export const CommentInput: React.FC<CommentInputProps> = ({
       if (currentFiles.length > 0) {
         setIsUploadingMedia(true);
         const mediaResponses = await mediaService.uploadPostMediaBatch(currentFiles, 'COMMENTS');
-        uploadedMedia = mediaResponses.map((m) => ({
-          mediaUrl: m.mediaUrl,
-          mediaType: m.mediaType === 'VIDEO' ? 'VIDEO' : 'IMAGE',
-        }));
+        uploadedMedia = mediaResponses.map((m, idx) => {
+          const file = currentFiles[idx];
+          const isGif = file?.type === 'image/gif' || file?.name?.toLowerCase().endsWith('.gif');
+          const isVideo = file?.type?.startsWith('video/');
+          return {
+            mediaUrl: m.mediaUrl,
+            mediaType: isGif ? 'GIF' : isVideo ? 'VIDEO' : 'IMAGE',
+          };
+        });
       }
 
       await onSubmit(trimmed, uploadedMedia);

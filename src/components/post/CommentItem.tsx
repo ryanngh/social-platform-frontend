@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   Heart, 
-  ChevronDown, 
   ChevronUp, 
   MoreHorizontal, 
   Pencil, 
@@ -10,10 +10,12 @@ import {
   PinOff,
   Loader2,
   Play,
-  Maximize2
+  Maximize2,
+  CornerDownRight
 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { getAvatarUrl, getMediaUrl, isVideoMedia } from '../../utils/media';
+import { getProfileUrl } from '../../utils/user';
 import { commentService } from '../../services/commentService';
 import type { CommentResponse, ReplyResponse } from '../../types';
 import CommentMediaLightbox from './CommentMediaLightbox';
@@ -60,7 +62,7 @@ export const CommentItem: React.FC<CommentItemProps> = ({
 
   // Edit state
   const [isEditing, setIsEditing] = useState(false);
-  const [editContent, setEditContent] = useState(comment.content);
+  const [editContent, setEditContent] = useState<string>(comment.content || '');
   const [currentContent, setCurrentContent] = useState(comment.content);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [isEdited, setIsEdited] = useState(!!comment.editedAt);
@@ -73,6 +75,29 @@ export const CommentItem: React.FC<CommentItemProps> = ({
 
   // 3-dot dropdown menu
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const moreMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showMoreMenu) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) {
+        setShowMoreMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showMoreMenu]);
+
+  const handleEditKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSaveEdit();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      setEditContent(currentContent || '');
+      setIsEditing(false);
+    }
+  };
 
   // Tự động tải 1 reply con khi được chỉ định
   React.useEffect(() => {
@@ -232,152 +257,201 @@ export const CommentItem: React.FC<CommentItemProps> = ({
 
   return (
     <div className="flex gap-3 items-start group/comment relative">
+      {/* Thread spine line connecting parent to replies if open */}
+      {showReplies && replies.length > 0 && (
+        <div 
+          className="absolute left-[15px] top-9 bottom-3 w-[1.5px] bg-slate-200 pointer-events-none" 
+          aria-hidden="true"
+        />
+      )}
+
       {/* Avatar */}
-      <img
-        src={getAvatarUrl(isDeleted ? null : comment.author.avatarUrl)}
-        alt={isDeleted ? 'deleted' : comment.author.fullName || comment.author.username}
-        className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-0.5"
-      />
+      <Link
+        to={getProfileUrl(comment.author)}
+        className="flex-shrink-0 relative z-10 hover:opacity-95 transition-transform active:scale-95 cursor-pointer"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <img
+          src={getAvatarUrl(isDeleted ? null : comment.author.avatarUrl)}
+          alt={isDeleted ? 'deleted' : comment.author.fullName || comment.author.username}
+          className="w-8 h-8 rounded-full object-cover ring-1 ring-slate-200/80 hover:ring-blue-400/60 transition-all shadow-2xs mt-0.5"
+        />
+      </Link>
 
       <div className="flex-1 min-w-0">
         {/* Comment Bubble */}
-        <div className={`rounded-2xl rounded-tl-none p-3.5 border transition-all ${
+        <div className={`relative ${isEditing ? 'w-full' : 'w-fit max-w-full'} rounded-2xl px-3.5 py-2.5 sm:px-4 sm:py-3 transition-colors ${
           isDeleted 
-            ? 'bg-gray-100/70 border-gray-200 text-gray-400 italic' 
+            ? 'bg-slate-100/70 border border-slate-200 text-slate-400 italic' 
             : isPinned 
-              ? 'bg-[#EEF4FF] border-[#004AC6]/30 shadow-xs' 
-              : 'bg-[#F4F4FB] border-[#E2E2EC]/50'
+              ? 'bg-gradient-to-br from-blue-50/95 via-indigo-50/50 to-blue-50/30 border border-blue-200/80 shadow-2xs' 
+              : 'bg-[#F0F2F5] hover:bg-[#EAEBED] border border-slate-200/40 shadow-[0_1px_2px_rgba(0,0,0,0.02)]'
         }`}>
+          {/* Pinned Eyebrow Badge (at top of bubble) */}
+          {isPinned && !isDeleted && (
+            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-blue-700 mb-1 select-none">
+              <Pin className="w-3 h-3 fill-blue-600 text-blue-600 -rotate-45" />
+              <span>{t('postDetail.pinned')}</span>
+            </div>
+          )}
+
           {/* Header Row */}
           {!isDeleted && (
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-sm font-semibold text-[#1A1C1E]">
+            <div className="flex items-start justify-between gap-3 mb-1">
+              <div className="flex items-center gap-1.5 flex-wrap leading-tight">
+                <Link
+                  to={getProfileUrl(comment.author)}
+                  className="text-[13px] font-bold text-slate-900 hover:text-blue-600 transition-colors cursor-pointer leading-tight"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   {comment.author.fullName || comment.author.username}
-                </span>
+                </Link>
+
                 {isAuthorBadge && (
-                  <span className="px-1.5 py-0.5 rounded bg-[#004AC6] text-white text-[10px] font-semibold">
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-blue-600 text-white text-[10px] font-medium leading-none tracking-wide shadow-2xs">
                     {t('postDetail.author')}
                   </span>
                 )}
+
                 {isYouBadge && !isAuthorBadge && (
-                  <span className="px-1.5 py-0.5 rounded bg-[#DBEAFE] text-[#004AC6] text-[10px] font-semibold">
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[10px] font-medium leading-none border border-blue-200/60">
                     {t('postDetail.you')}
                   </span>
                 )}
-                <span className="text-xs text-[#535F70]">
+
+                <Link
+                  to={getProfileUrl(comment.author)}
+                  className="text-xs text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   @{comment.author.username}
-                </span>
+                </Link>
               </div>
 
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] text-[#535F70]">
-                  {formatTime(comment.createdAt)}
-                  {isEdited && (
-                    <span className="ml-1 italic">({t('postDetail.edited')})</span>
-                  )}
-                </span>
+              {/* 3-dot More Menu for Comment */}
+              {(canEdit || canDelete || canPin) && (
+                <div className="relative flex-shrink-0" ref={moreMenuRef}>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowMoreMenu((prev) => !prev);
+                    }}
+                    className="opacity-70 sm:opacity-0 sm:group-hover/comment:opacity-100 focus:opacity-100 p-1 -mr-1 -mt-1 text-slate-400 hover:text-slate-700 hover:bg-black/5 rounded-full transition-all cursor-pointer"
+                    title="Tùy chọn bình luận"
+                    aria-label="Comment options"
+                    aria-expanded={showMoreMenu}
+                  >
+                    <MoreHorizontal className="w-4 h-4" />
+                  </button>
 
-                {/* 3-dot More Menu for Comment */}
-                {(canEdit || canDelete || canPin) && (
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setShowMoreMenu(!showMoreMenu)}
-                      className="opacity-0 group-hover/comment:opacity-100 p-1 text-[#535F70] hover:text-[#1A1C1E] hover:bg-black/5 rounded-md transition-opacity cursor-pointer"
+                  {showMoreMenu && (
+                    <div 
+                      className="absolute right-0 top-full mt-1.5 w-44 bg-white/95 backdrop-blur-md rounded-xl shadow-lg border border-slate-200/80 z-30 py-1 text-xs animate-in fade-in zoom-in-95 duration-100"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      <MoreHorizontal className="w-4 h-4" />
-                    </button>
+                      {canPin && (
+                        <button
+                          type="button"
+                          onClick={handleTogglePin}
+                          className="w-full flex items-center gap-2.5 px-3 py-2 text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 text-left transition-colors cursor-pointer"
+                        >
+                          {isPinned ? (
+                            <>
+                              <PinOff className="w-3.5 h-3.5 text-slate-500" />
+                              <span>{t('postDetail.unpinComment')}</span>
+                            </>
+                          ) : (
+                            <>
+                              <Pin className="w-3.5 h-3.5 text-slate-500" />
+                              <span>{t('postDetail.pinComment')}</span>
+                            </>
+                          )}
+                        </button>
+                      )}
 
-                    {showMoreMenu && (
-                      <div className="absolute right-0 top-full mt-1 w-44 bg-white rounded-xl shadow-lg border border-[#E2E2EC] z-30 py-1 text-xs">
-                        {canPin && (
-                          <button
-                            type="button"
-                            onClick={handleTogglePin}
-                            className="w-full flex items-center gap-2.5 px-3 py-2 text-[#1A1C1E] hover:bg-[#F4F4FB] text-left"
-                          >
-                            {isPinned ? (
-                              <>
-                                <PinOff className="w-3.5 h-3.5 text-[#535F70]" />
-                                <span>{t('postDetail.unpinComment')}</span>
-                              </>
-                            ) : (
-                              <>
-                                <Pin className="w-3.5 h-3.5 text-[#535F70]" />
-                                <span>{t('postDetail.pinComment')}</span>
-                              </>
-                            )}
-                          </button>
-                        )}
+                      {canEdit && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsEditing(true);
+                            setShowMoreMenu(false);
+                          }}
+                          className="w-full flex items-center gap-2.5 px-3 py-2 text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 text-left transition-colors cursor-pointer"
+                        >
+                          <Pencil className="w-3.5 h-3.5 text-slate-500" />
+                          <span>{t('postDetail.editComment')}</span>
+                        </button>
+                      )}
 
-                        {canEdit && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsEditing(true);
-                              setShowMoreMenu(false);
-                            }}
-                            className="w-full flex items-center gap-2.5 px-3 py-2 text-[#1A1C1E] hover:bg-[#F4F4FB] text-left"
-                          >
-                            <Pencil className="w-3.5 h-3.5 text-[#535F70]" />
-                            <span>{t('postDetail.editComment')}</span>
-                          </button>
-                        )}
-
-                        {canDelete && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setShowMoreMenu(false);
-                              handleDelete();
-                            }}
-                            className="w-full flex items-center gap-2.5 px-3 py-2 text-red-600 hover:bg-red-50 text-left"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                            <span>{t('postDetail.deleteComment')}</span>
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
+                      {canDelete && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowMoreMenu(false);
+                            handleDelete();
+                          }}
+                          className="w-full flex items-center gap-2.5 px-3 py-2 text-rose-600 hover:bg-rose-50 text-left transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                          <span>{t('postDetail.deleteComment')}</span>
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
           {/* Comment Content / Inline Edit Box */}
           {isEditing ? (
-            <div className="mt-1 space-y-2">
+            <div className="mt-1.5 space-y-2">
               <textarea
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
-                className="w-full text-[13px] text-[#1A1C1E] p-2 bg-white rounded-lg border border-[#004AC6] focus:outline-none focus:ring-1 focus:ring-[#004AC6] resize-none"
+                onKeyDown={handleEditKeyDown}
+                className="w-full text-[13px] text-slate-900 p-2.5 bg-white rounded-xl border border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none shadow-2xs"
                 rows={2}
                 autoFocus
+                placeholder={t('postDetail.writeComment', { name: '' })}
               />
-              <div className="flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsEditing(false)}
-                  className="px-2.5 py-1 text-xs text-[#535F70] hover:bg-gray-200 rounded-md transition-colors"
-                >
-                  {t('postDetail.cancel')}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSaveEdit}
-                  disabled={!editContent.trim() || isSavingEdit}
-                  className="px-3 py-1 text-xs bg-[#004AC6] text-white font-semibold rounded-md hover:bg-[#003A9F] transition-colors disabled:opacity-50"
-                >
-                  {t('postDetail.save')}
-                </button>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-[11px] text-slate-400 hidden sm:inline">
+                  Esc để hủy • Enter để lưu
+                </span>
+                <div className="flex items-center gap-2 ml-auto">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditContent(currentContent || '');
+                      setIsEditing(false);
+                    }}
+                    disabled={isSavingEdit}
+                    className="px-2.5 py-1 text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    {t('postDetail.cancel')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveEdit}
+                    disabled={!editContent.trim() || isSavingEdit}
+                    className="px-3 py-1 text-xs bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                  >
+                    {isSavingEdit && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    <span>{isSavingEdit ? (t('postDetail.saving') || 'Saving...') : t('postDetail.save')}</span>
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
-            <p className={`text-[13px] leading-snug ${isDeleted ? 'text-gray-400 italic' : 'text-[#1A1C1E]'}`}>
-              {currentContent}
-            </p>
+            currentContent ? (
+              <p className={`text-[13px] leading-relaxed break-words whitespace-pre-wrap select-text ${
+                isDeleted ? 'text-slate-400 italic' : 'text-slate-900'
+              }`}>
+                {currentContent}
+              </p>
+            ) : null
           )}
 
           {/* Attached Media Items */}
@@ -388,7 +462,7 @@ export const CommentItem: React.FC<CommentItemProps> = ({
                 return (
                   <div
                     key={item.id || idx}
-                    className="relative rounded-xl overflow-hidden max-h-56 max-w-xs border border-[#E2E2EC] cursor-pointer group hover:shadow-md transition-all bg-black/5"
+                    className="relative rounded-xl overflow-hidden max-h-56 max-w-xs border border-slate-200/80 cursor-pointer group/media hover:shadow-md transition-all duration-200 bg-slate-900/5"
                     onClick={() =>
                       setLightboxMedia({
                         url: item.mediaUrl,
@@ -404,9 +478,9 @@ export const CommentItem: React.FC<CommentItemProps> = ({
                           playsInline
                           className="max-h-56 w-auto object-contain bg-black"
                         />
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/35 transition-colors">
-                          <div className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-xs flex items-center justify-center text-white shadow group-hover:scale-110 transition-transform">
-                            <Play className="w-5 h-5 fill-white ml-0.5" />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover/media:bg-black/40 transition-colors">
+                          <div className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-xs flex items-center justify-center text-white shadow-md group-hover/media:scale-110 transition-transform">
+                            <Play className="w-4 h-4 fill-white ml-0.5" />
                           </div>
                         </div>
                       </div>
@@ -415,10 +489,10 @@ export const CommentItem: React.FC<CommentItemProps> = ({
                         <img
                           src={getMediaUrl(item.mediaUrl)}
                           alt={`media-${idx}`}
-                          className="max-h-56 w-auto object-cover group-hover:scale-[1.02] transition-transform duration-200"
+                          className="max-h-56 w-auto object-cover group-hover/media:scale-[1.02] transition-transform duration-200"
                         />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors flex items-center justify-center">
-                          <Maximize2 className="w-6 h-6 text-white opacity-0 group-hover:opacity-90 drop-shadow transition-opacity" />
+                        <div className="absolute inset-0 bg-black/0 group-hover/media:bg-black/15 transition-colors flex items-center justify-center">
+                          <Maximize2 className="w-5 h-5 text-white opacity-0 group-hover/media:opacity-90 drop-shadow transition-opacity" />
                         </div>
                       </div>
                     )}
@@ -428,41 +502,63 @@ export const CommentItem: React.FC<CommentItemProps> = ({
             </div>
           )}
 
-          {/* Pinned Indicator */}
-          {isPinned && !isDeleted && (
-            <div className="mt-1.5 text-[11px] text-[#004AC6] font-semibold flex items-center gap-1">
-              📌 {t('postDetail.pinned')}
-            </div>
+          {/* Floating Reaction Pill (Facebook / Threads signature interaction) */}
+          {!isDeleted && likeCount > 0 && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenLikers?.(comment.id, 'comment', likeCount);
+              }}
+              className="absolute -bottom-2.5 right-2.5 bg-white hover:bg-slate-50 border border-slate-200/90 shadow-2xs rounded-full px-1.5 py-0.5 flex items-center gap-1 transition-transform hover:scale-105 active:scale-95 cursor-pointer z-10"
+              title={t('postDetail.viewLikers')}
+              aria-label={t('postDetail.viewLikers')}
+            >
+              <div className="w-3.5 h-3.5 rounded-full bg-rose-500 flex items-center justify-center text-white flex-shrink-0 shadow-2xs">
+                <Heart className="w-2 h-2 fill-white text-white" />
+              </div>
+              <span className="text-[11px] font-semibold text-slate-700 pr-0.5">{likeCount}</span>
+            </button>
           )}
         </div>
 
-        {/* Action Bar (Like, Reply) */}
+        {/* Action Bar (Timestamp, Like, Reply) */}
         {!isDeleted && (
-          <div className="flex items-center gap-4 mt-1.5 ml-2 text-xs text-[#535F70]">
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={handleLike}
-                className={`p-1 -m-1 rounded-full transition-transform active:scale-90 hover:scale-110 cursor-pointer ${
-                  isLiked ? 'text-rose-500' : 'hover:text-rose-500'
+          <div className="flex items-center gap-3 mt-1.5 ml-2 text-xs text-slate-500">
+            {/* Timestamp */}
+            <span className="text-[11.5px] text-slate-400 font-normal">
+              {formatTime(comment.createdAt)}
+              {isEdited && (
+                <span className="ml-1 text-[10.5px] italic text-slate-400">({t('postDetail.edited')})</span>
+              )}
+            </span>
+
+            <span className="text-slate-300 text-[10px] select-none">•</span>
+
+            {/* Like action */}
+            <button
+              type="button"
+              onClick={handleLike}
+              className={`font-semibold text-xs transition-colors flex items-center gap-1 py-0.5 px-1.5 rounded-md hover:bg-slate-100 cursor-pointer ${
+                isLiked ? 'text-rose-600 font-bold' : 'text-slate-500 hover:text-slate-800'
+              }`}
+              title={isLiked ? t('postDetail.unlikedToast') : t('postDetail.likeButton')}
+            >
+              <Heart
+                className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                  isLiked ? 'fill-rose-500 text-rose-500 scale-110' : ''
                 }`}
-                title={isLiked ? t('postDetail.unlikedToast') : t('postDetail.likeButton')}
-              >
-                <Heart className={`w-3.5 h-3.5 transition-all ${isLiked ? 'fill-rose-500 text-rose-500 scale-105' : ''}`} />
-              </button>
-              <button
-                type="button"
-                onClick={() => onOpenLikers?.(comment.id, 'comment', likeCount)}
-                className="hover:underline hover:text-rose-500 font-semibold text-[12px] cursor-pointer transition-colors px-0.5"
-                title={t('postDetail.viewLikers')}
-              >
-                {likeCount}
-              </button>
-            </div>
+              />
+              <span>{t('postDetail.likeButton')}</span>
+            </button>
+
+            <span className="text-slate-300 text-[10px] select-none">•</span>
+
+            {/* Reply action */}
             <button
               type="button"
               onClick={() => onReply(comment)}
-              className="hover:text-[#004AC6] font-semibold text-[12px] cursor-pointer"
+              className="text-slate-500 hover:text-blue-600 font-semibold text-xs py-0.5 px-1.5 rounded-md hover:bg-blue-50/70 transition-colors cursor-pointer"
             >
               {t('postDetail.reply')}
             </button>
@@ -474,12 +570,18 @@ export const CommentItem: React.FC<CommentItemProps> = ({
           <button
             type="button"
             onClick={toggleReplies}
-            className="mt-2 ml-2 flex items-center gap-1 text-[12px] text-[#004AC6] font-semibold hover:underline cursor-pointer"
+            className="mt-2 ml-1 flex items-center gap-1.5 text-xs text-blue-600 font-semibold py-1 px-2 rounded-lg hover:bg-blue-50/70 transition-colors cursor-pointer group/toggle w-fit"
           >
             {showReplies && replies.length >= comment.replyCount ? (
-              <><ChevronUp className="w-3.5 h-3.5" /> {t('postDetail.hideReplies')}</>
+              <>
+                <ChevronUp className="w-3.5 h-3.5 text-blue-600 transition-transform group-hover/toggle:-translate-y-0.5" />
+                <span>{t('postDetail.hideReplies')}</span>
+              </>
             ) : (
-              <><ChevronDown className="w-3.5 h-3.5" /> {t('postDetail.showReplies', { count: comment.replyCount })}</>
+              <>
+                <CornerDownRight className="w-3.5 h-3.5 text-blue-600 transition-transform group-hover/toggle:translate-x-0.5" />
+                <span>{t('postDetail.showReplies', { count: comment.replyCount })}</span>
+              </>
             )}
           </button>
         )}
@@ -622,11 +724,34 @@ const ReplyItem: React.FC<ReplyItemProps> = ({
   // Edit & Delete state
   const [isDeleted, setIsDeleted] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [editContent, setEditContent] = useState(reply.content);
+  const [editContent, setEditContent] = useState<string>(reply.content || '');
   const [currentContent, setCurrentContent] = useState(reply.content);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [isEdited, setIsEdited] = useState(!!reply.editedAt);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const moreMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showMoreMenu) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) {
+        setShowMoreMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showMoreMenu]);
+
+  const handleEditKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSaveEdit();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      setEditContent(currentContent || '');
+      setIsEditing(false);
+    }
+  };
 
   React.useEffect(() => {
     setIsLiked(reply.isLiked ?? reply.liked ?? false);
@@ -713,26 +838,36 @@ const ReplyItem: React.FC<ReplyItemProps> = ({
   if (isDeleted) return null;
 
   return (
-    <div className="flex gap-2.5 items-start">
-      <img
-        src={getAvatarUrl(reply.author.avatarUrl)}
-        alt={reply.author.fullName || reply.author.username}
-        className="w-6 h-6 rounded-full object-cover mt-0.5"
-      />
-      <div className="flex-1">
-        <div className="bg-[#EDEDF8] rounded-xl p-2.5 relative group/reply">
-          <div className="flex items-center justify-between mb-0.5">
-            <div className="flex items-center gap-1">
-              <span className="text-xs font-bold text-[#1A1C1E]">
+    <div className="flex gap-2.5 items-start group/reply relative">
+      <Link
+        to={getProfileUrl(reply.author)}
+        className="flex-shrink-0 hover:opacity-95 transition-transform active:scale-95 cursor-pointer relative z-10"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <img
+          src={getAvatarUrl(reply.author.avatarUrl)}
+          alt={reply.author.fullName || reply.author.username}
+          className="w-6.5 h-6.5 rounded-full object-cover ring-1 ring-slate-200/80 shadow-2xs mt-0.5"
+        />
+      </Link>
+      <div className="flex-1 min-w-0">
+        <div className={`relative ${isEditing ? 'w-full' : 'w-fit max-w-full'} bg-[#F0F2F5] hover:bg-[#EAEBED] border border-slate-200/40 rounded-2xl px-3 py-2 transition-colors shadow-[0_1px_2px_rgba(0,0,0,0.02)]`}>
+          <div className="flex items-start justify-between gap-2 mb-0.5">
+            <div className="flex items-center gap-1.5 flex-wrap leading-tight">
+              <Link
+                to={getProfileUrl(reply.author)}
+                className="text-xs font-bold text-slate-900 hover:text-blue-600 transition-colors cursor-pointer"
+                onClick={(e) => e.stopPropagation()}
+              >
                 {reply.author.fullName || reply.author.username}
-              </span>
+              </Link>
               {isAuthor && (
-                <span className="px-1.5 py-0.5 rounded bg-[#004AC6] text-white text-[10px] font-semibold">
+                <span className="inline-flex items-center px-1.5 py-0.2 rounded-full bg-blue-600 text-white text-[9.5px] font-medium leading-none tracking-wide shadow-2xs">
                   {t('postDetail.author')}
                 </span>
               )}
               {isCurrentUser && !isAuthor && (
-                <span className="px-1.5 py-0.5 rounded bg-[#DBEAFE] text-[#004AC6] text-[10px] font-semibold">
+                <span className="inline-flex items-center px-1.5 py-0.2 rounded-full bg-blue-100 text-blue-700 text-[9.5px] font-medium leading-none border border-blue-200/60">
                   {t('postDetail.you')}
                 </span>
               )}
@@ -740,18 +875,26 @@ const ReplyItem: React.FC<ReplyItemProps> = ({
 
             {/* Nút 3 chấm tùy chọn cho Reply */}
             {(canEdit || canDelete) && (
-              <div className="relative">
+              <div className="relative flex-shrink-0" ref={moreMenuRef}>
                 <button
                   type="button"
-                  onClick={() => setShowMoreMenu(!showMoreMenu)}
-                  className="p-1 text-[#535F70] hover:text-[#1A1C1E] hover:bg-black/5 rounded-full transition-colors cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowMoreMenu((prev) => !prev);
+                  }}
+                  className="opacity-70 sm:opacity-0 sm:group-hover/reply:opacity-100 focus:opacity-100 p-0.5 -mr-1 -mt-0.5 text-slate-400 hover:text-slate-700 hover:bg-black/5 rounded-full transition-all cursor-pointer"
                   title="Tùy chọn"
+                  aria-label="Reply options"
+                  aria-expanded={showMoreMenu}
                 >
                   <MoreHorizontal className="w-3.5 h-3.5" />
                 </button>
 
                 {showMoreMenu && (
-                  <div className="absolute right-0 top-full mt-1 w-32 bg-white rounded-lg shadow-lg border border-[#E2E2EC] py-1 z-30 text-xs">
+                  <div 
+                    className="absolute right-0 top-full mt-1 w-36 bg-white/95 backdrop-blur-md rounded-xl shadow-lg border border-slate-200/80 py-1 z-30 text-xs animate-in fade-in zoom-in-95 duration-100"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     {canEdit && (
                       <button
                         type="button"
@@ -759,9 +902,9 @@ const ReplyItem: React.FC<ReplyItemProps> = ({
                           setIsEditing(true);
                           setShowMoreMenu(false);
                         }}
-                        className="w-full flex items-center gap-2 px-3 py-1.5 text-[#1A1C1E] hover:bg-[#F4F4FB] text-left cursor-pointer"
+                        className="w-full flex items-center gap-2 px-3 py-1.5 text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 text-left transition-colors cursor-pointer"
                       >
-                        <Pencil className="w-3 h-3 text-[#535F70]" />
+                        <Pencil className="w-3 h-3 text-slate-500" />
                         <span>{t('postDetail.editComment')}</span>
                       </button>
                     )}
@@ -773,9 +916,9 @@ const ReplyItem: React.FC<ReplyItemProps> = ({
                           setShowMoreMenu(false);
                           handleDelete();
                         }}
-                        className="w-full flex items-center gap-2 px-3 py-1.5 text-red-600 hover:bg-red-50 text-left cursor-pointer"
+                        className="w-full flex items-center gap-2 px-3 py-1.5 text-rose-600 hover:bg-rose-50 text-left transition-colors cursor-pointer"
                       >
-                        <Trash2 className="w-3 h-3" />
+                        <Trash2 className="w-3 h-3 text-rose-500" />
                         <span>{t('postDetail.deleteComment')}</span>
                       </button>
                     )}
@@ -787,44 +930,52 @@ const ReplyItem: React.FC<ReplyItemProps> = ({
 
           {/* Nội dung hoặc Khung chỉnh sửa Inline */}
           {isEditing ? (
-            <div className="mt-1 space-y-2">
+            <div className="mt-1 space-y-1.5">
               <textarea
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
-                className="w-full bg-white border border-[#004AC6] text-xs text-[#1A1C1E] rounded-lg p-2 focus:ring-1 focus:ring-[#004AC6] outline-none"
+                onKeyDown={handleEditKeyDown}
+                className="w-full bg-white border border-blue-500 text-xs text-slate-900 rounded-lg p-2 focus:ring-2 focus:ring-blue-500/20 outline-none resize-none shadow-2xs"
                 rows={2}
+                autoFocus
               />
-              <div className="flex justify-end gap-2 text-xs">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEditContent(currentContent);
-                    setIsEditing(false);
-                  }}
-                  className="px-2 py-1 text-[#535F70] hover:text-[#1A1C1E] cursor-pointer"
-                >
-                  {t('postDetail.cancel')}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSaveEdit}
-                  disabled={isSavingEdit || !editContent.trim()}
-                  className="px-3 py-1 bg-[#004AC6] text-white rounded font-medium hover:bg-[#003A9F] cursor-pointer disabled:opacity-50"
-                >
-                  {isSavingEdit ? t('postDetail.saving') : t('postDetail.save')}
-                </button>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-[10px] text-slate-400 hidden sm:inline">
+                  Esc để hủy • Enter để lưu
+                </span>
+                <div className="flex items-center gap-2 ml-auto">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditContent(currentContent || '');
+                      setIsEditing(false);
+                    }}
+                    disabled={isSavingEdit}
+                    className="px-2 py-0.5 text-xs text-slate-500 hover:text-slate-800 cursor-pointer disabled:opacity-50"
+                  >
+                    {t('postDetail.cancel')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveEdit}
+                    disabled={isSavingEdit || !editContent.trim()}
+                    className="px-2.5 py-0.5 bg-blue-600 text-white rounded-md text-xs font-medium hover:bg-blue-700 cursor-pointer disabled:opacity-50 flex items-center gap-1 shadow-2xs"
+                  >
+                    {isSavingEdit && <Loader2 className="w-3 h-3 animate-spin" />}
+                    <span>{isSavingEdit ? (t('postDetail.saving') || 'Saving...') : t('postDetail.save')}</span>
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
-            <p className="text-xs text-[#1A1C1E]">
-              {reply.replyToUser && (
-                <span className="text-[#004AC6] font-medium">@{reply.replyToUser.username} </span>
-              )}
-              {currentContent}
-              {isEdited && (
-                <span className="text-[10px] text-[#535F70] ml-1">({t('postDetail.edited')})</span>
-              )}
-            </p>
+            (reply.replyToUser || currentContent) ? (
+              <p className="text-xs text-slate-900 leading-relaxed break-words whitespace-pre-wrap select-text">
+                {reply.replyToUser && (
+                  <span className="text-blue-600 font-semibold mr-1">@{reply.replyToUser.username}</span>
+                )}
+                {currentContent}
+              </p>
+            ) : null
           )}
 
           {/* Media in reply */}
@@ -835,7 +986,7 @@ const ReplyItem: React.FC<ReplyItemProps> = ({
                 return (
                   <div
                     key={item.id || idx}
-                    className="relative rounded-lg overflow-hidden max-h-40 max-w-[200px] border border-[#E2E2EC] cursor-pointer group hover:shadow-md transition-all bg-black/5"
+                    className="relative rounded-lg overflow-hidden max-h-40 max-w-[200px] border border-slate-200/80 cursor-pointer group/media hover:shadow-md transition-all bg-slate-900/5"
                     onClick={() =>
                       onOpenMedia?.({
                         url: item.mediaUrl,
@@ -851,8 +1002,8 @@ const ReplyItem: React.FC<ReplyItemProps> = ({
                           playsInline
                           className="max-h-40 w-auto object-contain bg-black"
                         />
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/35 transition-colors">
-                          <div className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-xs flex items-center justify-center text-white shadow group-hover:scale-110 transition-transform">
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover/media:bg-black/40 transition-colors">
+                          <div className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-xs flex items-center justify-center text-white shadow-md group-hover/media:scale-110 transition-transform">
                             <Play className="w-4 h-4 fill-white ml-0.5" />
                           </div>
                         </div>
@@ -862,10 +1013,10 @@ const ReplyItem: React.FC<ReplyItemProps> = ({
                         <img
                           src={getMediaUrl(item.mediaUrl)}
                           alt={`reply-media-${idx}`}
-                          className="max-h-40 w-auto object-cover group-hover:scale-[1.02] transition-transform duration-200"
+                          className="max-h-40 w-auto object-cover group-hover/media:scale-[1.02] transition-transform duration-200"
                         />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors flex items-center justify-center">
-                          <Maximize2 className="w-5 h-5 text-white opacity-0 group-hover:opacity-90 drop-shadow transition-opacity" />
+                        <div className="absolute inset-0 bg-black/0 group-hover/media:bg-black/15 transition-colors flex items-center justify-center">
+                          <Maximize2 className="w-4 h-4 text-white opacity-0 group-hover/media:opacity-90 drop-shadow transition-opacity" />
                         </div>
                       </div>
                     )}
@@ -874,37 +1025,61 @@ const ReplyItem: React.FC<ReplyItemProps> = ({
               })}
             </div>
           )}
+
+          {/* Floating Reaction Pill for Reply */}
+          {!isDeleted && likeCount > 0 && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenLikers?.(reply.id, 'comment', likeCount);
+              }}
+              className="absolute -bottom-2 right-2 bg-white hover:bg-slate-50 border border-slate-200/90 shadow-2xs rounded-full px-1.5 py-0.5 flex items-center gap-1 transition-transform hover:scale-105 active:scale-95 cursor-pointer z-10"
+              title={t('postDetail.viewLikers')}
+              aria-label={t('postDetail.viewLikers')}
+            >
+              <div className="w-3 h-3 rounded-full bg-rose-500 flex items-center justify-center text-white flex-shrink-0 shadow-2xs">
+                <Heart className="w-1.5 h-1.5 fill-white text-white" />
+              </div>
+              <span className="text-[10px] font-semibold text-slate-700 pr-0.5">{likeCount}</span>
+            </button>
+          )}
         </div>
 
-        <div className="flex items-center gap-3 mt-1 ml-1 text-[11px] text-[#535F70]">
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={handleLike}
-              className={`p-0.5 rounded-full transition-transform active:scale-90 hover:scale-110 cursor-pointer ${
-                isLiked ? 'text-rose-500' : 'hover:text-rose-500'
-              }`}
-              title={isLiked ? t('postDetail.unlikedToast') : t('postDetail.likeButton')}
-            >
-              <Heart className={`w-3 h-3 transition-all ${isLiked ? 'fill-rose-500 text-rose-500 scale-105' : ''}`} />
-            </button>
-            <button
-              type="button"
-              onClick={() => onOpenLikers?.(reply.id, 'comment', likeCount)}
-              className="hover:underline hover:text-rose-500 font-semibold cursor-pointer transition-colors px-0.5"
-              title={t('postDetail.viewLikers')}
-            >
-              {likeCount}
-            </button>
-          </div>
+        {/* Action Bar for Reply */}
+        <div className="flex items-center gap-2 mt-1 ml-1.5 text-[11px] text-slate-500">
+          <span className="text-slate-400 font-normal">
+            {formatTime(reply.createdAt)}
+            {isEdited && (
+              <span className="ml-1 text-[10px] italic text-slate-400">({t('postDetail.edited')})</span>
+            )}
+          </span>
+
+          <span className="text-slate-300 text-[10px] select-none">•</span>
+
+          <button
+            type="button"
+            onClick={handleLike}
+            className={`font-semibold transition-colors flex items-center gap-1 py-0.5 px-1 rounded-md hover:bg-slate-100 cursor-pointer ${
+              isLiked ? 'text-rose-600 font-bold' : 'text-slate-500 hover:text-slate-800'
+            }`}
+            title={isLiked ? t('postDetail.unlikedToast') : t('postDetail.likeButton')}
+          >
+            <Heart className={`w-3 h-3 transition-transform duration-200 ${
+              isLiked ? 'fill-rose-500 text-rose-500 scale-110' : ''
+            }`} />
+            <span>{t('postDetail.likeButton')}</span>
+          </button>
+
+          <span className="text-slate-300 text-[10px] select-none">•</span>
+
           <button
             type="button"
             onClick={() => onReplyToChild?.(reply)}
-            className="hover:text-[#004AC6] font-semibold cursor-pointer transition-colors"
+            className="hover:text-blue-600 font-semibold py-0.5 px-1 rounded-md hover:bg-blue-50/70 transition-colors cursor-pointer text-slate-500"
           >
             {t('postDetail.reply')}
           </button>
-          <span>{formatTime(reply.createdAt)}</span>
         </div>
       </div>
     </div>

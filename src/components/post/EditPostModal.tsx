@@ -167,30 +167,35 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
     try {
       // 1. Upload newly added files
       const newFileItems = mediaList.filter((m): m is Extract<EditMediaItem, { isNew: true }> => m.isNew);
-      const uploadedMap = new Map<File, string>();
+      const uploadedMap = new Map<File, PostMediaRequest>();
 
       if (newFileItems.length > 0) {
         const filesToUpload = newFileItems.map((item) => item.file);
         const uploadResponses = await mediaService.uploadPostMediaBatch(filesToUpload, 'POSTS');
         uploadResponses.forEach((res, idx) => {
-          uploadedMap.set(filesToUpload[idx], res.mediaUrl);
+          uploadedMap.set(filesToUpload[idx], res);
         });
       }
 
       // 2. Assemble ordered final media list
       const finalMedia: PostMediaRequest[] = mediaList.map((item) => {
         if (item.isNew) {
-          const remoteUrl = uploadedMap.get(item.file) || item.file.name;
+          const uploadRes = uploadedMap.get(item.file);
+          const remoteUrl = uploadRes?.mediaUrl || item.file.name;
           return {
             mediaUrl: remoteUrl,
             mediaType: item.mediaType,
             thumbnailUrl: null,
+            width: uploadRes?.width ?? null,
+            height: uploadRes?.height ?? null,
           };
         } else {
           return {
             mediaUrl: item.mediaUrl,
             mediaType: item.mediaType,
             thumbnailUrl: item.thumbnailUrl || null,
+            width: (item as any).width ?? null,
+            height: (item as any).height ?? null,
           };
         }
       });

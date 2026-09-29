@@ -8,11 +8,14 @@ import FeedNetworkErrorState from '../components/feed/FeedNetworkErrorState';
 import FeedSkeleton from '../components/feed/FeedSkeleton';
 import { ImageFeedPost, PollFeedPost } from '../components/feed/FeedPostCard';
 import CreatePostModal from '../components/feed/CreatePostModal';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { getProfileUrl } from '../utils/user';
 
 type FeedState = 'empty' | 'posts' | 'all-caught-up' | 'skeleton' | 'network-error';
 
 const FeedPage: React.FC = () => {
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const urlState = (searchParams.get('state') as FeedState) || 'empty';
 
@@ -46,11 +49,17 @@ const FeedPage: React.FC = () => {
           {customPosts.map((text, idx) => (
             <article key={idx} className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 animate-fadeIn">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-[#004AC6] text-white font-bold flex items-center justify-center">
-                  Tôi
-                </div>
+                <Link to={getProfileUrl(user)} className="flex-shrink-0 hover:opacity-90 transition cursor-pointer">
+                  <div className="w-10 h-10 rounded-full bg-[#004AC6] text-white font-bold flex items-center justify-center">
+                    Tôi
+                  </div>
+                </Link>
                 <div>
-                  <h4 className="font-bold text-gray-900 text-sm">Bạn vừa đăng</h4>
+                  <h4 className="font-bold text-gray-900 text-sm">
+                    <Link to={getProfileUrl(user)} className="hover:underline hover:text-[#004AC6] transition-colors cursor-pointer">
+                      Bạn vừa đăng
+                    </Link>
+                  </h4>
                   <p className="text-xs text-gray-400">Vừa xong</p>
                 </div>
               </div>
