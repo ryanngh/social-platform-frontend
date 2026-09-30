@@ -47,7 +47,7 @@ export const UnfollowConfirmModal = ({
       }}
     >
       <div
-        className="bg-white rounded-3xl shadow-2xl border border-gray-100 w-full max-w-sm overflow-hidden flex flex-col p-6 text-center animate-in zoom-in-95 duration-150 relative"
+        className="bg-white dark:bg-[#121212] rounded-3xl shadow-2xl border border-gray-100 dark:border-[#262626] w-full max-w-sm overflow-hidden flex flex-col p-6 text-center animate-in zoom-in-95 duration-150 relative"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
@@ -55,7 +55,7 @@ export const UnfollowConfirmModal = ({
           type="button"
           onClick={onClose}
           disabled={isLoading}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-1.5 rounded-full hover:bg-gray-100 transition cursor-pointer disabled:opacity-50"
+          className="absolute top-4 right-4 text-gray-400 dark:text-[#A8A8A8] hover:text-gray-600 dark:hover:text-[#F5F5F5] p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-[#262626] transition cursor-pointer disabled:opacity-50"
           title={t('profile.cancel', { defaultValue: 'Hủy' })}
         >
           <X className="w-4 h-4" />
@@ -66,22 +66,22 @@ export const UnfollowConfirmModal = ({
           <img
             src={getAvatarUrl(user.avatarUrl)}
             alt={displayName}
-            className="w-20 h-20 rounded-full object-cover border-2 border-gray-100 shadow-sm"
+            className="w-20 h-20 rounded-full object-cover border-2 border-gray-100 dark:border-[#363636] shadow-sm"
             onError={(e) => {
               e.currentTarget.onerror = null;
               e.currentTarget.src = DEFAULT_AVATAR_FALLBACK;
             }}
           />
-          <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-rose-50 border border-white flex items-center justify-center text-rose-600 shadow-xs">
+          <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-rose-50 dark:bg-rose-950/80 border border-white dark:border-[#121212] flex items-center justify-center text-rose-600 dark:text-rose-400 shadow-xs">
             <UserMinus className="w-3.5 h-3.5" />
           </div>
         </div>
 
         {/* Title & Description */}
-        <h3 className="text-base font-bold text-gray-900 mb-1.5">
+        <h3 className="text-base font-bold text-gray-900 dark:text-[#F5F5F5] mb-1.5">
           {t('profile.unfollowConfirmTitle', { username: user.username, defaultValue: `Hủy theo dõi @${user.username}?` })}
         </h3>
-        <p className="text-xs text-gray-500 leading-relaxed mb-6">
+        <p className="text-xs text-gray-500 dark:text-[#A8A8A8] leading-relaxed mb-6">
           {t('profile.unfollowConfirmDesc', {
             defaultValue: 'Họ sẽ không nhận được thông báo rằng bạn đã hủy theo dõi họ. Bạn sẽ không còn thấy bài viết của họ trên bảng tin.',
           })}
@@ -93,7 +93,7 @@ export const UnfollowConfirmModal = ({
             type="button"
             onClick={onConfirm}
             disabled={isLoading}
-            className="w-full py-2.5 px-4 bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs rounded-2xl shadow-sm transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed hover:shadow-rose-200 hover:shadow-md"
+            className="w-full py-2.5 px-4 bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs rounded-2xl shadow-sm transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed hover:shadow-rose-900/30 hover:shadow-md"
           >
             {isLoading ? (
               <>
@@ -109,7 +109,7 @@ export const UnfollowConfirmModal = ({
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="w-full py-2.5 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-xs rounded-2xl transition-colors cursor-pointer disabled:opacity-50"
+            className="w-full py-2.5 px-4 bg-gray-100 dark:bg-[#1A1A1A] hover:bg-gray-200 dark:hover:bg-[#363636] text-gray-700 dark:text-[#E5E5E5] font-semibold text-xs rounded-2xl transition-colors cursor-pointer disabled:opacity-50"
           >
             {t('profile.cancel', { defaultValue: 'Hủy' })}
           </button>

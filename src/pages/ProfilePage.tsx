@@ -393,28 +393,28 @@ export const ProfilePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F9F9FB] text-[#1A1C1E] flex flex-col font-sans">
+    <div className="min-h-screen bg-[#F9F9FB] dark:bg-[#000000] text-[#1A1C1E] dark:text-[#F5F5F5] flex flex-col font-sans">
       {/* Fixed/Sticky Top Navigation Bar */}
       <TopNavBar />
 
       {/* If blocked by them, show Instagram-style Page Unavailable view */}
       {isBlockedByThem ? (
         <main className="flex-1 max-w-[720px] w-full mx-auto px-4 pt-28 pb-16 flex flex-col items-center justify-center text-center">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#EDEDF8] flex items-center justify-center mb-6">
-            <Link2 className="w-8 h-8 sm:w-10 sm:h-10 text-[#8C93A8]" />
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#EDEDF8] dark:bg-[#1A1A1A] flex items-center justify-center mb-6">
+            <Link2 className="w-8 h-8 sm:w-10 sm:h-10 text-[#8C93A8] dark:text-[#A8A8A8]" />
           </div>
 
-          <h2 className="text-xl sm:text-2xl font-bold text-[#1A1C1E] mb-3 tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-bold text-[#1A1C1E] dark:text-[#F5F5F5] mb-3 tracking-tight">
             {t('profile.pageUnavailableTitle', { defaultValue: 'Rất tiếc, trang này hiện không khả dụng.' })}
           </h2>
 
-          <p className="text-sm sm:text-base text-[#535F70] max-w-md mb-8 leading-relaxed">
+          <p className="text-sm sm:text-base text-[#535F70] dark:text-[#A8A8A8] max-w-md mb-8 leading-relaxed">
             {t('profile.pageUnavailableDesc', {
               defaultValue: 'Liên kết bạn theo dõi có thể bị hỏng hoặc trang này có thể đã bị gỡ.',
             })}{' '}
             <Link
               to="/feed"
-              className="text-[#004AC6] hover:underline font-semibold cursor-pointer"
+              className="text-[#004AC6] dark:text-[#0095F6] hover:underline font-semibold cursor-pointer"
             >
               {t('profile.goBackToApp', { defaultValue: 'Quay lại RySocial.' })}
             </Link>
@@ -422,53 +422,53 @@ export const ProfilePage = () => {
 
           <Link
             to="/feed"
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#004AC6] hover:bg-[#003da3] text-white font-semibold text-sm shadow-sm transition cursor-pointer"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#004AC6] hover:bg-[#003da3] dark:bg-[#0095F6] dark:hover:bg-[#1877F2] text-white font-semibold text-sm shadow-sm transition cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>{t('profile.returnToFeed', { defaultValue: 'Quay lại Bảng tin' })}</span>
           </Link>
         </main>
       ) : (
-        /* Main 3-Column Profile Container matching Stitch UI */
-        <main className="flex-1 max-w-[1240px] w-full mx-auto px-4 pt-20 pb-16 md:pb-8 grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
-          {/* Left Column: Profile Info & Saved Bookmarks (md: 4 cols, lg: 3 cols) */}
-          <aside className="md:col-span-4 lg:col-span-3 space-y-4" data-purpose="sidebar-column">
+        /* Main 3-Column Profile Container matching standard app layout */
+        <main className="max-w-[1340px] w-full mx-auto pt-20 pb-16 px-3 sm:px-4 flex justify-center gap-5 lg:gap-6 items-start">
+          {/* Left Column: Profile Info & Saved Bookmarks (hidden on mobile, sticky when scrolling) */}
+          <aside className="hidden md:block w-[260px] flex-shrink-0 sticky top-20 self-start max-h-[calc(100vh-6rem)] overflow-y-auto custom-scrollbar space-y-4" data-purpose="sidebar-column">
             {isLoading ? (
-              <div className="bg-white border border-[#E2E2EC] rounded-2xl p-5 shadow-card animate-pulse space-y-3">
-                <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-                <div className="h-3 bg-gray-100 rounded w-full"></div>
-                <div className="h-3 bg-gray-100 rounded w-2/3"></div>
+              <div className="bg-white dark:bg-[#121212] border border-gray-100 dark:border-[#262626] rounded-3xl p-5 shadow-sm animate-pulse space-y-3">
+                <div className="h-4 bg-gray-200 dark:bg-[#262626] rounded w-1/3"></div>
+                <div className="h-3 bg-gray-100 dark:bg-[#1A1A1A] rounded w-full"></div>
+                <div className="h-3 bg-gray-100 dark:bg-[#1A1A1A] rounded w-2/3"></div>
               </div>
             ) : isNotFound ? (
-              <section className="bg-white border border-[#E2E2EC] rounded-2xl p-5 shadow-card text-center">
-                <div className="w-12 h-12 rounded-full bg-red-50 text-red-500 mx-auto flex items-center justify-center mb-3">
+              <section className="bg-white dark:bg-[#121212] border border-gray-100 dark:border-[#262626] rounded-3xl p-5 shadow-sm text-center">
+                <div className="w-12 h-12 rounded-full bg-red-50 dark:bg-red-950/40 text-red-500 dark:text-red-400 mx-auto flex items-center justify-center mb-3">
                   <UserIcon className="w-6 h-6" />
                 </div>
-                <h3 className="text-sm font-bold text-[#1A1C1E] mb-1">
+                <h3 className="text-sm font-bold text-[#1A1C1E] dark:text-[#F5F5F5] mb-1">
                   {t('profile.profileUnavailableTitle')}
                 </h3>
-                <p className="text-xs text-[#535F70] mb-4">
+                <p className="text-xs text-[#535F70] dark:text-[#A8A8A8] mb-4">
                   {t('profile.profileUnavailableDesc')}
                 </p>
 
-                <div className="border-t border-[#E2E2EC] pt-3 text-xs text-[#535F70] space-y-2 text-left">
-                  <div className="flex items-center gap-2.5 text-gray-400 italic">
-                    <MapPin className="w-4 h-4 text-[#8C93A8] shrink-0" />
+                <div className="border-t border-[#E2E2EC] dark:border-[#262626] pt-3 text-xs text-[#535F70] dark:text-[#A8A8A8] space-y-2 text-left">
+                  <div className="flex items-center gap-2.5 text-gray-400 dark:text-[#737373] italic">
+                    <MapPin className="w-4 h-4 text-[#8C93A8] dark:text-[#737373] shrink-0" />
                     <span>{t('profile.locationUnavailable')}</span>
                   </div>
-                  <div className="flex items-center gap-2.5 text-gray-400 italic">
-                    <Link2 className="w-4 h-4 text-[#8C93A8] shrink-0" />
+                  <div className="flex items-center gap-2.5 text-gray-400 dark:text-[#737373] italic">
+                    <Link2 className="w-4 h-4 text-[#8C93A8] dark:text-[#737373] shrink-0" />
                     <span>{t('profile.noLinkAvailable')}</span>
                   </div>
-                  <div className="flex items-center gap-2.5 text-gray-400 italic">
-                    <Calendar className="w-4 h-4 text-[#8C93A8] shrink-0" />
+                  <div className="flex items-center gap-2.5 text-gray-400 dark:text-[#737373] italic">
+                    <Calendar className="w-4 h-4 text-[#8C93A8] dark:text-[#737373] shrink-0" />
                     <span>{t('profile.joinedDateUnknown')}</span>
                   </div>
                 </div>
 
                 {/* Notice Box */}
-                <div className="mt-4 p-3.5 bg-[#F9F9FB] border border-[#E2E2EC] rounded-xl text-left">
-                  <p className="text-xs text-[#535F70] leading-relaxed">
+                <div className="mt-4 p-3.5 bg-[#F9F9FB] dark:bg-[#121212]/50 border border-[#E2E2EC] dark:border-[#262626] rounded-xl text-left">
+                  <p className="text-xs text-[#535F70] dark:text-[#A8A8A8] leading-relaxed">
                     {t('profile.accountDeactivatedNotice')}
                   </p>
                 </div>
@@ -480,63 +480,63 @@ export const ProfilePage = () => {
             <ProfileBookmarksCard />
           </aside>
 
-          {/* Center Column (md: 8 cols, lg: 6 cols) */}
-          <div className="md:col-span-8 lg:col-span-6 space-y-4" data-purpose="feed-column">
+          {/* Center Column */}
+          <div className="w-full max-w-[640px] flex-shrink-0 min-w-0 space-y-4" data-purpose="feed-column">
             {isLoading ? (
               <ProfileSkeleton />
             ) : isNotFound ? (
-              /* 404 User Not Found Center Card matching design mockup */
-              <div className="bg-white border border-[#E2E2EC] rounded-2xl p-8 sm:p-12 flex flex-col items-center justify-center text-center shadow-card">
+              /* 404 User Not Found Center Card matching design */
+              <div className="bg-white dark:bg-[#121212] border border-gray-100 dark:border-[#262626] rounded-3xl p-8 sm:p-12 flex flex-col items-center justify-center text-center shadow-sm">
                 {/* Circle avatar placeholder */}
-                <div className="w-20 h-20 rounded-full bg-[#EDEDF8] flex items-center justify-center mb-5">
-                  <UserIcon className="w-10 h-10 text-[#8C93A8]" />
+                <div className="w-20 h-20 rounded-full bg-[#EDEDF8] dark:bg-[#1A1A1A] flex items-center justify-center mb-5">
+                  <UserIcon className="w-10 h-10 text-[#8C93A8] dark:text-[#A8A8A8]" />
                 </div>
 
                 {/* Red pill badge */}
-                <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-semibold bg-red-50 text-red-600 border border-red-200/80 mb-4">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-semibold bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200/80 dark:border-red-900/60 mb-4">
                   <span className="w-2 h-2 rounded-full bg-red-500"></span>
                   <span>Error 404 • Profile Not Found</span>
                 </div>
 
                 {/* Headline */}
-                <h2 className="text-2xl sm:text-3xl font-bold text-[#1A1C1E] mb-3 tracking-tight">
+                <h2 className="text-2xl sm:text-3xl font-bold text-[#1A1C1E] dark:text-[#F5F5F5] mb-3 tracking-tight">
                   {t('profile.userNotFoundTitle')}
                 </h2>
 
                 {/* Description */}
-                <p className="text-sm text-[#535F70] max-w-md mb-7 leading-relaxed">
+                <p className="text-sm text-[#535F70] dark:text-[#A8A8A8] max-w-md mb-7 leading-relaxed">
                   {t('profile.userNotFoundDesc')}
                 </p>
 
                 {/* Return to Feed Button */}
                 <Link
                   to="/feed"
-                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#004AC6] hover:bg-[#003da3] text-white font-semibold text-sm shadow-sm transition cursor-pointer"
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#004AC6] hover:bg-[#003da3] dark:bg-[#0095F6] dark:hover:bg-[#1877F2] text-white font-semibold text-sm shadow-sm transition cursor-pointer"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   <span>{t('profile.returnToFeed')}</span>
                 </Link>
 
                 {/* Looking for someone else? */}
-                <p className="text-xs text-[#8C93A8] mt-9 mb-3">
+                <p className="text-xs text-[#8C93A8] dark:text-[#A8A8A8] mt-9 mb-3">
                   {t('profile.lookingForSomeoneElse')}
                 </p>
 
                 {/* Pill Search Input */}
                 <form
                   onSubmit={handleSearch}
-                  className="w-full max-w-md flex items-center bg-[#EDEDF8]/60 border border-[#E2E2EC] rounded-full p-1.5 shadow-2xs"
+                  className="w-full max-w-md flex items-center bg-[#EDEDF8]/60 dark:bg-[#1A1A1A] border border-[#E2E2EC] dark:border-[#363636] rounded-full p-1.5 shadow-2xs"
                 >
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder={t('profile.searchPlaceholder')}
-                    className="flex-1 bg-transparent px-4 py-1.5 text-sm text-[#1A1C1E] placeholder-[#8C93A8] outline-none"
+                    className="flex-1 bg-transparent px-4 py-1.5 text-sm text-[#1A1C1E] dark:text-[#F5F5F5] placeholder-[#8C93A8] dark:placeholder-[#737373] outline-none"
                   />
                   <button
                     type="submit"
-                    className="px-5 py-2 bg-[#004AC6] text-white text-xs font-semibold rounded-full hover:bg-[#003da3] transition cursor-pointer"
+                    className="px-5 py-2 bg-[#004AC6] hover:bg-[#003da3] dark:bg-[#0095F6] dark:hover:bg-[#1877F2] text-white text-xs font-semibold rounded-full transition cursor-pointer"
                   >
                     {t('profile.searchButton')}
                   </button>

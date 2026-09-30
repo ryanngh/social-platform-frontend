@@ -40,6 +40,7 @@ import CommentItem from './CommentItem';
 import CommentInput from './CommentInput';
 import LikersModal from './LikersModal';
 import EditPostModal from './EditPostModal';
+import DeletePostModal from './DeletePostModal';
 import CustomVideoPlayer from '../media/CustomVideoPlayer';
 
 // ============================================================
@@ -116,6 +117,8 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
   const [isPanning, setIsPanning] = useState(false);
   const panStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isEditPostModalOpen, setIsEditPostModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const MIN_ZOOM = 0.5;
   const MAX_ZOOM = 3;
@@ -385,15 +388,19 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
     }
   };
 
-  const handleDeletePost = async () => {
+  const handleConfirmDeletePost = async () => {
+    setIsDeleting(true);
     try {
       await postService.deletePost(currentPost.id);
       toast.success(t('postDetail.deletePostSuccess'));
+      setIsDeleteModalOpen(false);
       onPostDeleted?.(currentPost.id);
       onClose();
     } catch (err) {
       console.error('Failed to delete post:', err);
-      toast.error('Không thể xóa bài viết');
+      toast.error(language === 'vi' ? 'Không thể xóa bài viết' : 'Failed to delete post');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -841,7 +848,7 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
                 onClose={() => setIsMoreMenuOpen(false)}
                 onEdit={() => setIsEditPostModalOpen(true)}
                 onChangeVisibility={handleChangeVisibility}
-                onDelete={handleDeletePost}
+                onDelete={() => setIsDeleteModalOpen(true)}
                 onCopyLink={handleShare}
               />
               <button
@@ -1132,6 +1139,15 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
             setCurrentIndex(Math.max(0, updated.media.length - 1));
           }
         }}
+      />
+
+      {/* Delete Post Modal */}
+      <DeletePostModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => !isDeleting && setIsDeleteModalOpen(false)}
+        onConfirm={handleConfirmDeletePost}
+        isLoading={isDeleting}
+        post={currentPost}
       />
     </div>
   );

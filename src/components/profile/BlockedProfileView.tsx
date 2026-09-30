@@ -22,20 +22,20 @@ export const BlockedProfileView = ({
 
   if (type === 'BLOCKED_BY_ME') {
     return (
-      <div className="bg-white border border-[#E2E2EC] rounded-3xl p-8 sm:p-14 flex flex-col items-center justify-center text-center shadow-card animate-in fade-in duration-200 select-none">
+      <div className="bg-white dark:bg-[#121212] border border-[#E2E2EC] dark:border-[#262626] rounded-3xl p-8 sm:p-14 flex flex-col items-center justify-center text-center shadow-card animate-in fade-in duration-200 select-none">
         {/* Red Shield Icon with glowing ring */}
-        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-500 mb-5 shadow-xs">
+        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-rose-50 dark:bg-rose-950/40 border border-rose-100 dark:border-rose-900/60 flex items-center justify-center text-rose-500 dark:text-rose-400 mb-5 shadow-xs">
           <ShieldAlert className="w-8 h-8 sm:w-10 sm:h-10" />
         </div>
 
         {/* Red pill badge */}
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-600 border border-rose-200/80 mb-3.5">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200/80 dark:border-rose-900/60 mb-3.5">
           <span className="w-2 h-2 rounded-full bg-rose-500"></span>
           <span>{t('profile.blockedBadge', { defaultValue: 'Đã chặn' })}</span>
         </div>
 
         {/* Headline */}
-        <h2 className="text-xl sm:text-2xl font-bold text-[#1A1C1E] mb-2 tracking-tight">
+        <h2 className="text-xl sm:text-2xl font-bold text-[#1A1C1E] dark:text-[#F5F5F5] mb-2 tracking-tight">
           {t('profile.youBlockedUser', {
             username: user.username,
             defaultValue: `Bạn đã chặn @${user.username}`,
@@ -43,7 +43,7 @@ export const BlockedProfileView = ({
         </h2>
 
         {/* Description */}
-        <p className="text-xs sm:text-sm text-[#535F70] max-w-md mb-7 leading-relaxed">
+        <p className="text-xs sm:text-sm text-[#535F70] dark:text-[#A8A8A8] max-w-md mb-7 leading-relaxed">
           {t('profile.youBlockedUserDesc', {
             defaultValue:
               'Bạn sẽ không nhìn thấy bài viết, tin nhắn hoặc hoạt động từ người này. Họ cũng không thể tìm thấy trang cá nhân của bạn.',
@@ -55,7 +55,7 @@ export const BlockedProfileView = ({
           type="button"
           onClick={onUnblockClick}
           disabled={isUnblocking}
-          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#004AC6] hover:bg-[#003da3] text-white font-semibold text-xs sm:text-sm shadow-sm transition-all duration-150 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed hover:shadow-blue-200 hover:shadow-md"
+          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#004AC6] hover:bg-[#003da3] dark:bg-[#0095F6] dark:hover:bg-[#1877F2] text-white font-semibold text-xs sm:text-sm shadow-sm transition-all duration-150 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed hover:shadow-blue-200 dark:hover:shadow-none hover:shadow-md"
         >
           {isUnblocking ? (
             <>
@@ -75,16 +75,16 @@ export const BlockedProfileView = ({
 
   // BLOCKED_BY_THEM (Instagram style)
   return (
-    <div className="bg-white border border-[#E2E2EC] rounded-3xl p-8 sm:p-14 flex flex-col items-center justify-center text-center shadow-card animate-in fade-in duration-200 select-none">
-      <h2 className="text-xl sm:text-2xl font-bold text-[#1A1C1E] mb-3 tracking-tight">
+    <div className="bg-white dark:bg-[#121212] border border-[#E2E2EC] dark:border-[#262626] rounded-3xl p-8 sm:p-14 flex flex-col items-center justify-center text-center shadow-card animate-in fade-in duration-200 select-none">
+      <h2 className="text-xl sm:text-2xl font-bold text-[#1A1C1E] dark:text-[#F5F5F5] mb-3 tracking-tight">
         {t('profile.pageUnavailableTitle', { defaultValue: "Rất tiếc, trang này hiện không khả dụng." })}
       </h2>
 
-      <p className="text-sm text-[#535F70] max-w-md mb-8 leading-relaxed">
+      <p className="text-sm text-[#535F70] dark:text-[#A8A8A8] max-w-md mb-8 leading-relaxed">
         {t('profile.pageUnavailableDesc', { defaultValue: "Liên kết bạn theo dõi có thể bị hỏng hoặc trang này có thể đã bị gỡ." })}{' '}
         <Link
           to="/feed"
-          className="text-[#004AC6] hover:underline font-semibold cursor-pointer"
+          className="text-[#004AC6] dark:text-[#0095F6] hover:underline font-semibold cursor-pointer"
         >
           {t('profile.goBackToApp', { defaultValue: "Quay lại RySocial." })}
         </Link>
@@ -93,7 +93,7 @@ export const BlockedProfileView = ({
       {/* Action Button: Quay lại bảng tin */}
       <Link
         to="/feed"
-        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#004AC6] hover:bg-[#003da3] text-white font-semibold text-xs sm:text-sm shadow-sm transition-all duration-150 cursor-pointer"
+        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#004AC6] hover:bg-[#003da3] dark:bg-[#0095F6] dark:hover:bg-[#1877F2] text-white font-semibold text-xs sm:text-sm shadow-sm transition-all duration-150 cursor-pointer"
       >
         <ArrowLeft className="w-4 h-4" />
         <span>{t('profile.returnToFeed', { defaultValue: 'Quay lại Bảng tin' })}</span>

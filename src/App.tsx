@@ -4,6 +4,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LanguageProvider } from './contexts/LanguageContext';
+import { ThemeProvider } from './contexts/ThemeContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 
 import MainLayout from './components/layouts/MainLayout';
 import FeedPage from './pages/FeedPage';
@@ -11,6 +13,12 @@ import SignInPage from './pages/SignInPage';
 import SignUpPage from './pages/SignUpPage';
 import ProfilePage from './pages/ProfilePage';
 import PostDetailPage from './pages/PostDetailPage';
+import NotificationsPage from './pages/NotificationsPage';
+import ExplorePage from './pages/ExplorePage';
+import MessagesPage from './pages/MessagesPage';
+import StoragePage from './pages/StoragePage';
+import MarketplacePage from './pages/MarketplacePage';
+import SavedPage from './pages/SavedPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -26,8 +34,8 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#FAFAFB]">
-        <div className="w-10 h-10 border-4 border-[#004AC6] border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen flex items-center justify-center bg-[#FAFAFB] dark:bg-[#000000] transition-colors">
+        <div className="w-10 h-10 border-4 border-[#004AC6] dark:border-[#0095F6] border-t-transparent dark:border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -43,8 +51,8 @@ const ProfileRouteWrapper = () => {
   const { user, isLoading } = useAuth();
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#FAFAFB]">
-        <div className="w-10 h-10 border-4 border-[#004AC6] border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen flex items-center justify-center bg-[#FAFAFB] dark:bg-[#000000] transition-colors">
+        <div className="w-10 h-10 border-4 border-[#004AC6] dark:border-[#0095F6] border-t-transparent dark:border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -62,35 +70,55 @@ const ProfileIdentifierRedirect = () => {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <LanguageProvider>
-          <AuthProvider>
-            <Toaster position="bottom-right" />
-            <Routes>
-              <Route path="/signin" element={<SignInPage />} />
-              <Route path="/signup" element={<SignUpPage />} />
-              
-              {/* Feed Page and Post Details with 3-Column Layout */}
-              <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
-                <Route path="/feed" element={<FeedPage />} />
-                <Route path="/posts/:postId" element={<PostDetailPage />} />
-                <Route path="/" element={<Navigate to="/feed" replace />} />
-              </Route>
+      <ThemeProvider>
+        <BrowserRouter>
+          <LanguageProvider>
+            <AuthProvider>
+              <NotificationProvider>
+                <Toaster
+                  position="bottom-right"
+                  toastOptions={{
+                    className: 'dark:!bg-[#262626] dark:!text-[#F5F5F5] dark:!border dark:!border-[#363636]',
+                  }}
+                />
+                <Routes>
+                  <Route path="/signin" element={<SignInPage />} />
+                  <Route path="/signup" element={<SignUpPage />} />
 
-              {/* Backward compatibility for /profile */}
-              <Route path="/profile" element={<ProtectedRoute><ProfileRouteWrapper /></ProtectedRoute>} />
-              <Route path="/profile/:identifier" element={<ProtectedRoute><ProfileIdentifierRedirect /></ProtectedRoute>} />
-              
-              {/* Root parameter profile route */}
-              <Route path="/:identifier" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-              
-              <Route path="*" element={<Navigate to="/feed" replace />} />
-            </Routes>
-          </AuthProvider>
-        </LanguageProvider>
-      </BrowserRouter>
+                  {/* Main App Layout Routes */}
+                  <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
+                    <Route path="/feed" element={<FeedPage />} />
+                    <Route path="/trending" element={<FeedPage defaultTab="trending" />} />
+                    <Route path="/notifications" element={<NotificationsPage />} />
+                    <Route path="/explore" element={<ExplorePage />} />
+                    <Route path="/messages" element={<MessagesPage />} />
+                    <Route path="/messages/:chatId" element={<MessagesPage />} />
+                    <Route path="/drive" element={<StoragePage />} />
+                    <Route path="/storage" element={<StoragePage />} />
+                    <Route path="/marketplace" element={<MarketplacePage />} />
+                    <Route path="/marketplace/:itemId" element={<MarketplacePage />} />
+                    <Route path="/saved" element={<SavedPage />} />
+                    <Route path="/posts/:postId" element={<PostDetailPage />} />
+                    <Route path="/" element={<Navigate to="/feed" replace />} />
+                  </Route>
+
+                  {/* Backward compatibility for /profile */}
+                  <Route path="/profile" element={<ProtectedRoute><ProfileRouteWrapper /></ProtectedRoute>} />
+                  <Route path="/profile/:identifier" element={<ProtectedRoute><ProfileIdentifierRedirect /></ProtectedRoute>} />
+
+                  {/* Root parameter profile route */}
+                  <Route path="/:identifier" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+
+                  <Route path="*" element={<Navigate to="/feed" replace />} />
+                </Routes>
+              </NotificationProvider>
+            </AuthProvider>
+          </LanguageProvider>
+        </BrowserRouter>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
+
 
 export default App;

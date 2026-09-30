@@ -24,6 +24,7 @@ import type { PostResponse, PostVisibility, CommentResponse, CommentMediaRequest
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { postService } from '../../services/postService';
+import { repostService } from '../../services/repostService';
 import { commentService } from '../../services/commentService';
 import { getAvatarUrl, getMediaUrl, isVideoMedia, DEFAULT_AVATAR_FALLBACK } from '../../utils/media';
 import { getProfileUrl } from '../../utils/user';
@@ -31,10 +32,15 @@ import { getContentWithoutHashtags } from '../../utils/text';
 import { handleCopyAndSharePost } from '../../utils/share';
 import PostMoreMenu from './PostMoreMenu';
 import EditPostModal from './EditPostModal';
+import DeletePostModal from './DeletePostModal';
 import CommentItem from './CommentItem';
 import { CommentInput } from './CommentInput';
 import LikersModal from './LikersModal';
+import RepostersModal from './RepostersModal';
+import CreateRepostModal from './CreateRepostModal';
 import PostMediaLightbox from './PostMediaLightbox';
+import RepostBubble from './RepostBubble';
+import { usePostViewTracker } from '../../hooks/usePostViewTracker';
 
 export function formatRelativeTime(dateStr: string, lang: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -97,10 +103,13 @@ export const PostCard: React.FC<PostCardProps> = ({
   const language = propLang || contextLang;
   const { user: currentUser } = useAuth();
   const isAuthor = propIsAuthor !== undefined ? propIsAuthor : currentUser?.id === post.author.id;
+  const postCardRef = usePostViewTracker<HTMLElement>(post.id);
 
   const [isLiked, setIsLiked] = useState(post.isLiked ?? post.liked ?? false);
   const [likeCount, setLikeCount] = useState(post.reactionCount);
   const [shareCount, setShareCount] = useState(post.shareCount ?? 0);
+  const [repostCount, setRepostCount] = useState(post.repostCount ?? 0);
+  const [isReposted, setIsReposted] = useState(post.isReposted ?? false);
   const [isLiking, setIsLiking] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -110,6 +119,8 @@ export const PostCard: React.FC<PostCardProps> = ({
   const [editContent, setEditContent] = useState(post.content);
   const [isSaving, setIsSaving] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Internal lightbox fallback if onOpenLightbox is not provided
   const [internalLightboxIndex, setInternalLightboxIndex] = useState<number | null>(null);
@@ -192,9 +203,29 @@ export const PostCard: React.FC<PostCardProps> = ({
     if (post.shareCount !== undefined) {
       setShareCount(post.shareCount);
     }
+    if (post.repostCount !== undefined) {
+      setRepostCount(post.repostCount);
+    }
+    if (post.isReposted !== undefined) {
+      setIsReposted(post.isReposted);
+    }
+    if (post.myRepostCaption !== undefined) {
+      setUserCaption(post.myRepostCaption);
+    } else if (post.isReposted && currentUser) {
+      // Fallback: fetch caption của chính mình nếu backend chưa trả về myRepostCaption
+      repostService
+        .getReposters(post.id, { page: 0, size: 20 })
+        .then((res) => {
+          const myEntry = res.content.find((r) => r.user.id === currentUser.id);
+          if (myEntry && myEntry.caption) {
+            setUserCaption(myEntry.caption);
+          }
+        })
+        .catch(() => {});
+    }
     setActiveMediaIndex(0);
     setDetectedDimensions({});
-  }, [post.id, post.reactionCount, post.isLiked, post.liked, post.commentCount, post.shareCount, defaultShowComments]);
+  }, [post.id, post.reactionCount, post.isLiked, post.liked, post.commentCount, post.shareCount, post.repostCount, post.isReposted, post.myRepostCaption, post.repostedByFollowing, currentUser, defaultShowComments]);
 
   // Likers Modal state
   const [isLikersOpen, setIsLikersOpen] = useState(false);
@@ -203,6 +234,26 @@ export const PostCard: React.FC<PostCardProps> = ({
     type: 'post',
     totalLikes: post.reactionCount,
   });
+
+  // Reposters Modal state
+  const [isRepostersOpen, setIsRepostersOpen] = useState(false);
+
+  // Create / Edit Repost Modal state (write caption)
+  const [isCreateRepostOpen, setIsCreateRepostOpen] = useState(false);
+  const [userCaption, setUserCaption] = useState<string | null>(post.myRepostCaption ?? null);
+
+  const handleRepostSuccess = (newReposted: boolean, newCount: number, caption?: string | null) => {
+    setIsReposted(newReposted);
+    setRepostCount(newCount);
+    if (caption !== undefined) {
+      setUserCaption(caption);
+    }
+    onPostUpdated?.({
+      ...post,
+      isReposted: newReposted,
+      repostCount: newCount,
+    });
+  };
 
   const handleOpenLikers = (id: string, type: 'post' | 'comment', total?: number) => {
     setLikersTarget({ id, type, totalLikes: total ?? 0 });
@@ -432,14 +483,18 @@ export const PostCard: React.FC<PostCardProps> = ({
     }
   };
 
-  const handleDeletePost = async () => {
+  const handleConfirmDeletePost = async () => {
+    setIsDeleting(true);
     try {
       await postService.deletePost(post.id);
+      setIsDeleteModalOpen(false);
       onPostDeleted?.(post.id);
       toast.success(t('postDetail.deletePostSuccess'));
     } catch (err) {
       console.error('Failed to delete post:', err);
       toast.error(language === 'vi' ? 'Không thể xóa bài viết' : 'Failed to delete post');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -483,7 +538,10 @@ export const PostCard: React.FC<PostCardProps> = ({
   };
 
   return (
-    <article className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
+    <article
+      ref={postCardRef}
+      className="bg-white dark:bg-[#121212] rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-[#262626] transition-colors duration-200"
+    >
       {/* Author Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
@@ -494,7 +552,7 @@ export const PostCard: React.FC<PostCardProps> = ({
           >
             <img
               alt={authorName}
-              className="w-10 h-10 rounded-full object-cover"
+              className="w-10 h-10 rounded-full object-cover border border-gray-100 dark:border-[#363636]"
               src={getAvatarUrl(post.author.avatarUrl)}
               onError={(e) => {
                 e.currentTarget.onerror = null;
@@ -506,16 +564,16 @@ export const PostCard: React.FC<PostCardProps> = ({
             <div className="flex items-center gap-1.5 leading-tight">
               <Link
                 to={getProfileUrl(post.author)}
-                className="font-bold text-gray-900 text-sm hover:underline hover:text-[#004AC6] transition-colors cursor-pointer"
+                className="font-bold text-gray-900 dark:text-[#F5F5F5] text-sm hover:underline hover:text-[#004AC6] dark:hover:text-[#0095F6] transition-colors cursor-pointer"
                 onClick={(e) => e.stopPropagation()}
               >
                 {authorName}
               </Link>
             </div>
-            <p className="text-xs text-gray-400 flex items-center gap-1.5">
+            <p className="text-xs text-gray-400 dark:text-[#A8A8A8] flex items-center gap-1.5">
               <Link
                 to={getProfileUrl(post.author)}
-                className="hover:underline hover:text-gray-600 transition-colors cursor-pointer"
+                className="hover:underline hover:text-gray-600 dark:hover:text-[#F5F5F5] transition-colors cursor-pointer"
                 onClick={(e) => e.stopPropagation()}
               >
                 @{post.author.username}
@@ -529,7 +587,7 @@ export const PostCard: React.FC<PostCardProps> = ({
         </div>
         <div className="relative">
           <button
-            className="text-gray-400 hover:text-gray-600 transition p-1.5 rounded-full hover:bg-gray-100 cursor-pointer"
+            className="text-gray-400 dark:text-[#A8A8A8] hover:text-gray-600 dark:hover:text-[#F5F5F5] transition p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-[#262626] cursor-pointer"
             title={t('postDetail.postOptions')}
             type="button"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -545,7 +603,7 @@ export const PostCard: React.FC<PostCardProps> = ({
             onClose={() => setIsMenuOpen(false)}
             onEdit={() => setIsEditModalOpen(true)}
             onChangeVisibility={handleChangeVisibility}
-            onDelete={handleDeletePost}
+            onDelete={() => setIsDeleteModalOpen(true)}
             onCopyLink={handleShare}
           />
         </div>
@@ -557,7 +615,7 @@ export const PostCard: React.FC<PostCardProps> = ({
           <textarea
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
-            className="w-full text-sm text-gray-800 p-3 border border-[#004AC6] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#004AC6]/20 resize-none bg-slate-50/50"
+            className="w-full text-sm text-gray-800 dark:text-[#F5F5F5] p-3 border border-[#004AC6] dark:border-[#0095F6] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#004AC6]/20 dark:focus:ring-[#0095F6]/20 resize-none bg-slate-50/50 dark:bg-[#1A1A1A]"
             rows={3}
             disabled={isSaving}
           />
@@ -569,7 +627,7 @@ export const PostCard: React.FC<PostCardProps> = ({
                 setEditContent(post.content);
               }}
               disabled={isSaving}
-              className="px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-lg transition cursor-pointer"
+              className="px-3 py-1.5 text-xs font-semibold text-gray-600 dark:text-[#D4D4D4] hover:bg-gray-100 dark:hover:bg-[#262626] rounded-lg transition cursor-pointer"
             >
               {t('postDetail.cancel')}
             </button>
@@ -577,14 +635,14 @@ export const PostCard: React.FC<PostCardProps> = ({
               type="button"
               onClick={handleSaveEdit}
               disabled={!editContent.trim() || isSaving}
-              className="px-4 py-1.5 text-xs font-semibold text-white bg-[#004AC6] hover:bg-[#003A9F] rounded-lg transition disabled:opacity-50 cursor-pointer"
+              className="px-4 py-1.5 text-xs font-semibold text-white bg-[#004AC6] hover:bg-[#003A9F] dark:bg-[#0095F6] dark:hover:bg-[#1877F2] rounded-lg transition disabled:opacity-50 cursor-pointer"
             >
               {isSaving ? '...' : t('postDetail.save')}
             </button>
           </div>
         </div>
       ) : cleanContent ? (
-        <p className="text-sm text-gray-800 mb-3 whitespace-pre-line">{cleanContent}</p>
+        <p className="text-[15px] sm:text-base leading-relaxed text-gray-800 dark:text-[#E5E5E5] mb-3.5 whitespace-pre-line">{cleanContent}</p>
       ) : null}
 
       {/* Media Attachment (Self-adapting aspect ratio) */}
@@ -599,7 +657,7 @@ export const PostCard: React.FC<PostCardProps> = ({
 
         return (
           <div
-            className="relative rounded-2xl overflow-hidden mb-3 border border-gray-100 cursor-pointer group bg-black/5 dark:bg-zinc-900 w-full flex items-center justify-center select-none transition-[aspect-ratio] duration-200"
+            className="relative rounded-2xl overflow-hidden mb-3.5 border border-gray-100 dark:border-[#262626] cursor-pointer group bg-black/5 dark:bg-zinc-900 w-full flex items-center justify-center select-none transition-[aspect-ratio] duration-200"
             style={{
               aspectRatio: `${clampedRatio}`,
               maxHeight: '760px',
@@ -608,7 +666,7 @@ export const PostCard: React.FC<PostCardProps> = ({
           >
             {/* Media Counter Badge */}
             {post.media.length > 1 && (
-              <span className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white text-[11px] font-medium px-2.5 py-0.5 rounded-full z-10 pointer-events-none">
+              <span className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-0.5 rounded-full z-10 pointer-events-none tabular-nums shadow-xs">
                 {activeMediaIndex + 1}/{post.media.length}
               </span>
             )}
@@ -690,15 +748,33 @@ export const PostCard: React.FC<PostCardProps> = ({
                 ))}
               </div>
             )}
+
+            {/* Floating Repost Social Activity Bubble on Media */}
+            {Boolean(
+              (post.repostedByFollowing && post.repostedByFollowing.length > 0) ||
+                isReposted ||
+                repostCount > 0
+            ) && (
+              <RepostBubble
+                repostedByFollowing={post.repostedByFollowing || []}
+                repostCount={repostCount}
+                isRepostedByMe={isReposted}
+                myCaption={userCaption}
+                currentUser={currentUser}
+                language={language}
+                onOpenReposters={() => setIsRepostersOpen(true)}
+                onOpenWriteCaption={() => setIsCreateRepostOpen(true)}
+              />
+            )}
           </div>
         );
       })()}
 
       {/* Hashtags */}
       {post.hashtags && post.hashtags.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mb-4">
+        <div className="flex flex-wrap gap-1.5 mb-3.5">
           {post.hashtags.map((tag) => (
-            <span key={tag} className="text-xs font-semibold text-[#004AC6] hover:underline cursor-pointer">
+            <span key={tag} className="text-xs font-semibold text-[#004AC6] dark:text-[#0095F6] hover:underline cursor-pointer">
               #{tag}
             </span>
           ))}
@@ -706,22 +782,22 @@ export const PostCard: React.FC<PostCardProps> = ({
       )}
 
       {/* Post Actions */}
-      <div className="flex items-center justify-between pt-3 border-t border-slate-100 text-xs text-slate-500">
+      <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-[#262626] text-xs font-semibold text-slate-500 dark:text-[#A8A8A8]">
         <div className="flex items-center gap-1 group/like">
           <button
-            className={`p-1 -m-1 rounded-full transition-transform active:scale-90 hover:scale-110 cursor-pointer ${
-              isLiked ? 'text-rose-600 font-semibold' : 'hover:text-rose-600'
+            className={`p-1.5 -m-1 rounded-full transition-transform active:scale-90 hover:scale-110 cursor-pointer ${
+              isLiked ? 'text-rose-600 dark:text-rose-400' : 'hover:text-rose-600 dark:hover:text-rose-400'
             }`}
             title={isLiked ? t('postDetail.unlikedToast') : t('postDetail.likeButton')}
             type="button"
             onClick={toggleLike}
           >
-            <Heart className={`w-4 h-4 transition-all ${isLiked ? 'fill-rose-500 text-rose-500 scale-105' : ''}`} />
+            <Heart className={`w-4.5 h-4.5 transition-all ${isLiked ? 'fill-rose-500 text-rose-500 scale-105' : ''}`} />
           </button>
           <button
             type="button"
             onClick={() => handleOpenLikers(post.id, 'post', likeCount)}
-            className="hover:underline hover:text-rose-600 font-semibold text-xs transition-colors px-1 py-0.5 rounded cursor-pointer"
+            className="hover:underline hover:text-rose-600 dark:hover:text-rose-400 font-semibold text-xs tabular-nums transition-colors px-1 py-0.5 rounded cursor-pointer"
             title={t('postDetail.viewLikers')}
           >
             {formatCount(likeCount)}
@@ -729,60 +805,76 @@ export const PostCard: React.FC<PostCardProps> = ({
         </div>
 
         <button
-          className="flex items-center gap-1.5 hover:text-blue-600 transition-colors group p-1 -m-1 cursor-pointer"
+          className="flex items-center gap-1.5 hover:text-blue-600 dark:hover:text-[#0095F6] transition-colors group p-1.5 -m-1 cursor-pointer tabular-nums"
           title={t('postDetail.commentButton')}
           type="button"
           onClick={() => setShowInlineComments((prev) => !prev)}
         >
-          <MessageCircle className="w-4 h-4 group-hover:scale-110 transition-transform" />
+          <MessageCircle className="w-4.5 h-4.5 group-hover:scale-110 transition-transform" />
           <span>{formatCount(commentCount)}</span>
         </button>
 
         <button
-          className="flex items-center gap-1.5 hover:text-emerald-600 transition-colors group p-1 -m-1 cursor-pointer"
-          title={t('postDetail.repostButton')}
+          className={`flex items-center gap-1.5 transition-colors group p-1.5 -m-1 cursor-pointer tabular-nums disabled:opacity-50 ${
+            isReposted
+              ? 'text-emerald-600 dark:text-emerald-400 font-semibold'
+              : 'hover:text-emerald-600 dark:hover:text-emerald-400'
+          }`}
+          title={
+            isReposted
+              ? language === 'vi' ? 'Xem / Chỉnh sửa repost' : 'View / Edit repost'
+              : t('postDetail.repostButton')
+          }
           type="button"
-          onClick={() => toast.success(t('postDetail.repostedToast'))}
+          onClick={() => setIsCreateRepostOpen(true)}
         >
-          <Repeat2 className="w-4 h-4 group-hover:rotate-180 transition-transform" />
-          <span>0</span>
+          <Repeat2
+            className={`w-4.5 h-4.5 transition-transform duration-200 ${
+              isReposted ? 'scale-105 text-emerald-500' : 'group-hover:rotate-180'
+            }`}
+          />
+          <span>{formatCount(repostCount)}</span>
         </button>
 
-        <div className="flex items-center gap-1.5 text-slate-400" title={t('postDetail.views')}>
-          <Eye className="w-4 h-4" />
-          <span>0</span>
+        <div
+          className="flex items-center gap-1.5 text-slate-400 dark:text-[#737373] select-none hover:text-slate-600 dark:hover:text-[#D4D4D4] transition-colors tabular-nums"
+          title={`${formatCount(post.viewCount ?? 0)} ${t('postDetail.views')}`}
+          aria-label={`${formatCount(post.viewCount ?? 0)} ${t('postDetail.views')}`}
+        >
+          <Eye className="w-4.5 h-4.5" />
+          <span>{formatCount(post.viewCount ?? 0)}</span>
         </div>
 
         <button
-          className="hover:text-blue-600 transition-colors p-1 -m-1 cursor-pointer"
+          className="hover:text-blue-600 dark:hover:text-[#0095F6] transition-colors p-1.5 -m-1 cursor-pointer"
           title={t('postDetail.bookmarkButton')}
           type="button"
           onClick={toggleBookmark}
         >
-          <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-[#004AC6] text-[#004AC6]' : ''}`} />
+          <Bookmark className={`w-4.5 h-4.5 ${isBookmarked ? 'fill-[#004AC6] text-[#004AC6] dark:fill-blue-400 dark:text-[#0095F6]' : ''}`} />
         </button>
 
         <button
-          className="flex items-center gap-1.5 hover:text-blue-600 transition-colors p-1 -m-1 cursor-pointer group"
+          className="flex items-center gap-1.5 hover:text-blue-600 dark:hover:text-[#0095F6] transition-colors p-1.5 -m-1 cursor-pointer group tabular-nums"
           title={t('postDetail.shareButton')}
           type="button"
           onClick={handleShare}
         >
-          <Share2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
+          <Share2 className="w-4.5 h-4.5 group-hover:scale-110 transition-transform" />
           <span>{formatCount(shareCount)}</span>
         </button>
       </div>
 
       {/* Inline Comments Stream */}
       {showInlineComments && (
-        <div className="mt-3 pt-3 border-t border-slate-100 space-y-3 animate-fadeIn">
+        <div className="mt-3 pt-3 border-t border-slate-100 dark:border-[#262626] space-y-3 animate-fadeIn">
           {/* Header Bar with Sort Selector */}
-          <div className="flex items-center justify-end px-1 pb-1 text-xs text-slate-500">
+          <div className="flex items-center justify-end px-1 pb-1 text-xs text-slate-500 dark:text-[#A8A8A8]">
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setIsSortOpen(!isSortOpen)}
-                className="flex items-center gap-1 font-medium text-slate-600 hover:text-[#004AC6] transition-colors py-1 px-2 rounded-lg hover:bg-slate-100 cursor-pointer"
+                className="flex items-center gap-1 font-medium text-slate-600 dark:text-[#D4D4D4] hover:text-[#004AC6] dark:hover:text-[#0095F6] transition-colors py-1 px-2 rounded-lg hover:bg-slate-100 dark:hover:bg-[#262626] cursor-pointer"
               >
                 <span>
                   {commentSort === 'POPULAR'
@@ -794,12 +886,12 @@ export const PostCard: React.FC<PostCardProps> = ({
                 <ChevronDown className="w-3.5 h-3.5" />
               </button>
               {isSortOpen && (
-                <div className="absolute right-0 top-full mt-1 w-36 bg-white rounded-xl shadow-lg border border-slate-200 z-30 py-1 animate-fadeIn">
+                <div className="absolute right-0 top-full mt-1 w-36 bg-white dark:bg-[#262626] rounded-xl shadow-lg border border-slate-200 dark:border-[#363636] z-30 py-1 animate-fadeIn">
                   <button
                     type="button"
                     onClick={() => handleSortChange('POPULAR')}
-                    className={`w-full text-left px-3 py-1.5 text-xs transition-colors hover:bg-slate-50 cursor-pointer ${
-                      commentSort === 'POPULAR' ? 'text-[#004AC6] font-semibold bg-blue-50/50' : 'text-gray-700'
+                    className={`w-full text-left px-3 py-1.5 text-xs transition-colors hover:bg-slate-50 dark:hover:bg-[#262626]/80 cursor-pointer ${
+                      commentSort === 'POPULAR' ? 'text-[#004AC6] dark:text-[#0095F6] font-semibold bg-blue-50/50 dark:bg-[#0095F6]/15' : 'text-gray-700 dark:text-[#D4D4D4]'
                     }`}
                   >
                     {t('postDetail.mostRelevant')}
@@ -807,8 +899,8 @@ export const PostCard: React.FC<PostCardProps> = ({
                   <button
                     type="button"
                     onClick={() => handleSortChange('NEWEST')}
-                    className={`w-full text-left px-3 py-1.5 text-xs transition-colors hover:bg-slate-50 cursor-pointer ${
-                      commentSort === 'NEWEST' ? 'text-[#004AC6] font-semibold bg-blue-50/50' : 'text-gray-700'
+                    className={`w-full text-left px-3 py-1.5 text-xs transition-colors hover:bg-slate-50 dark:hover:bg-[#262626]/80 cursor-pointer ${
+                      commentSort === 'NEWEST' ? 'text-[#004AC6] dark:text-[#0095F6] font-semibold bg-blue-50/50 dark:bg-[#0095F6]/15' : 'text-gray-700 dark:text-[#D4D4D4]'
                     }`}
                   >
                     {t('postDetail.newest')}
@@ -816,8 +908,8 @@ export const PostCard: React.FC<PostCardProps> = ({
                   <button
                     type="button"
                     onClick={() => handleSortChange('OLDEST')}
-                    className={`w-full text-left px-3 py-1.5 text-xs transition-colors hover:bg-slate-50 cursor-pointer ${
-                      commentSort === 'OLDEST' ? 'text-[#004AC6] font-semibold bg-blue-50/50' : 'text-gray-700'
+                    className={`w-full text-left px-3 py-1.5 text-xs transition-colors hover:bg-slate-50 dark:hover:bg-[#262626]/80 cursor-pointer ${
+                      commentSort === 'OLDEST' ? 'text-[#004AC6] dark:text-[#0095F6] font-semibold bg-blue-50/50 dark:bg-[#0095F6]/15' : 'text-gray-700 dark:text-[#D4D4D4]'
                     }`}
                   >
                     {t('postDetail.oldest')}
@@ -906,6 +998,24 @@ export const PostCard: React.FC<PostCardProps> = ({
         totalLikes={likersTarget.totalLikes}
       />
 
+      {/* Reposters Modal for Post */}
+      <RepostersModal
+        isOpen={isRepostersOpen}
+        onClose={() => setIsRepostersOpen(false)}
+        postId={post.id}
+        totalReposts={repostCount}
+      />
+
+      {/* Create / Edit Repost Modal (Write caption) */}
+      <CreateRepostModal
+        isOpen={isCreateRepostOpen}
+        onClose={() => setIsCreateRepostOpen(false)}
+        post={post}
+        isAlreadyReposted={isReposted}
+        initialCaption={userCaption || ''}
+        onRepostSuccess={handleRepostSuccess}
+      />
+
       {/* Edit Post Modal with Drag and Drop Media */}
       <EditPostModal
         isOpen={isEditModalOpen}
@@ -928,6 +1038,15 @@ export const PostCard: React.FC<PostCardProps> = ({
           onPostDeleted={onPostDeleted}
         />
       )}
+
+      {/* Delete Post Confirmation Modal */}
+      <DeletePostModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => !isDeleting && setIsDeleteModalOpen(false)}
+        onConfirm={handleConfirmDeletePost}
+        isLoading={isDeleting}
+        post={post}
+      />
     </article>
   );
 };

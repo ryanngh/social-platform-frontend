@@ -48,43 +48,43 @@ export const ImageFeedPost: React.FC = () => {
   };
 
   return (
-    <article className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
+    <article className="bg-white dark:bg-[#121212] rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-[#262626] transition-colors duration-200">
       {/* Author Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
           <Link to="/mayadesigns" className="flex-shrink-0 hover:opacity-90 transition cursor-pointer">
             <img
               alt="Maya Patel"
-              className="w-10 h-10 rounded-full object-cover"
+              className="w-10 h-10 rounded-full object-cover border border-gray-100 dark:border-[#363636]"
               src={DEFAULT_AVATAR_FALLBACK}
             />
           </Link>
           <div>
             <div className="flex items-center gap-1.5 leading-tight">
-              <Link to="/mayadesigns" className="font-bold text-gray-900 text-sm hover:underline hover:text-[#004AC6] transition-colors cursor-pointer">
+              <Link to="/mayadesigns" className="font-bold text-gray-900 dark:text-[#F5F5F5] text-sm hover:underline hover:text-[#004AC6] dark:hover:text-[#0095F6] transition-colors cursor-pointer">
                 Maya Patel
               </Link>
             </div>
-            <p className="text-xs text-gray-400">
-              <Link to="/mayadesigns" className="hover:underline hover:text-gray-700 transition-colors cursor-pointer">
+            <p className="text-xs text-gray-400 dark:text-[#A8A8A8]">
+              <Link to="/mayadesigns" className="hover:underline hover:text-gray-700 dark:hover:text-[#F5F5F5] transition-colors cursor-pointer">
                 @mayadesigns
               </Link>
               <span> · 1 giờ</span>
             </p>
           </div>
         </div>
-        <button className="text-gray-400 hover:text-gray-600 transition" title="Tùy chọn">
+        <button className="text-gray-400 dark:text-[#737373] hover:text-gray-600 dark:hover:text-[#F5F5F5] transition cursor-pointer" title="Tùy chọn">
           <MoreHorizontal className="w-5 h-5" />
         </button>
       </div>
 
       {/* Post Content */}
-      <p className="text-sm text-gray-800 mb-3">
+      <p className="text-sm text-gray-800 dark:text-[#E5E5E5] mb-3">
         Building a design system, one component at a time. 🎨
       </p>
 
       {/* Media Attachment (Instagram aspect ratio) */}
-      <div className="relative rounded-2xl overflow-hidden mb-3 border border-gray-100 bg-amber-50 aspect-square sm:aspect-[4/5] max-h-[580px] w-full flex flex-col justify-end select-none group">
+      <div className="relative rounded-2xl overflow-hidden mb-3 border border-gray-100 dark:border-[#262626] bg-amber-50 dark:bg-[#121212] aspect-square sm:aspect-[4/5] max-h-[580px] w-full flex flex-col justify-end select-none group">
         {/* Media Counter Badge */}
         <span className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white text-[11px] font-medium px-2.5 py-0.5 rounded-full z-10 pointer-events-none">
           {activeImageIdx + 1}/{MOCK_POST_IMAGES.length}
@@ -147,20 +147,20 @@ export const ImageFeedPost: React.FC = () => {
           </div>
         </div>
 
-        <div className="p-3 bg-white border-t border-gray-100 text-xs text-gray-600 flex-shrink-0">
-          <p className="italic text-[11px] text-gray-500 leading-relaxed">
+        <div className="p-3 bg-white dark:bg-[#121212] border-t border-gray-100 dark:border-[#262626] text-xs text-gray-600 dark:text-[#D4D4D4] flex-shrink-0 transition-colors">
+          <p className="italic text-[11px] text-gray-500 dark:text-[#A8A8A8] leading-relaxed">
             Morning essentials to start the day right! ☕✨ So productive with my brew from @elevatecoffee_co y favorite workspace. What's fueling your creativity today? #ElevateYourDay #CoffeeLover #WorkFromAnywhere #CafeVibes #MorningRoutine #Productivity #ElevateCoffeeCo
           </p>
         </div>
       </div>
 
       {/* Hashtags */}
-      <p className="text-xs font-semibold text-[#004AC6] mb-4 hover:underline cursor-pointer">
+      <p className="text-xs font-semibold text-[#004AC6] dark:text-[#0095F6] mb-4 hover:underline cursor-pointer">
         #DesignSystem
       </p>
 
       {/* Post Actions */}
-      <div className="flex items-center justify-between pt-2 border-t border-gray-100 text-xs text-gray-500 font-medium">
+      <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-[#262626] text-xs text-gray-500 dark:text-[#A8A8A8] font-medium">
         <div className="flex items-center gap-6">
           <button 
             onClick={() => toast('Mở khung bình luận', { icon: '💬' })}
@@ -234,37 +234,37 @@ export const PollFeedPost: React.FC = () => {
   };
 
   return (
-    <article className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100">
+    <article className="bg-white dark:bg-[#121212] rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-[#262626] transition-colors duration-200">
       {/* Author Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
           <Link to="/techdigest" className="flex-shrink-0 hover:opacity-90 transition cursor-pointer">
             <img
               alt="Tech Digest"
-              className="w-10 h-10 rounded-full object-cover"
+              className="w-10 h-10 rounded-full object-cover border border-gray-100 dark:border-[#363636]"
               src={DEFAULT_AVATAR_FALLBACK}
             />
           </Link>
           <div>
             <div className="flex items-center gap-1.5 leading-tight">
-              <Link to="/techdigest" className="font-bold text-gray-900 text-sm hover:underline hover:text-[#004AC6] transition-colors cursor-pointer">
+              <Link to="/techdigest" className="font-bold text-gray-900 dark:text-[#F5F5F5] text-sm hover:underline hover:text-[#004AC6] dark:hover:text-[#0095F6] transition-colors cursor-pointer">
                 Tech Digest
               </Link>
             </div>
-            <p className="text-xs text-gray-400">
-              <Link to="/techdigest" className="hover:underline hover:text-gray-700 transition-colors cursor-pointer">
+            <p className="text-xs text-gray-400 dark:text-[#A8A8A8]">
+              <Link to="/techdigest" className="hover:underline hover:text-gray-700 dark:hover:text-[#F5F5F5] transition-colors cursor-pointer">
                 @techdigest
               </Link>
               <span> · 4 giờ</span>
             </p>
           </div>
         </div>
-        <button className="text-gray-400 hover:text-gray-600 transition" title="Tùy chọn">
+        <button className="text-gray-400 dark:text-[#737373] hover:text-gray-600 dark:hover:text-[#F5F5F5] transition cursor-pointer" title="Tùy chọn">
           <MoreHorizontal className="w-5 h-5" />
         </button>
       </div>
 
-      <p className="text-sm text-gray-800 mb-4 font-normal">
+      <p className="text-sm text-gray-800 dark:text-[#E5E5E5] mb-4 font-normal">
         Which topic should we cover next?
       </p>
 
@@ -276,22 +276,26 @@ export const PollFeedPost: React.FC = () => {
             <div
               key={option.id}
               onClick={() => handleVote(option.id)}
-              className={`relative overflow-hidden border rounded-2xl h-11 flex items-center px-4 justify-between bg-white cursor-pointer transition-all ${
+              className={`relative overflow-hidden border rounded-2xl h-11 flex items-center px-4 justify-between bg-white dark:bg-[#1A1A1A] cursor-pointer transition-all ${
                 isSelected
-                  ? 'border-[#004AC6] ring-1 ring-[#004AC6]'
-                  : 'border-gray-200/80 hover:border-gray-300'
+                  ? 'border-[#004AC6] dark:border-[#0095F6] ring-1 ring-[#004AC6] dark:ring-[#0095F6]'
+                  : 'border-gray-200/80 dark:border-[#363636] hover:border-gray-300 dark:hover:border-slate-600'
               }`}
             >
               <div
                 className={`absolute inset-y-0 left-0 rounded-2xl transition-all duration-500 ${
-                  isSelected ? 'bg-[#BFDBFE]' : option.percent === 62 ? 'bg-[#DBEAFE]' : 'bg-[#EFF6FF]'
+                  isSelected
+                    ? 'bg-[#BFDBFE] dark:bg-blue-900/60'
+                    : option.percent === 62
+                    ? 'bg-[#DBEAFE] dark:bg-blue-950/70'
+                    : 'bg-[#EFF6FF] dark:bg-[#262626]/50'
                 }`}
                 style={{ width: `${option.percent}%` }}
               ></div>
-              <span className={`relative z-10 text-xs ${isSelected ? 'font-bold text-[#004AC6]' : 'font-semibold text-gray-800'}`}>
+              <span className={`relative z-10 text-xs ${isSelected ? 'font-bold text-[#004AC6] dark:text-[#0095F6]' : 'font-semibold text-gray-800 dark:text-[#E5E5E5]'}`}>
                 {option.label} {isSelected && '✓'}
               </span>
-              <span className="relative z-10 text-xs font-bold text-gray-900">
+              <span className="relative z-10 text-xs font-bold text-gray-900 dark:text-[#F5F5F5]">
                 {option.percent}%
               </span>
             </div>
@@ -299,23 +303,23 @@ export const PollFeedPost: React.FC = () => {
         })}
       </div>
 
-      <p className="text-xs text-gray-400 mb-4">
+      <p className="text-xs text-gray-400 dark:text-[#A8A8A8] mb-4">
         {totalVotes.toLocaleString()} votes · 10 giờ còn lại
       </p>
 
       {/* Post Actions */}
-      <div className="flex items-center justify-between pt-2 border-t border-gray-100 text-xs text-gray-500 font-medium">
+      <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-[#262626] text-xs text-gray-500 dark:text-[#A8A8A8] font-medium">
         <div className="flex items-center gap-6">
           <button 
             onClick={() => toast('Mở khung bình luận', { icon: '💬' })}
-            className="flex items-center gap-1.5 hover:text-gray-800 transition"
+            className="flex items-center gap-1.5 hover:text-gray-800 dark:hover:text-[#F5F5F5] transition"
           >
             <MessageSquare className="w-4 h-4" />
             <span>16</span>
           </button>
           <button 
             onClick={() => toast.success('Đã chia sẻ lại bài viết')}
-            className="flex items-center gap-1.5 hover:text-gray-800 transition"
+            className="flex items-center gap-1.5 hover:text-gray-800 dark:hover:text-[#F5F5F5] transition"
           >
             <Repeat2 className="w-4 h-4" />
             <span>3</span>
@@ -330,19 +334,19 @@ export const PollFeedPost: React.FC = () => {
             <Heart className={`w-4 h-4 ${isLiked ? 'fill-rose-500 text-rose-500' : ''}`} />
             <span>{likeCount}</span>
           </button>
-          <div className="flex items-center gap-1.5 text-gray-500">
+          <div className="flex items-center gap-1.5 text-gray-500 dark:text-[#A8A8A8]">
             <BarChart2 className="w-4 h-4" />
             <span>1.6K</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 text-gray-400">
+        <div className="flex items-center gap-3 text-gray-400 dark:text-[#A8A8A8]">
           <button 
             onClick={() => {
               setIsBookmarked(!isBookmarked);
               toast(isBookmarked ? 'Đã bỏ lưu bài viết' : 'Đã lưu bài viết', { icon: '🔖' });
             }}
-            className="hover:text-gray-600 transition"
+            className="hover:text-gray-600 dark:hover:text-[#F5F5F5] transition"
           >
             <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-[#004AC6] text-[#004AC6]' : ''}`} />
           </button>
@@ -351,7 +355,7 @@ export const PollFeedPost: React.FC = () => {
               await copyToClipboard(`${window.location.origin}/posts/mock-poll-post`);
               toast.success('Đã sao chép liên kết vào bộ nhớ tạm!');
             }}
-            className="hover:text-gray-600 transition"
+            className="hover:text-gray-600 dark:hover:text-[#F5F5F5] transition"
           >
             <Share2 className="w-4 h-4" />
           </button>

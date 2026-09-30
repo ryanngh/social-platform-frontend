@@ -21,10 +21,13 @@ export const ProfileRightSidebar = () => {
   const trends: TrendItem[] = [];
 
   return (
-    <aside className="hidden lg:block lg:col-span-3 space-y-4 sticky top-20 self-start max-h-[calc(100vh-6rem)] overflow-y-auto custom-scrollbar" data-purpose="right-sidebar">
+    <aside
+      className="hidden lg:block w-[338px] flex-shrink-0 sticky top-20 self-start max-h-[calc(100vh-6rem)] overflow-y-auto custom-scrollbar space-y-4"
+      data-purpose="right-sidebar"
+    >
       {/* Suggestions For You Card */}
-      <section aria-labelledby="suggestions-heading" className="bg-white border border-[#E2E2EC] rounded-xl p-5 shadow-card">
-        <h2 id="suggestions-heading" className="text-sm font-bold text-[#1A1C1E] mb-3">
+      <section aria-labelledby="suggestions-heading" className="bg-white dark:bg-[#121212] border border-gray-100 dark:border-[#262626] rounded-3xl p-5 shadow-sm">
+        <h2 id="suggestions-heading" className="text-sm font-bold text-gray-900 dark:text-[#F5F5F5] mb-3">
           {t('rightSidebar.suggestions')}
         </h2>
         {suggestions.length > 0 ? (
@@ -38,55 +41,55 @@ export const ProfileRightSidebar = () => {
                     src={item.avatar}
                   />
                   <div className="truncate">
-                    <p className="text-xs font-bold text-[#1A1C1E] truncate">{item.name}</p>
-                    <p className="text-[11px] text-[#535F70] truncate">{item.handle}</p>
+                    <p className="text-xs font-bold text-gray-900 dark:text-[#F5F5F5] truncate">{item.name}</p>
+                    <p className="text-[11px] text-gray-500 dark:text-[#A8A8A8] truncate">{item.handle}</p>
                   </div>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="py-6 text-center text-gray-400">
-            <Users className="w-7 h-7 mx-auto mb-2 text-gray-300 stroke-[1.5]" />
-            <p className="text-xs text-gray-400 italic">{t('profile.noSuggestions')}</p>
+          <div className="py-6 text-center text-gray-400 dark:text-[#737373]">
+            <Users className="w-7 h-7 mx-auto mb-2 text-gray-300 dark:text-[#525252] stroke-[1.5]" />
+            <p className="text-xs text-gray-400 dark:text-[#737373] italic">{t('profile.noSuggestions')}</p>
           </div>
         )}
       </section>
 
       {/* Trending Hashtags Card */}
-      <section aria-labelledby="trending-heading" className="bg-white border border-[#E2E2EC] rounded-xl p-5 shadow-card">
-        <h2 id="trending-heading" className="text-sm font-bold text-[#1A1C1E] mb-3">
+      <section aria-labelledby="trending-heading" className="bg-white dark:bg-[#121212] border border-gray-100 dark:border-[#262626] rounded-3xl p-5 shadow-sm">
+        <h2 id="trending-heading" className="text-sm font-bold text-gray-900 dark:text-[#F5F5F5] mb-3">
           {t('rightSidebar.trending')}
         </h2>
         {trends.length > 0 ? (
           <div className="space-y-3.5">
             {trends.map((trend) => (
               <div key={trend.tag}>
-                <p className="text-[11px] text-[#535F70]">{trend.category}</p>
-                <p className="text-xs font-bold text-[#1A1C1E] hover:underline cursor-pointer">
+                <p className="text-[11px] text-gray-400 dark:text-[#A8A8A8]">{trend.category}</p>
+                <p className="text-xs font-bold text-gray-800 dark:text-[#E5E5E5] hover:underline cursor-pointer">
                   {trend.tag}
                 </p>
-                <p className="text-[11px] text-[#535F70]">{trend.count}</p>
+                <p className="text-[11px] text-gray-400 dark:text-[#A8A8A8]">{trend.count}</p>
               </div>
             ))}
           </div>
         ) : (
-          <div className="py-6 text-center text-gray-400">
-            <TrendingUp className="w-7 h-7 mx-auto mb-2 text-gray-300 stroke-[1.5]" />
-            <p className="text-xs text-gray-400 italic">{t('profile.noTrending')}</p>
+          <div className="py-6 text-center text-gray-400 dark:text-[#737373]">
+            <TrendingUp className="w-7 h-7 mx-auto mb-2 text-gray-300 dark:text-[#525252] stroke-[1.5]" />
+            <p className="text-xs text-gray-400 dark:text-[#737373] italic">{t('profile.noTrending')}</p>
           </div>
         )}
       </section>
 
       {/* Site Footer Meta Links */}
-      <footer className="px-2 text-[11px] text-[#535F70] space-y-1.5 leading-relaxed">
+      <footer className="px-3 text-[11px] text-gray-400 dark:text-[#737373] space-y-1 leading-relaxed">
         <div className="flex flex-wrap gap-x-2 gap-y-1">
           <a className="hover:underline" href="#">Terms of Service</a>
           <a className="hover:underline" href="#">Privacy Policy</a>
           <a className="hover:underline" href="#">Cookie Policy</a>
           <a className="hover:underline" href="#">Accessibility</a>
         </div>
-        <p>© 2026 Mo3Studio.</p>
+        <p>© 2026 RySocial from Mo3Studio.</p>
       </footer>
     </aside>
   );

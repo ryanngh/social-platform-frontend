@@ -249,17 +249,17 @@ export const CommentInput: React.FC<CommentInputProps> = ({
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`p-4 bg-white border-t border-[#E2E2EC] flex-shrink-0 flex flex-col gap-2 relative transition-[box-shadow,border-color] ${
-        isDragging ? 'ring-2 ring-inset ring-[#004AC6]' : ''
+      className={`p-4 bg-white border-t border-[#E2E2EC] dark:bg-[#121212] dark:border-[#262626] flex-shrink-0 flex flex-col gap-2 relative transition-[box-shadow,border-color] ${
+        isDragging ? 'ring-2 ring-inset ring-[#004AC6] dark:ring-[#0095F6]' : ''
       }`}
     >
       {/* Dragging drop overlay - Không làm dịch chuyển layout, không bị glitching */}
       {isDragging && (
-        <div className="absolute inset-0 z-30 bg-blue-50/90 border-2 border-dashed border-[#004AC6] flex flex-col items-center justify-center gap-1.5 backdrop-blur-xs pointer-events-none animate-fadeIn select-none">
-          <div className="w-9 h-9 rounded-full bg-[#004AC6]/10 flex items-center justify-center text-[#004AC6]">
+        <div className="absolute inset-0 z-30 bg-blue-50/90 dark:bg-[#121212]/90 border-2 border-dashed border-[#004AC6] dark:border-[#0095F6] flex flex-col items-center justify-center gap-1.5 backdrop-blur-xs pointer-events-none animate-fadeIn select-none">
+          <div className="w-9 h-9 rounded-full bg-[#004AC6]/10 dark:bg-blue-500/20 flex items-center justify-center text-[#004AC6] dark:text-[#0095F6]">
             <Upload className="w-4 h-4 animate-bounce" />
           </div>
-          <span className="text-xs font-semibold text-[#004AC6]">
+          <span className="text-xs font-semibold text-[#004AC6] dark:text-[#0095F6]">
             {language === 'vi' ? 'Thả tệp ảnh hoặc video vào đây để đính kèm' : 'Drop image or video here to attach'}
           </span>
         </div>
@@ -267,12 +267,12 @@ export const CommentInput: React.FC<CommentInputProps> = ({
 
       {/* Replying banner */}
       {replyingTo && (
-        <div className="flex items-center justify-between bg-[#F4F4FB] px-3 py-1.5 rounded-lg text-xs text-[#004AC6] font-medium border border-[#E2E2EC]">
+        <div className="flex items-center justify-between bg-[#F4F4FB] dark:bg-[#1A1A1A] px-3 py-1.5 rounded-lg text-xs text-[#004AC6] dark:text-[#0095F6] font-medium border border-[#E2E2EC] dark:border-[#363636]">
           <span>{t('postDetail.replyTo', { name: replyingTo.username })}</span>
           <button
             type="button"
             onClick={replyingTo.onCancel}
-            className="p-1 hover:text-red-500 rounded transition-colors"
+            className="p-1 hover:text-red-500 dark:hover:text-red-400 rounded transition-colors"
             title={t('postDetail.cancelReply')}
           >
             <X className="w-3.5 h-3.5" />
@@ -286,7 +286,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
           {previews.map((preview, idx) => (
             <div
               key={preview.id}
-              className="relative w-14 h-14 rounded-xl overflow-hidden bg-black/10 flex-shrink-0 border border-[#E2E2EC] group"
+              className="relative w-14 h-14 rounded-xl overflow-hidden bg-black/10 dark:bg-black/30 flex-shrink-0 border border-[#E2E2EC] dark:border-[#363636] group"
             >
               {preview.type.startsWith('video/') ? (
                 <div className="w-full h-full flex items-center justify-center bg-gray-900 text-white pointer-events-none">
@@ -318,16 +318,16 @@ export const CommentInput: React.FC<CommentInputProps> = ({
         <img
           src={getAvatarUrl(user?.avatarUrl)}
           alt={user?.firstName || ''}
-          className="w-9 h-9 rounded-full object-cover ring-2 ring-[#004AC6]/20 flex-shrink-0"
+          className="w-9 h-9 rounded-full object-cover ring-2 ring-[#004AC6]/20 dark:ring-[#0095F6]/30 flex-shrink-0"
         />
-        <div className="flex-1 bg-[#F4F4FB] border border-[#E2E2EC] rounded-xl flex items-center px-3 py-1.5 focus-within:border-[#004AC6] focus-within:ring-2 focus-within:ring-[#004AC6]/20 transition-all">
+        <div className="flex-1 bg-[#F4F4FB] dark:bg-[#1A1A1A] border border-[#E2E2EC] dark:border-[#363636] rounded-xl flex items-center px-3 py-1.5 focus-within:border-[#004AC6] dark:focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-[#004AC6]/20 dark:focus-within:ring-blue-500/20 transition-all">
           <input
             ref={textInputRef}
             type="text"
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="w-full bg-transparent border-none text-sm text-[#1A1C1E] placeholder:text-[#535F70] focus:ring-0 p-1 outline-none"
+            className="w-full bg-transparent border-none text-sm text-[#1A1C1E] dark:text-[#F5F5F5] placeholder:text-[#535F70] dark:placeholder:text-slate-400 focus:ring-0 p-1 outline-none"
             placeholder={
               placeholder ||
               (replyingTo
@@ -336,7 +336,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
             }
             disabled={busy}
           />
-          <div className="flex items-center gap-1 text-[#535F70] relative">
+          <div className="flex items-center gap-1 text-[#535F70] dark:text-[#A8A8A8] relative">
             {/* GIF Button */}
             <div className="relative">
               <button
@@ -347,8 +347,8 @@ export const CommentInput: React.FC<CommentInputProps> = ({
                 }}
                 className={`px-1.5 py-0.5 text-[11px] font-bold rounded-md transition-colors cursor-pointer ${
                   isGifPickerOpen
-                    ? 'bg-[#004AC6] text-white'
-                    : 'text-purple-600 bg-purple-50 hover:bg-purple-100'
+                    ? 'bg-[#004AC6] text-white dark:bg-[#0095F6]'
+                    : 'text-purple-600 bg-purple-50 hover:bg-purple-100 dark:text-purple-300 dark:bg-purple-900/40 dark:hover:bg-purple-900/60'
                 }`}
                 title={language === 'vi' ? 'Chọn ảnh động GIF' : 'Choose animated GIF'}
                 disabled={busy}
@@ -375,8 +375,8 @@ export const CommentInput: React.FC<CommentInputProps> = ({
                 }}
                 className={`p-1 rounded transition-colors cursor-pointer ${
                   isEmojiPickerOpen
-                    ? 'text-amber-600 bg-amber-100'
-                    : 'hover:text-[#1A1C1E] hover:bg-[#E2E2EC]'
+                    ? 'text-amber-600 bg-amber-100 dark:text-amber-300 dark:bg-amber-900/40'
+                    : 'hover:text-[#1A1C1E] hover:bg-[#E2E2EC] dark:hover:text-[#F5F5F5] dark:hover:bg-[#363636]'
                 }`}
                 title={t('postDetail.addEmoji')}
                 disabled={busy}
@@ -397,7 +397,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="p-1 hover:text-[#1A1C1E] rounded hover:bg-[#E2E2EC] transition-colors cursor-pointer"
+              className="p-1 hover:text-[#1A1C1E] rounded hover:bg-[#E2E2EC] dark:hover:text-[#F5F5F5] dark:hover:bg-[#363636] transition-colors cursor-pointer"
               title={t('postDetail.attachPhoto')}
               disabled={busy}
             >
@@ -420,14 +420,14 @@ export const CommentInput: React.FC<CommentInputProps> = ({
           type="button"
           onClick={handleSubmit}
           disabled={!canSend}
-          className="h-10 px-4 bg-[#004AC6] hover:bg-[#003A9F] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 flex-shrink-0 cursor-pointer"
+          className="h-10 px-4 bg-[#004AC6] hover:bg-[#003A9F] dark:bg-[#0095F6] dark:hover:bg-[#1877F2] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-semibold flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-95 flex-shrink-0 cursor-pointer"
           title={t('postDetail.send')}
         >
           {busy ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
             <>
-              <span className="text-sm hidden lg:inline">{t('postDetail.send')}</span>
+              <span className="text-xs sm:text-sm hidden sm:inline">{t('postDetail.send')}</span>
               <Send className="w-4 h-4" />
             </>
           )}

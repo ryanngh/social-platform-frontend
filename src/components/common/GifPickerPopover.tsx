@@ -156,32 +156,32 @@ export const GifPickerPopover: React.FC<GifPickerPopoverProps> = ({
   return (
     <div
       ref={popoverRef}
-      className={`bg-white rounded-2xl shadow-2xl border border-gray-100 p-3.5 w-84 max-w-[92vw] z-50 flex flex-col gap-2.5 animate-fadeIn select-none ${className}`}
+      className={`bg-white dark:bg-[#262626] rounded-2xl shadow-2xl border border-gray-100 dark:border-[#363636] p-3.5 w-84 max-w-[92vw] z-50 flex flex-col gap-2.5 animate-fadeIn select-none ${className}`}
       onClick={(e) => e.stopPropagation()}
     >
       {/* Header */}
       <div className="flex items-center justify-between">
-        <span className="text-xs font-bold text-gray-900 uppercase tracking-wider flex items-center gap-1.5">
+        <span className="text-xs font-bold text-gray-900 dark:text-[#F5F5F5] uppercase tracking-wider flex items-center gap-1.5">
           <span className="px-1.5 py-0.5 rounded bg-[#004AC6] text-white text-[10px] font-black tracking-normal">
             GIF
           </span>
           Kho ảnh động
         </span>
-        <div className="flex items-center gap-1 text-[10px] text-gray-400 font-medium">
+        <div className="flex items-center gap-1 text-[10px] text-gray-400 dark:text-[#A8A8A8] font-medium">
           <span>Powered by</span>
-          <span className="font-extrabold text-[#004AC6]">GIPHY</span>
+          <span className="font-extrabold text-[#004AC6] dark:text-[#0095F6]">GIPHY</span>
         </div>
       </div>
 
       {/* Search Input */}
       <div className="relative flex items-center">
-        <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 pointer-events-none" />
+        <Search className="w-3.5 h-3.5 text-gray-400 dark:text-[#737373] absolute left-3 pointer-events-none" />
         <input
           type="text"
           value={search}
           onChange={handleSearchChange}
           placeholder="Tìm kiếm GIF trên GIPHY..."
-          className="w-full bg-gray-50 border border-gray-100 rounded-xl pl-8 pr-3 py-1.5 text-xs text-gray-800 placeholder-gray-400 outline-none focus:border-[#004AC6] focus:bg-white transition"
+          className="w-full bg-gray-50 dark:bg-[#1A1A1A] border border-gray-100 dark:border-[#363636] rounded-xl pl-8 pr-3 py-1.5 text-xs text-gray-800 dark:text-[#F5F5F5] placeholder-gray-400 dark:placeholder-[#737373] outline-none focus:border-[#004AC6] dark:focus:border-[#0095F6] focus:bg-white dark:focus:bg-slate-800 transition"
           autoFocus
         />
         {loading && (
@@ -199,7 +199,7 @@ export const GifPickerPopover: React.FC<GifPickerPopoverProps> = ({
             className={`px-2.5 py-1 rounded-full text-[11px] font-medium whitespace-nowrap transition cursor-pointer ${
               activeCategory === cat.value
                 ? 'bg-[#004AC6] text-white shadow-xs font-semibold'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                : 'bg-gray-100 dark:bg-[#1A1A1A] text-gray-600 dark:text-[#D4D4D4] hover:bg-gray-200 dark:hover:bg-[#363636]'
             }`}
           >
             {cat.label}
@@ -219,7 +219,7 @@ export const GifPickerPopover: React.FC<GifPickerPopoverProps> = ({
             {Array.from({ length: 8 }).map((_, i) => (
               <div
                 key={`skeleton-${i}`}
-                className="rounded-xl aspect-video bg-gray-100 animate-pulse border border-gray-100"
+                className="rounded-xl aspect-video bg-gray-100 dark:bg-[#1A1A1A] animate-pulse border border-gray-100 dark:border-[#363636]"
               />
             ))}
           </>
@@ -227,13 +227,13 @@ export const GifPickerPopover: React.FC<GifPickerPopoverProps> = ({
 
         {/* Error State */}
         {!loading && error && (
-          <div className="col-span-2 flex flex-col items-center justify-center py-6 text-center text-gray-500 gap-2">
+          <div className="col-span-2 flex flex-col items-center justify-center py-6 text-center text-gray-500 dark:text-[#A8A8A8] gap-2">
             <AlertCircle className="w-6 h-6 text-amber-500" />
             <p className="text-xs">{error}</p>
             <button
               type="button"
               onClick={() => loadGifs(true)}
-              className="mt-1 flex items-center gap-1 text-[11px] font-medium text-[#004AC6] hover:underline cursor-pointer"
+              className="mt-1 flex items-center gap-1 text-[11px] font-medium text-[#004AC6] dark:text-[#0095F6] hover:underline cursor-pointer"
             >
               <RefreshCw className="w-3 h-3" /> Thử lại
             </button>
@@ -242,9 +242,9 @@ export const GifPickerPopover: React.FC<GifPickerPopoverProps> = ({
 
         {/* Empty State */}
         {!loading && !error && gifs.length === 0 && (
-          <div className="col-span-2 flex flex-col items-center justify-center py-8 text-center text-gray-400">
+          <div className="col-span-2 flex flex-col items-center justify-center py-8 text-center text-gray-400 dark:text-[#737373]">
             <p className="text-xs font-medium">Không tìm thấy GIF nào</p>
-            <p className="text-[11px] text-gray-400 mt-0.5">
+            <p className="text-[11px] text-gray-400 dark:text-[#737373] mt-0.5">
               Thử tìm kiếm với từ khóa khác nhé
             </p>
           </div>
@@ -261,7 +261,7 @@ export const GifPickerPopover: React.FC<GifPickerPopoverProps> = ({
                 onClose();
               }}
               title={gif.title}
-              className="group relative rounded-xl overflow-hidden aspect-video bg-gray-100 border border-gray-100 hover:opacity-90 hover:scale-[1.02] transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#004AC6]"
+              className="group relative rounded-xl overflow-hidden aspect-video bg-gray-100 dark:bg-[#1A1A1A] border border-gray-100 dark:border-[#363636] hover:opacity-90 hover:scale-[1.02] transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#004AC6]"
             >
               <img
                 src={gif.previewUrl}
@@ -280,7 +280,7 @@ export const GifPickerPopover: React.FC<GifPickerPopoverProps> = ({
         {/* Loading More Indicator */}
         {loadingMore && (
           <div className="col-span-2 flex justify-center py-2">
-            <Loader2 className="w-4 h-4 text-[#004AC6] animate-spin" />
+            <Loader2 className="w-4 h-4 text-[#004AC6] dark:text-[#0095F6] animate-spin" />
           </div>
         )}
       </div>

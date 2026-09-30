@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, type React
 import type { User, LoginRequest, RegisterRequest } from '../types';
 import { authService } from '../services/authService';
 import { userService } from '../services/userService';
+import { viewTracker } from '../services/viewTracker';
 
 interface AuthContextType {
   user: User | null;
@@ -119,6 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
       setUser(null);
+      viewTracker.resetSession();
     }
   };
 

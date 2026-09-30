@@ -175,13 +175,55 @@ export interface PostResponse {
   media: PostMedia[];
   hashtags: string[];
   taggedUsers: PostAuthor[];
+  viewCount?: number;
   reactionCount: number;
   commentCount: number;
   shareCount?: number;
+  repostCount?: number;
   isLiked?: boolean;
   liked?: boolean;
+  isReposted?: boolean;
+  myRepostCaption?: string | null;
+  repostedByFollowing?: RepostUserEntry[];
   createdAt: string;
   updatedAt: string;
+  feedScore?: number | null;
+  debugReason?: string | null;
+}
+
+export interface FeedResponse {
+  content: PostResponse[];
+  nextCursor: string | null;
+  hasMore: boolean;
+  sessionId: string;
+}
+
+export interface FeedQueryParams {
+  limit?: number;
+  sessionId?: string | null;
+  cursor?: string | null;
+}
+
+// ============================================================
+// Repost Types
+// ============================================================
+
+export interface RepostToggleResponse {
+  reposted: boolean;
+  repostCount: number;
+}
+
+export interface RepostUserEntry {
+  user: PostAuthor;
+  caption: string | null;
+  repostedAt: string;
+}
+
+export interface UserRepostEntry {
+  repostId: string;
+  originalPostId: string;
+  caption: string | null;
+  repostedAt: string;
 }
 
 export interface PostShareResponse {
@@ -189,6 +231,19 @@ export interface PostShareResponse {
   shareCount: number;
   algorithmEligible: boolean;
   message: string;
+}
+
+// ============================================================
+// Post View Types
+// ============================================================
+
+export interface BatchViewRequest {
+  postIds: string[];
+}
+
+export interface BatchViewResponse {
+  submittedCount: number;
+  newViewsRecorded: number;
 }
 
 export interface PostMediaRequest {
@@ -217,6 +272,7 @@ export interface CreatePostResponse {
   taggedUsers: PostAuthor[];
   createdAt: string;
   updatedAt: string;
+  viewCount?: number;
   reactionCount?: number;
   commentCount?: number;
   shareCount?: number;
@@ -328,3 +384,6 @@ export interface SliceResponse<T> {
   last: boolean;
   empty: boolean;
 }
+
+export * from './notification';
+

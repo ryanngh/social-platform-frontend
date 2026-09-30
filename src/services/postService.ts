@@ -1,5 +1,12 @@
 import api from '../lib/axios';
-import type { PostResponse, PostShareResponse, SliceResponse } from '../types';
+import type {
+  PostResponse,
+  PostShareResponse,
+  SliceResponse,
+  BatchViewResponse,
+  FeedResponse,
+  FeedQueryParams,
+} from '../types';
 
 export interface PostPaginationParams {
   page?: number;
@@ -40,8 +47,18 @@ export const postService = {
     return response.data;
   },
 
-  async getFeed(params?: PostPaginationParams): Promise<SliceResponse<PostResponse>> {
-    const response = await api.get<SliceResponse<PostResponse>>('/posts/feed', { params });
+  async getFeed(params?: FeedQueryParams): Promise<FeedResponse> {
+    const response = await api.get<FeedResponse>('/feed', { params });
+    return response.data;
+  },
+
+  async getTrendingFeed(params?: FeedQueryParams): Promise<FeedResponse> {
+    const response = await api.get<FeedResponse>('/feed/trending', { params });
+    return response.data;
+  },
+
+  async getFollowingFeed(params?: FeedQueryParams): Promise<FeedResponse> {
+    const response = await api.get<FeedResponse>('/feed/following', { params });
     return response.data;
   },
 
@@ -71,6 +88,11 @@ export const postService = {
 
   async sharePost(postId: string): Promise<PostShareResponse> {
     const response = await api.post<PostShareResponse>(`/posts/${postId}/shares`);
+    return response.data;
+  },
+
+  async logViews(postIds: string[]): Promise<BatchViewResponse> {
+    const response = await api.post<BatchViewResponse>('/posts/views', { postIds });
     return response.data;
   },
 };

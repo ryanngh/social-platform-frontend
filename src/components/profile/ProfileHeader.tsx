@@ -135,14 +135,14 @@ export const ProfileHeader = ({
   ];
 
   return (
-    <section className="bg-white border border-[#E2E2EC] rounded-xl overflow-hidden shadow-card">
+    <section className="bg-white dark:bg-[#121212] border border-gray-100 dark:border-[#262626] rounded-3xl overflow-hidden shadow-sm">
       {/* Header Banner */}
-      <div className={`h-32 sm:h-40 w-full relative overflow-hidden ${
+      <div className={`h-36 sm:h-44 w-full relative overflow-hidden ${
         isBlockedByThem
-          ? 'bg-gray-100'
+          ? 'bg-gray-100 dark:bg-[#1A1A1A]'
           : isBlockedByMe
-          ? 'bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200'
-          : 'bg-gradient-to-r from-[#DFE6F5] via-[#E8EDFB] to-[#F1F3FB]'
+          ? 'bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 dark:from-[#1A1A1A] dark:via-slate-900 dark:to-[#1A1A1A]'
+          : 'bg-gradient-to-r from-[#DFE6F5] via-[#E8EDFB] to-[#F1F3FB] dark:from-[#1A1A1A] dark:via-[#222222]/80 dark:to-[#121212]'
       }`}>
         {/* Subtle decorative graphic pattern */}
         <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#003594_1px,transparent_1px)] [background-size:16px_16px]"></div>
@@ -159,13 +159,13 @@ export const ProfileHeader = ({
         )}
       </div>
 
-      <div className="px-5 pb-5">
+      <div className="px-5 sm:px-6 pb-5">
         {/* Avatar and Action Row */}
-        <div className="flex justify-between items-end -mt-12 sm:-mt-14 mb-3.5">
+        <div className="flex justify-between items-end -mt-14 sm:-mt-16 mb-4">
           <div className="relative z-20">
             <img
               alt={fullName}
-              className={`w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white object-cover shadow bg-white ${
+              className={`w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white dark:border-[#121212] object-cover shadow-md bg-white dark:bg-[#121212] ${
                 isBlockedByMe ? 'filter grayscale opacity-80' : ''
               }`}
               src={getAvatarUrl(isBlockedByThem ? null : user.avatarUrl)}
@@ -181,7 +181,7 @@ export const ProfileHeader = ({
               <div className="flex items-center gap-2">
                 <button
                   onClick={onEditProfile}
-                  className="px-4 py-1.5 border border-[#E2E2EC] rounded-full text-xs font-semibold text-[#1A1C1E] hover:bg-[#EDEDF8] transition shadow-sm cursor-pointer"
+                  className="h-9 px-4 border border-gray-200 dark:border-[#363636] rounded-xl text-xs sm:text-sm font-semibold text-gray-800 dark:text-[#F5F5F5] hover:bg-gray-50 dark:hover:bg-[#262626] transition shadow-2xs cursor-pointer inline-flex items-center justify-center"
                   type="button"
                 >
                   {t('profile.editProfile')}
@@ -191,7 +191,7 @@ export const ProfileHeader = ({
                 <div className="relative" ref={moreMenuRef}>
                   <button
                     onClick={() => setIsMoreDropdownOpen(!isMoreDropdownOpen)}
-                    className="p-1.5 border border-[#E2E2EC] hover:bg-[#EDEDF8] text-[#1A1C1E] rounded-full transition cursor-pointer"
+                    className="w-9 h-9 flex items-center justify-center border border-gray-200 dark:border-[#363636] hover:bg-gray-50 dark:hover:bg-[#262626] text-gray-700 dark:text-[#F5F5F5] rounded-xl transition cursor-pointer"
                     type="button"
                     title={t('topNav.options', { defaultValue: 'Tùy chọn' })}
                     aria-expanded={isMoreDropdownOpen}
@@ -200,22 +200,22 @@ export const ProfileHeader = ({
                   </button>
 
                   {isMoreDropdownOpen && (
-                    <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 p-1.5 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#1E1E1E] rounded-2xl shadow-xl border border-gray-100 dark:border-[#363636] z-50 p-1.5 animate-in fade-in zoom-in-95 duration-150">
                       <button
                         type="button"
                         onClick={handleCopyLink}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-gray-50 text-xs font-semibold text-gray-700 transition cursor-pointer"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-[#262626] text-xs font-semibold text-gray-700 dark:text-[#E5E5E5] transition cursor-pointer"
                       >
-                        <Link2 className="w-4 h-4 text-gray-500" />
+                        <Link2 className="w-4 h-4 text-gray-500 dark:text-[#A8A8A8]" />
                         <span>{t('profile.copyLink', { defaultValue: 'Sao chép liên kết trang cá nhân' })}</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={handleShareProfile}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-gray-50 text-xs font-semibold text-gray-700 transition cursor-pointer"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-[#262626] text-xs font-semibold text-gray-700 dark:text-[#E5E5E5] transition cursor-pointer"
                       >
-                        <Share2 className="w-4 h-4 text-gray-500" />
+                        <Share2 className="w-4 h-4 text-gray-500 dark:text-[#A8A8A8]" />
                         <span>{t('profile.shareProfile', { defaultValue: 'Chia sẻ trang cá nhân' })}</span>
                       </button>
                     </div>
@@ -231,9 +231,9 @@ export const ProfileHeader = ({
                 <button
                   type="button"
                   onClick={onUnblockClick}
-                  className="px-4 py-1.5 rounded-full text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:border-rose-300"
+                  className="h-9 px-4 rounded-xl text-xs sm:text-sm font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/40"
                 >
-                  <UserCheck className="w-3.5 h-3.5" />
+                  <UserCheck className="w-4 h-4" />
                   <span>{t('profile.unblock', { defaultValue: 'Bỏ chặn' })}</span>
                 </button>
               </div>
@@ -244,13 +244,13 @@ export const ProfileHeader = ({
                   <button
                     onClick={onFollowToggle}
                     disabled={isFollowPending}
-                    className="px-4 py-1.5 rounded-full text-xs font-semibold shadow-sm transition flex items-center gap-1.5 cursor-pointer bg-[#004AC6] hover:bg-[#003A9F] text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="h-9 px-4 rounded-xl text-xs sm:text-sm font-semibold shadow-sm transition flex items-center gap-1.5 cursor-pointer bg-[#004AC6] hover:bg-[#003A9F] dark:bg-[#0095F6] dark:hover:bg-[#1877F2] text-white disabled:opacity-60 disabled:cursor-not-allowed"
                     type="button"
                   >
                     {isFollowPending ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
-                      <UserPlus className="w-3.5 h-3.5" />
+                      <UserPlus className="w-4 h-4" />
                     )}
                     <span>{t('profile.follow')}</span>
                   </button>
@@ -259,20 +259,20 @@ export const ProfileHeader = ({
                     <button
                       onClick={() => setIsFollowingDropdownOpen(!isFollowingDropdownOpen)}
                       disabled={isFollowPending}
-                      className={`px-3.5 py-1.5 rounded-full text-xs font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer border ${
+                      className={`h-9 px-3.5 rounded-xl text-xs sm:text-sm font-semibold shadow-xs transition flex items-center gap-1.5 cursor-pointer border ${
                         isCloseFriend
-                          ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100/80'
-                          : 'border-[#E2E2EC] bg-white text-[#1A1C1E] hover:bg-gray-50'
+                          ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100/80 dark:hover:bg-emerald-900/40'
+                          : 'border-gray-200 dark:border-[#363636] bg-white dark:bg-[#1A1A1A] text-gray-800 dark:text-[#F5F5F5] hover:bg-gray-50 dark:hover:bg-[#363636]'
                       }`}
                       type="button"
                       aria-expanded={isFollowingDropdownOpen}
                     >
                       {isFollowPending ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <Loader2 className="w-4 h-4 animate-spin" />
                       ) : isCloseFriend ? (
-                        <Star className="w-3.5 h-3.5 fill-emerald-500 text-emerald-500" />
+                        <Star className="w-4 h-4 fill-emerald-500 text-emerald-500" />
                       ) : (
-                        <UserCheck className="w-3.5 h-3.5 text-[#004AC6]" />
+                        <UserCheck className="w-4 h-4 text-[#004AC6] dark:text-[#0095F6]" />
                       )}
                       <span>{t('profile.following')}</span>
                       <ChevronDown
@@ -284,7 +284,7 @@ export const ProfileHeader = ({
 
                     {/* Following Dropdown Menu */}
                     {isFollowingDropdownOpen && (
-                      <div className="absolute left-0 sm:right-0 sm:left-auto top-full mt-2 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 p-1.5 animate-in fade-in zoom-in-95 duration-150">
+                      <div className="absolute left-0 sm:right-0 sm:left-auto top-full mt-2 w-64 bg-white dark:bg-[#1E1E1E] rounded-2xl shadow-xl border border-gray-100 dark:border-[#363636] z-50 p-1.5 animate-in fade-in zoom-in-95 duration-150">
                         {/* Close Friends Toggle Option */}
                         <button
                           type="button"
@@ -293,13 +293,13 @@ export const ProfileHeader = ({
                             onToggleCloseFriend?.();
                           }}
                           disabled={isCloseFriendPending}
-                          className="w-full flex items-start gap-2.5 p-2.5 rounded-xl hover:bg-gray-50 transition text-left cursor-pointer group"
+                          className="w-full flex items-start gap-2.5 p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-[#262626] transition text-left cursor-pointer group"
                         >
                           <div
                             className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
                               isCloseFriend
-                                ? 'bg-emerald-100 text-emerald-600'
-                                : 'bg-gray-100 text-gray-500 group-hover:bg-emerald-50 group-hover:text-emerald-600'
+                                ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400'
+                                : 'bg-gray-100 dark:bg-[#1A1A1A] text-gray-500 dark:text-[#A8A8A8] group-hover:bg-emerald-50 dark:group-hover:bg-emerald-950/40 group-hover:text-emerald-600 dark:group-hover:text-emerald-400'
                             }`}
                           >
                             {isCloseFriendPending ? (
@@ -314,7 +314,7 @@ export const ProfileHeader = ({
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
-                              <span className="text-xs font-bold text-gray-900">
+                              <span className="text-xs font-bold text-gray-900 dark:text-[#F5F5F5]">
                                 {isCloseFriend
                                   ? t('profile.removeFromCloseFriends', { defaultValue: 'Xóa khỏi Bạn thân' })
                                   : t('profile.addToCloseFriends', { defaultValue: 'Thêm vào Bạn thân' })}
@@ -323,13 +323,13 @@ export const ProfileHeader = ({
                                 <span className="w-2 h-2 rounded-full bg-emerald-500" />
                               )}
                             </div>
-                            <p className="text-[11px] text-gray-400 leading-tight mt-0.5">
+                            <p className="text-[11px] text-gray-400 dark:text-[#A8A8A8] leading-tight mt-0.5">
                               {t('profile.closeFriendDesc', { defaultValue: 'Chia sẻ và xem các bài viết, tin riêng tư' })}
                             </p>
                           </div>
                         </button>
 
-                        <div className="border-t border-gray-100 my-1" />
+                        <div className="border-t border-gray-100 dark:border-[#262626] my-1" />
 
                         {/* Unfollow Option */}
                         <button
@@ -338,9 +338,9 @@ export const ProfileHeader = ({
                             setIsFollowingDropdownOpen(false);
                             onUnfollowClick?.();
                           }}
-                          className="w-full flex items-center gap-2.5 p-2.5 rounded-xl hover:bg-rose-50 transition text-left cursor-pointer text-rose-600"
+                          className="w-full flex items-center gap-2.5 p-2.5 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/30 transition text-left cursor-pointer text-rose-600 dark:text-rose-400"
                         >
-                          <div className="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center flex-shrink-0 text-rose-600">
+                          <div className="w-8 h-8 rounded-full bg-rose-50 dark:bg-rose-950/40 flex items-center justify-center flex-shrink-0 text-rose-600 dark:text-rose-400">
                             <UserMinus className="w-4 h-4" />
                           </div>
                           <div className="flex-1 min-w-0">
@@ -356,10 +356,10 @@ export const ProfileHeader = ({
 
                 {/* Message button */}
                 <button
-                  className="px-3.5 py-1.5 border border-[#E2E2EC] hover:bg-[#EDEDF8] text-[#1A1C1E] text-xs font-semibold rounded-full transition cursor-pointer flex items-center gap-1"
+                  className="h-9 px-3.5 border border-gray-200 dark:border-[#363636] hover:bg-gray-50 dark:hover:bg-[#262626] text-gray-800 dark:text-[#F5F5F5] text-xs sm:text-sm font-semibold rounded-xl transition cursor-pointer flex items-center gap-1.5"
                   type="button"
                 >
-                  <MessageCircle className="w-3.5 h-3.5" />
+                  <MessageCircle className="w-4 h-4" />
                   <span>{t('profile.message')}</span>
                 </button>
 
@@ -367,7 +367,7 @@ export const ProfileHeader = ({
                 <div className="relative" ref={moreMenuRef}>
                   <button
                     onClick={() => setIsMoreDropdownOpen(!isMoreDropdownOpen)}
-                    className="p-1.5 border border-[#E2E2EC] hover:bg-[#EDEDF8] text-[#1A1C1E] rounded-full transition cursor-pointer"
+                    className="w-9 h-9 flex items-center justify-center border border-gray-200 dark:border-[#363636] hover:bg-gray-50 dark:hover:bg-[#262626] text-gray-700 dark:text-[#F5F5F5] rounded-xl transition cursor-pointer"
                     type="button"
                     title={t('topNav.options', { defaultValue: 'Tùy chọn' })}
                     aria-expanded={isMoreDropdownOpen}
@@ -376,14 +376,14 @@ export const ProfileHeader = ({
                   </button>
 
                   {isMoreDropdownOpen && (
-                    <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 p-1.5 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#1E1E1E] rounded-2xl shadow-xl border border-gray-100 dark:border-[#363636] z-50 p-1.5 animate-in fade-in zoom-in-95 duration-150">
                       {/* Copy Link */}
                       <button
                         type="button"
                         onClick={handleCopyLink}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-gray-50 text-xs font-semibold text-gray-700 transition cursor-pointer"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-[#262626] text-xs font-semibold text-gray-700 dark:text-[#E5E5E5] transition cursor-pointer"
                       >
-                        <Link2 className="w-4 h-4 text-gray-500" />
+                        <Link2 className="w-4 h-4 text-gray-500 dark:text-[#A8A8A8]" />
                         <span>{t('profile.copyLink', { defaultValue: 'Sao chép liên kết trang cá nhân' })}</span>
                       </button>
 
@@ -391,13 +391,13 @@ export const ProfileHeader = ({
                       <button
                         type="button"
                         onClick={handleShareProfile}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-gray-50 text-xs font-semibold text-gray-700 transition cursor-pointer"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-[#262626] text-xs font-semibold text-gray-700 dark:text-[#E5E5E5] transition cursor-pointer"
                       >
-                        <Share2 className="w-4 h-4 text-gray-500" />
+                        <Share2 className="w-4 h-4 text-gray-500 dark:text-[#A8A8A8]" />
                         <span>{t('profile.shareProfile', { defaultValue: 'Chia sẻ trang cá nhân' })}</span>
                       </button>
 
-                      <div className="border-t border-gray-100 my-1" />
+                      <div className="border-t border-gray-100 dark:border-[#262626] my-1" />
 
                       {/* Block User */}
                       <button
@@ -406,9 +406,9 @@ export const ProfileHeader = ({
                           setIsMoreDropdownOpen(false);
                           onBlockClick?.();
                         }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-rose-50 text-xs font-semibold text-rose-600 transition cursor-pointer"
+                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-950/30 text-xs font-semibold text-rose-600 dark:text-rose-400 transition cursor-pointer"
                       >
-                        <ShieldAlert className="w-4 h-4 text-rose-600" />
+                        <ShieldAlert className="w-4 h-4 text-rose-600 dark:text-rose-400" />
                         <span>{t('profile.blockUser', { username: user.username, defaultValue: `Chặn @${user.username}` })}</span>
                       </button>
                     </div>
@@ -422,17 +422,17 @@ export const ProfileHeader = ({
         {/* User Identity: Full Name & Nickname */}
         <div className="mb-3">
           <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-xl sm:text-2xl font-bold text-[#1A1C1E] tracking-tight leading-tight">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-[#F5F5F5] tracking-tight leading-tight">
               {isBlockedByThem ? `@${user.username || 'user'}` : fullName}
             </h1>
             {isBlockedByMe && (
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-600 border border-rose-200">
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/60">
                 {t('profile.blockedBadge', { defaultValue: 'Đã chặn' })}
               </span>
             )}
           </div>
           {!isBlockedByThem && (
-            <p className="text-xs sm:text-sm text-[#535F70] font-normal">
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-[#A8A8A8] font-normal">
               @{user.username || 'user'}
             </p>
           )}
@@ -440,40 +440,40 @@ export const ProfileHeader = ({
 
         {/* Profile Metadata */}
         {!isBlockedByThem && (
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#535F70]">
+          <div className="space-y-2.5">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs sm:text-[13px] text-gray-500 dark:text-[#A8A8A8]">
               {user.location && (
-                <span className="flex items-center gap-1 text-[#1A1C1E]">
-                  <MapPin className="w-3.5 h-3.5 text-[#535F70] shrink-0" />
+                <span className="flex items-center gap-1.5 text-gray-700 dark:text-[#E5E5E5]">
+                  <MapPin className="w-3.5 h-3.5 text-gray-400 dark:text-[#A8A8A8] shrink-0" />
                   <span>{user.location}</span>
                 </span>
               )}
 
               {user.websiteUrl && (
                 <a
-                  className="flex items-center gap-1 text-[#004AC6] font-medium hover:underline"
+                  className="flex items-center gap-1.5 text-[#004AC6] dark:text-[#0095F6] font-medium hover:underline"
                   href={user.websiteUrl.startsWith('http') ? user.websiteUrl : `https://${user.websiteUrl}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <Link2 className="w-3.5 h-3.5 text-[#535F70] shrink-0" />
+                  <Link2 className="w-3.5 h-3.5 text-[#004AC6] dark:text-[#0095F6] shrink-0" />
                   <span>{user.websiteUrl.replace(/^https?:\/\//, '')}</span>
                 </a>
               )}
 
-              <span className="flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5 text-[#535F70] shrink-0" />
+              <span className="flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-gray-400 dark:text-[#A8A8A8] shrink-0" />
                 <span>{t('profile.joined', { date: joinedDate })}</span>
               </span>
             </div>
 
             {/* Bio */}
             {user.bio ? (
-              <p className="text-xs text-[#1A1C1E] pt-1 leading-relaxed">
+              <p className="text-xs sm:text-sm text-gray-800 dark:text-[#E5E5E5] pt-0.5 leading-relaxed">
                 {user.bio}
               </p>
             ) : isOwnProfile ? (
-              <p className="text-xs text-gray-400 italic pt-1 leading-relaxed">
+              <p className="text-xs sm:text-sm text-gray-400 dark:text-[#737373] italic pt-0.5 leading-relaxed">
                 {language === 'vi' 
                   ? 'Chưa có tiểu sử. Bấm "Chỉnh sửa" để cập nhật giới thiệu về bản thân.' 
                   : 'No bio yet. Click "Edit profile" to introduce yourself.'}
@@ -482,28 +482,28 @@ export const ProfileHeader = ({
 
             {/* Following & Follower counts (hidden when blocked by me) */}
             {!isBlockedByMe && (
-              <div className="flex items-center gap-4 text-xs pt-2">
+              <div className="flex items-center gap-4 text-xs sm:text-sm pt-2">
                 <button
                   type="button"
                   onClick={onOpenFollowing}
-                  className="flex items-center gap-1 cursor-pointer group hover:underline transition-colors"
+                  className="flex items-center gap-1.5 cursor-pointer group hover:underline transition-colors"
                   title={t('profile.followingTitle', { defaultValue: 'Đang theo dõi' })}
                 >
-                  <span className="font-bold text-[#1A1C1E] group-hover:text-[#004AC6] transition-colors">
+                  <span className="tabular-nums font-bold text-gray-900 dark:text-[#F5F5F5] group-hover:text-[#004AC6] dark:group-hover:text-[#0095F6] transition-colors">
                     {user.followingCount ?? 0}
                   </span>
-                  <span className="text-[#535F70] group-hover:text-[#1A1C1E] transition-colors">{t('leftNav.following')}</span>
+                  <span className="text-gray-500 dark:text-[#A8A8A8] group-hover:text-gray-800 dark:group-hover:text-slate-200 transition-colors">{t('leftNav.following')}</span>
                 </button>
                 <button
                   type="button"
                   onClick={onOpenFollowers}
-                  className="flex items-center gap-1 cursor-pointer group hover:underline transition-colors"
+                  className="flex items-center gap-1.5 cursor-pointer group hover:underline transition-colors"
                   title={t('profile.followersTitle', { defaultValue: 'Người theo dõi' })}
                 >
-                  <span className="font-bold text-[#1A1C1E] group-hover:text-[#004AC6] transition-colors">
+                  <span className="tabular-nums font-bold text-gray-900 dark:text-[#F5F5F5] group-hover:text-[#004AC6] dark:group-hover:text-[#0095F6] transition-colors">
                     {user.followerCount ?? user.followersCount ?? 0}
                   </span>
-                  <span className="text-[#535F70] group-hover:text-[#1A1C1E] transition-colors">{t('leftNav.followers')}</span>
+                  <span className="text-gray-500 dark:text-[#A8A8A8] group-hover:text-gray-800 dark:group-hover:text-slate-200 transition-colors">{t('leftNav.followers')}</span>
                 </button>
               </div>
             )}
@@ -513,15 +513,15 @@ export const ProfileHeader = ({
 
       {/* Profile Tabs (only render if not blocked) */}
       {!isBlockedByMe && !isBlockedByThem && (
-        <nav aria-label="Profile navigation" className="flex border-t border-[#E2E2EC] text-xs font-semibold text-[#535F70] px-2 overflow-x-auto custom-scrollbar">
+        <nav aria-label="Profile navigation" className="flex border-t border-gray-100 dark:border-[#262626] text-xs sm:text-sm font-semibold text-gray-500 dark:text-[#A8A8A8] px-3 overflow-x-auto custom-scrollbar">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`py-3 px-4 transition border-b-2 whitespace-nowrap cursor-pointer ${
                 activeTab === tab.id
-                  ? 'border-[#004AC6] text-[#004AC6] font-bold'
-                  : 'border-transparent hover:text-[#1A1C1E]'
+                  ? 'border-[#004AC6] text-[#004AC6] dark:border-blue-400 dark:text-[#0095F6] font-bold'
+                  : 'border-transparent hover:text-gray-900 dark:hover:text-[#F5F5F5]'
               }`}
               type="button"
             >

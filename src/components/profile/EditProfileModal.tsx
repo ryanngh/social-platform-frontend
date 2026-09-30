@@ -104,29 +104,29 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
     <div
       aria-labelledby="modal-profile-title"
       aria-modal="true"
-      className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto"
+      className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto animate-fadeIn"
       role="dialog"
     >
-      <div className="bg-white rounded-2xl shadow-2xl max-w-xl w-full max-h-[90vh] flex flex-col border border-gray-100 overflow-hidden">
+      <div className="bg-white dark:bg-[#121212] rounded-3xl shadow-2xl max-w-xl w-full max-h-[90vh] flex flex-col border border-gray-100 dark:border-[#262626] overflow-hidden">
         {/* Sticky Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E2E2EC] bg-white sticky top-0 z-20">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-[#262626] bg-white dark:bg-[#121212] sticky top-0 z-20">
           <div className="flex items-center gap-3">
             <button
               onClick={onClose}
               aria-label={t('common.close')}
-              className="p-1.5 text-gray-500 hover:text-[#1A1C1E] hover:bg-[#EDEDF8] rounded-full transition-colors cursor-pointer"
+              className="p-1.5 text-gray-400 dark:text-[#A8A8A8] hover:text-gray-900 dark:hover:text-[#F5F5F5] hover:bg-gray-100 dark:hover:bg-[#262626] rounded-full transition-colors cursor-pointer"
               type="button"
             >
               <X className="w-5 h-5" />
             </button>
-            <h2 className="text-base font-bold text-[#1A1C1E]" id="modal-profile-title">
+            <h2 className="text-base font-bold text-gray-900 dark:text-[#F5F5F5]" id="modal-profile-title">
               {t('profile.editModalTitle')}
             </h2>
           </div>
           <button
             onClick={() => handleSubmit()}
             disabled={isLoading}
-            className="px-4 py-1.5 bg-[#004AC6] hover:bg-[#002970] text-white text-xs font-semibold rounded-full shadow-sm transition-colors cursor-pointer disabled:opacity-50"
+            className="h-9 px-4 bg-[#004AC6] hover:bg-[#002970] dark:bg-[#0095F6] dark:hover:bg-[#1877F2] text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-50"
             type="button"
           >
             {isLoading ? t('profile.saving') : t('profile.saveChanges')}
@@ -134,17 +134,17 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
         </div>
 
         {/* Scrollable Content */}
-        <div className="overflow-y-auto flex-1 p-6 space-y-5">
+        <div className="overflow-y-auto flex-1 p-6 space-y-5 custom-scrollbar">
           {/* Cover / Banner Upload Area */}
           <div className="relative">
-            <div className="h-28 w-full bg-gradient-to-r from-[#DFE6F5] via-[#E8EDFB] to-[#F1F3FB] rounded-xl relative overflow-hidden flex items-center justify-center">
+            <div className="h-32 w-full bg-gradient-to-r from-[#DFE6F5] via-[#E8EDFB] to-[#F1F3FB] dark:from-[#1A1A1A] dark:via-[#222222]/80 dark:to-[#121212] rounded-2xl relative overflow-hidden flex items-center justify-center border border-gray-100 dark:border-[#262626]">
               <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#003594_1px,transparent_1px)] [background-size:16px_16px]"></div>
               {bannerPreview && (
                 <img src={bannerPreview} alt="Cover preview" className="absolute inset-0 w-full h-full object-cover z-0" />
               )}
               <button
                 onClick={() => bannerInputRef.current?.click()}
-                className="relative z-10 px-3 py-1.5 bg-slate-900/60 hover:bg-slate-900/80 text-white rounded-full text-xs font-medium flex items-center gap-1.5 backdrop-blur-sm transition cursor-pointer"
+                className="relative z-10 px-3.5 py-1.5 bg-black/60 hover:bg-black/80 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 backdrop-blur-xs transition cursor-pointer"
                 type="button"
               >
                 <Camera className="w-4 h-4" />
@@ -164,7 +164,7 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
               <div className="relative group">
                 <img
                   alt="Avatar preview"
-                  className="w-20 h-20 rounded-full border-4 border-white object-cover shadow bg-white"
+                  className="w-20 h-20 rounded-full border-4 border-white dark:border-[#121212] object-cover shadow-md bg-white dark:bg-[#121212]"
                   src={avatarPreview || DEFAULT_AVATAR_FALLBACK}
                   onError={(e) => {
                     e.currentTarget.onerror = null;
@@ -174,16 +174,16 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
                 <button
                   onClick={() => avatarInputRef.current?.click()}
                   aria-label={language === 'vi' ? 'Đổi ảnh đại diện' : 'Change avatar'}
-                  className="absolute inset-0 m-1 rounded-full bg-slate-900/50 hover:bg-slate-900/70 text-white flex flex-col items-center justify-center transition opacity-90 hover:opacity-100 cursor-pointer"
+                  className="absolute inset-0 m-1 rounded-full bg-black/50 hover:bg-black/70 text-white flex flex-col items-center justify-center transition opacity-90 hover:opacity-100 cursor-pointer"
                   type="button"
                 >
                   <Camera className="w-4 h-4" />
-                  <span className="text-[10px] font-medium leading-tight mt-0.5">
+                  <span className="text-[10px] font-semibold leading-tight mt-0.5">
                     {language === 'vi' ? 'Đổi ảnh' : 'Change'}
                   </span>
                 </button>
               </div>
-              <span className="text-[11px] text-[#535F70] pb-2">
+              <span className="text-[11px] text-gray-500 dark:text-[#A8A8A8] pb-2">
                 {language === 'vi' ? 'Kích thước đề xuất: 400x400px JPG/PNG' : 'Recommended: 400x400px JPG/PNG'}
               </span>
             </div>
@@ -201,22 +201,22 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
             {/* Name Fields */}
             <div className="grid grid-cols-2 gap-3.5">
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-[#1A1C1E]">
+                <label className="block text-xs font-semibold text-gray-700 dark:text-[#E5E5E5]">
                   {language === 'vi' ? 'Họ' : 'Last name'}
                 </label>
                 <input
-                  className="w-full px-3.5 py-2 text-xs text-[#1A1C1E] bg-[#F9F9FB] border border-[#E2E2EC] rounded-lg focus:bg-white focus:ring-2 focus:ring-[#004AC6] focus:border-[#004AC6] transition outline-none"
+                  className="w-full px-3.5 h-10 text-xs sm:text-sm text-gray-900 dark:text-[#F5F5F5] bg-gray-50 dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#363636] rounded-xl focus:bg-white dark:focus:bg-[#000000] focus:ring-2 focus:ring-[#004AC6]/20 dark:focus:ring-[#0095F6]/30 focus:border-[#004AC6] dark:focus:border-[#0095F6] transition outline-none"
                   type="text"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-[#1A1C1E]">
+                <label className="block text-xs font-semibold text-gray-700 dark:text-[#E5E5E5]">
                   {language === 'vi' ? 'Tên' : 'First name'}
                 </label>
                 <input
-                  className="w-full px-3.5 py-2 text-xs text-[#1A1C1E] bg-[#F9F9FB] border border-[#E2E2EC] rounded-lg focus:bg-white focus:ring-2 focus:ring-[#004AC6] focus:border-[#004AC6] transition outline-none"
+                  className="w-full px-3.5 h-10 text-xs sm:text-sm text-gray-900 dark:text-[#F5F5F5] bg-gray-50 dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#363636] rounded-xl focus:bg-white dark:focus:bg-[#000000] focus:ring-2 focus:ring-[#004AC6]/20 dark:focus:ring-[#0095F6]/30 focus:border-[#004AC6] dark:focus:border-[#0095F6] transition outline-none"
                   type="text"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
@@ -226,12 +226,12 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
 
             {/* Username Field */}
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-[#1A1C1E]">
+              <label className="block text-xs font-semibold text-gray-700 dark:text-[#E5E5E5]">
                 {language === 'vi' ? 'Tên người dùng' : 'Username'}
               </label>
               <div className="relative">
                 <input
-                  className="w-full px-3.5 py-2 text-xs text-[#1A1C1E] bg-[#F9F9FB] border border-[#E2E2EC] rounded-lg focus:bg-white focus:ring-2 focus:ring-[#004AC6] focus:border-[#004AC6] transition outline-none"
+                  className="w-full px-3.5 h-10 text-xs sm:text-sm text-gray-900 dark:text-[#F5F5F5] bg-gray-50 dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#363636] rounded-xl focus:bg-white dark:focus:bg-[#000000] focus:ring-2 focus:ring-[#004AC6]/20 dark:focus:ring-[#0095F6]/30 focus:border-[#004AC6] dark:focus:border-[#0095F6] transition outline-none"
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -242,13 +242,13 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
             {/* Bio Field with counter */}
             <div className="space-y-1.5">
               <div className="flex justify-between items-center">
-                <label className="block text-xs font-semibold text-[#1A1C1E]">
+                <label className="block text-xs font-semibold text-gray-700 dark:text-[#E5E5E5]">
                   {language === 'vi' ? 'Tiểu sử' : 'Bio'}
                 </label>
-                <span className="text-[11px] text-[#535F70]">{bio.length}/160</span>
+                <span className="text-[11px] text-gray-400 dark:text-[#A8A8A8] tabular-nums">{bio.length}/160</span>
               </div>
               <textarea
-                className="w-full px-3.5 py-2 text-xs text-[#1A1C1E] bg-[#F9F9FB] border border-[#E2E2EC] rounded-lg focus:bg-white focus:ring-2 focus:ring-[#004AC6] focus:border-[#004AC6] transition outline-none leading-relaxed"
+                className="w-full p-3 text-xs sm:text-sm text-gray-900 dark:text-[#F5F5F5] bg-gray-50 dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#363636] rounded-xl focus:bg-white dark:focus:bg-[#000000] focus:ring-2 focus:ring-[#004AC6]/20 dark:focus:ring-[#0095F6]/30 focus:border-[#004AC6] dark:focus:border-[#0095F6] transition outline-none leading-relaxed resize-none"
                 rows={3}
                 maxLength={160}
                 value={bio}
@@ -259,13 +259,13 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
             {/* Location & Website 2-Column */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-[#1A1C1E]">
+                <label className="block text-xs font-semibold text-gray-700 dark:text-[#E5E5E5]">
                   {language === 'vi' ? 'Vị trí' : 'Location'}
                 </label>
                 <div className="relative">
-                  <MapPin className="absolute left-3 top-2.5 w-3.5 h-3.5 text-[#535F70]" />
+                  <MapPin className="absolute left-3.5 top-3 w-4 h-4 text-gray-400 dark:text-[#A8A8A8]" />
                   <input
-                    className="w-full pl-9 pr-3 py-2 text-xs text-[#1A1C1E] bg-[#F9F9FB] border border-[#E2E2EC] rounded-lg focus:bg-white focus:ring-2 focus:ring-[#004AC6] focus:border-[#004AC6] transition outline-none"
+                    className="w-full pl-10 pr-3.5 h-10 text-xs sm:text-sm text-gray-900 dark:text-[#F5F5F5] bg-gray-50 dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#363636] rounded-xl focus:bg-white dark:focus:bg-[#000000] focus:ring-2 focus:ring-[#004AC6]/20 dark:focus:ring-[#0095F6]/30 focus:border-[#004AC6] dark:focus:border-[#0095F6] transition outline-none"
                     type="text"
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
@@ -274,13 +274,13 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-[#1A1C1E]">
+                <label className="block text-xs font-semibold text-gray-700 dark:text-[#E5E5E5]">
                   {language === 'vi' ? 'Liên kết website' : 'Website'}
                 </label>
                 <div className="relative">
-                  <Link2 className="absolute left-3 top-2.5 w-3.5 h-3.5 text-[#535F70]" />
+                  <Link2 className="absolute left-3.5 top-3 w-4 h-4 text-gray-400 dark:text-[#A8A8A8]" />
                   <input
-                    className="w-full pl-9 pr-3 py-2 text-xs text-[#1A1C1E] bg-[#F9F9FB] border border-[#E2E2EC] rounded-lg focus:bg-white focus:ring-2 focus:ring-[#004AC6] focus:border-[#004AC6] transition outline-none"
+                    className="w-full pl-10 pr-3.5 h-10 text-xs sm:text-sm text-gray-900 dark:text-[#F5F5F5] bg-gray-50 dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#363636] rounded-xl focus:bg-white dark:focus:bg-[#000000] focus:ring-2 focus:ring-[#004AC6]/20 dark:focus:ring-[#0095F6]/30 focus:border-[#004AC6] dark:focus:border-[#0095F6] transition outline-none"
                     type="url"
                     value={websiteUrl}
                     onChange={(e) => setWebsiteUrl(e.target.value)}
@@ -291,23 +291,23 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
 
             {/* Interests Field */}
             <div className="space-y-2 pt-1">
-              <label className="block text-xs font-semibold text-[#1A1C1E]">
+              <label className="block text-xs font-semibold text-gray-700 dark:text-[#E5E5E5]">
                 {language === 'vi' ? 'Sở thích & Chuyên môn' : 'Interests & Specialties'}
               </label>
               <div className="flex flex-wrap gap-1.5 items-center">
                 {interests.map((tag) => (
                   <span
                     key={tag}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 text-xs bg-[#F3F3FD] border border-[#E2E2EC] rounded-full text-[#1A1C1E] font-medium"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 text-xs bg-gray-100 dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#363636] rounded-full text-gray-800 dark:text-[#E5E5E5] font-medium"
                   >
                     {tag}
                     <button
                       onClick={() => removeInterest(tag)}
                       aria-label={`Xoá ${tag}`}
-                      className="text-[#535F70] hover:text-red-500 flex items-center cursor-pointer ml-0.5"
+                      className="text-gray-400 dark:text-[#A8A8A8] hover:text-red-500 dark:hover:text-red-400 flex items-center cursor-pointer ml-0.5"
                       type="button"
                     >
-                      <X className="w-3 h-3" />
+                      <X className="w-3.5 h-3.5" />
                     </button>
                   </span>
                 ))}
@@ -328,11 +328,11 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
                           setIsAddingInterest(false);
                         }
                       }}
-                      className="px-2.5 py-1 text-xs bg-white border border-[#004AC6] rounded-full outline-none w-28"
+                      className="px-3 py-1 text-xs bg-white dark:bg-[#121212] border border-[#004AC6] dark:border-[#0095F6] text-gray-900 dark:text-[#F5F5F5] rounded-full outline-none w-32"
                     />
                     <button
                       onClick={addInterest}
-                      className="text-xs bg-[#004AC6] text-white px-2 py-1 rounded-full cursor-pointer"
+                      className="text-xs font-semibold bg-[#004AC6] dark:bg-[#0095F6] text-white px-2.5 py-1 rounded-full cursor-pointer"
                       type="button"
                     >
                       {language === 'vi' ? 'Thêm' : 'Add'}
@@ -341,10 +341,10 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
                 ) : (
                   <button
                     onClick={() => setIsAddingInterest(true)}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 text-xs text-[#004AC6] hover:bg-[#EFF4FF] border border-dashed border-[#004AC6]/40 rounded-full font-medium transition cursor-pointer"
+                    className="inline-flex items-center gap-1 px-3 py-1 text-xs text-[#004AC6] dark:text-[#0095F6] hover:bg-blue-50 dark:hover:bg-blue-950/40 border border-dashed border-[#004AC6]/40 dark:border-[#0095F6]/40 rounded-full font-semibold transition cursor-pointer"
                     type="button"
                   >
-                    <Plus className="w-3 h-3" />
+                    <Plus className="w-3.5 h-3.5" />
                     <span>{language === 'vi' ? '+ Thêm sở thích' : '+ Add interest'}</span>
                   </button>
                 )}
@@ -354,10 +354,10 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
         </div>
 
         {/* Sticky Footer */}
-        <div className="flex items-center justify-end gap-2.5 px-6 py-4 border-t border-[#E2E2EC] bg-white sticky bottom-0 z-20">
+        <div className="flex items-center justify-end gap-2.5 px-6 py-4 border-t border-gray-100 dark:border-[#262626] bg-white dark:bg-[#121212] sticky bottom-0 z-20">
           <button
             onClick={onClose}
-            className="px-4 py-2 border border-[#E2E2EC] rounded-full text-xs font-semibold text-[#1A1C1E] hover:bg-[#EDEDF8] transition cursor-pointer"
+            className="h-9 px-4 border border-gray-200 dark:border-[#363636] rounded-xl text-xs sm:text-sm font-semibold text-gray-700 dark:text-[#E5E5E5] hover:bg-gray-50 dark:hover:bg-[#262626] transition cursor-pointer"
             type="button"
           >
             {t('common.cancel')}
@@ -365,7 +365,7 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
           <button
             onClick={() => handleSubmit()}
             disabled={isLoading}
-            className="px-5 py-2 bg-[#004AC6] hover:bg-[#002970] text-white text-xs font-semibold rounded-full shadow transition cursor-pointer disabled:opacity-50"
+            className="h-9 px-5 bg-[#004AC6] hover:bg-[#002970] dark:bg-[#0095F6] dark:hover:bg-[#1877F2] text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition cursor-pointer disabled:opacity-50"
             type="button"
           >
             {isLoading ? t('profile.saving') : t('profile.saveChanges')}

@@ -7,20 +7,20 @@ import { PostCard } from '../components/post/PostCard';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const PostSkeleton = () => (
-  <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 animate-pulse">
+  <div className="bg-white dark:bg-[#121212] rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-[#262626] animate-pulse">
     <div className="flex items-center gap-3 mb-4">
-      <div className="w-10 h-10 rounded-full bg-gray-200" />
+      <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-[#262626]" />
       <div className="space-y-2 flex-1">
-        <div className="h-4 bg-gray-200 rounded w-1/4" />
-        <div className="h-3 bg-gray-200 rounded w-1/6" />
+        <div className="h-4 bg-gray-200 dark:bg-[#262626] rounded w-1/4" />
+        <div className="h-3 bg-gray-200 dark:bg-[#262626] rounded w-1/6" />
       </div>
     </div>
     <div className="space-y-2 mb-4">
-      <div className="h-4 bg-gray-200 rounded w-full" />
-      <div className="h-4 bg-gray-200 rounded w-4/5" />
+      <div className="h-4 bg-gray-200 dark:bg-[#262626] rounded w-full" />
+      <div className="h-4 bg-gray-200 dark:bg-[#262626] rounded w-4/5" />
     </div>
-    <div className="h-64 bg-gray-200 rounded-2xl mb-4" />
-    <div className="h-8 bg-gray-100 rounded-xl" />
+    <div className="h-64 bg-gray-200 dark:bg-[#262626] rounded-2xl mb-4" />
+    <div className="h-8 bg-gray-100 dark:bg-[#1A1A1A] rounded-xl" />
   </div>
 );
 
@@ -89,12 +89,12 @@ const PostDetailPage: React.FC = () => {
         <button
           type="button"
           onClick={handleBack}
-          className="flex items-center gap-2 px-3.5 py-2 text-sm font-semibold text-gray-700 bg-white hover:bg-gray-100 rounded-2xl shadow-xs border border-gray-200/80 transition-colors cursor-pointer"
+          className="flex items-center gap-2 px-3.5 py-2 text-sm font-semibold text-gray-700 dark:text-[#E5E5E5] bg-white dark:bg-[#121212] hover:bg-gray-100 dark:hover:bg-[#262626] rounded-2xl shadow-xs border border-gray-200/80 dark:border-[#262626] transition-colors cursor-pointer"
         >
-          <ArrowLeft className="w-4 h-4 text-gray-600" />
+          <ArrowLeft className="w-4 h-4 text-gray-600 dark:text-[#A8A8A8]" />
           <span>{language === 'vi' ? 'Quay lại' : 'Back'}</span>
         </button>
-        <h2 className="text-base font-bold text-gray-900">
+        <h2 className="text-base font-bold text-gray-900 dark:text-[#F5F5F5]">
           {language === 'vi' ? 'Chi tiết bài viết' : 'Post Detail'}
         </h2>
       </div>
@@ -104,21 +104,21 @@ const PostDetailPage: React.FC = () => {
 
       {/* Error state */}
       {!isLoading && error && (
-        <div className="bg-white border border-[#E2E2EC] rounded-3xl p-8 sm:p-12 text-center shadow-xs flex flex-col items-center justify-center">
-          <div className="w-16 h-16 rounded-full bg-red-50 border border-red-100 flex items-center justify-center text-red-500 mb-4 shadow-xs">
+        <div className="bg-white dark:bg-[#121212] border border-[#E2E2EC] dark:border-[#262626] rounded-3xl p-8 sm:p-12 text-center shadow-xs flex flex-col items-center justify-center">
+          <div className="w-16 h-16 rounded-full bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-red-900/60 flex items-center justify-center text-red-500 dark:text-red-400 mb-4 shadow-xs">
             <AlertCircle className="w-8 h-8" />
           </div>
-          <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-2">
+          <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-[#F5F5F5] mb-2">
             {language === 'vi' ? 'Không tìm thấy bài viết' : 'Post Not Found'}
           </h3>
-          <p className="text-xs sm:text-sm text-gray-500 max-w-md leading-relaxed mb-6">
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-[#A8A8A8] max-w-md leading-relaxed mb-6">
             {error}
           </p>
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={fetchPost}
-              className="px-5 py-2.5 bg-[#EDEDF8] hover:bg-slate-200 text-[#1A1C1E] text-xs font-semibold rounded-full transition flex items-center gap-1.5 cursor-pointer"
+              className="px-5 py-2.5 bg-[#EDEDF8] hover:bg-slate-200 dark:bg-[#1A1A1A] dark:hover:bg-[#363636] text-[#1A1C1E] dark:text-[#F5F5F5] text-xs font-semibold rounded-full transition flex items-center gap-1.5 cursor-pointer"
             >
               <RefreshCw className="w-4 h-4" />
               <span>{language === 'vi' ? 'Thử lại' : 'Retry'}</span>
@@ -126,7 +126,7 @@ const PostDetailPage: React.FC = () => {
             <button
               type="button"
               onClick={() => navigate('/feed')}
-              className="px-5 py-2.5 bg-[#004AC6] hover:bg-[#003A9F] text-white text-xs font-semibold rounded-full transition shadow-xs cursor-pointer"
+              className="px-5 py-2.5 bg-[#004AC6] hover:bg-[#003A9F] dark:bg-[#0095F6] dark:hover:bg-[#1877F2] text-white text-xs font-semibold rounded-full transition shadow-xs cursor-pointer"
             >
               <span>{language === 'vi' ? 'Về Bảng tin' : 'Go to Feed'}</span>
             </button>

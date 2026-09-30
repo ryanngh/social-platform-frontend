@@ -229,18 +229,18 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
       onClick={onClose}
     >
       <div 
-        className="bg-white rounded-3xl shadow-2xl border border-gray-100 w-full max-w-xl max-h-[90vh] flex flex-col relative"
+        className="bg-white dark:bg-[#121212] rounded-3xl shadow-2xl border border-gray-100 dark:border-[#262626] w-full max-w-xl max-h-[90vh] flex flex-col relative"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h3 className="text-base font-bold text-gray-900">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-[#262626]">
+          <h3 className="text-base font-bold text-gray-900 dark:text-[#F5F5F5]">
             {t('profile.editPostTitle')}
           </h3>
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center transition cursor-pointer"
+            className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-[#1A1A1A] dark:hover:bg-[#363636] text-gray-500 dark:text-[#A8A8A8] flex items-center justify-center transition cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -253,7 +253,7 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
             <button
               type="button"
               onClick={() => setIsAudienceOpen(!isAudienceOpen)}
-              className="flex items-center gap-1.5 px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-xs font-semibold transition cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1 bg-gray-100 hover:bg-gray-200 dark:bg-[#1A1A1A] dark:hover:bg-[#363636] text-gray-700 dark:text-[#D4D4D4] rounded-full text-xs font-semibold transition cursor-pointer"
             >
               {visibility === 'PUBLIC' && <Globe className="w-3.5 h-3.5" />}
               {visibility === 'FRIENDS' && <Users className="w-3.5 h-3.5" />}
@@ -265,11 +265,11 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
                   ? t('postDetail.friendsVisibility')
                   : t('postDetail.privateVisibility')}
               </span>
-              <ChevronDown className="w-3 h-3 text-gray-400" />
+              <ChevronDown className="w-3 h-3 text-gray-400 dark:text-[#A8A8A8]" />
             </button>
 
             {isAudienceOpen && (
-              <div className="absolute left-0 mt-1 w-44 bg-white rounded-2xl shadow-xl border border-gray-100 py-1.5 z-20 animate-fadeIn">
+              <div className="absolute left-0 mt-1 w-44 bg-white dark:bg-[#262626] rounded-2xl shadow-xl border border-gray-100 dark:border-[#363636] py-1.5 z-20 animate-fadeIn">
                 {(['PUBLIC', 'FRIENDS', 'PRIVATE'] as PostVisibility[]).map((v) => (
                   <button
                     key={v}
@@ -280,8 +280,8 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
                     }}
                     className={`w-full flex items-center gap-2.5 px-4 py-2 text-xs transition text-left cursor-pointer ${
                       visibility === v
-                        ? 'bg-blue-50 text-[#004AC6] font-semibold'
-                        : 'text-gray-700 hover:bg-gray-50'
+                        ? 'bg-blue-50 dark:bg-[#0095F6]/15 text-[#004AC6] dark:text-[#0095F6] font-semibold'
+                        : 'text-gray-700 dark:text-[#E5E5E5] hover:bg-gray-50 dark:hover:bg-[#262626]'
                     }`}
                   >
                     {v === 'PUBLIC' && <Globe className="w-3.5 h-3.5" />}
@@ -305,18 +305,18 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
             value={content}
             onChange={(e) => setContent(e.target.value)}
             rows={4}
-            className="w-full text-sm text-gray-800 placeholder-gray-400 border-none outline-none resize-none p-0 custom-scrollbar leading-relaxed"
+            className="w-full text-sm text-gray-800 dark:text-[#F5F5F5] placeholder-gray-400 dark:placeholder-[#737373] border-none outline-none resize-none p-0 custom-scrollbar leading-relaxed bg-transparent"
             placeholder="Nội dung bài viết..."
           />
 
           {/* Media Manager & Reordering */}
           {mediaList.length > 0 && (
-            <div className="border border-gray-200 rounded-2xl p-3.5 bg-gray-50/70">
+            <div className="border border-gray-200 dark:border-[#363636] rounded-2xl p-3.5 bg-gray-50/70 dark:bg-[#1A1A1A]">
               <div className="flex items-center justify-between mb-2.5 px-1">
-                <span className="text-[11px] font-semibold text-gray-600">
+                <span className="text-[11px] font-semibold text-gray-600 dark:text-[#A8A8A8]">
                   {mediaList.length} / 30 ảnh & video
                 </span>
-                <span className="text-[11px] text-[#004AC6] font-medium">
+                <span className="text-[11px] text-[#004AC6] dark:text-[#0095F6] font-medium">
                   {t('profile.dragToReorder')}
                 </span>
               </div>
@@ -386,12 +386,12 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
                       setDraggedIdx(null);
                       setDragOverIdx(null);
                     }}
-                    className={`relative group aspect-square rounded-xl overflow-hidden bg-black/5 border select-none transition-[border-color,box-shadow,opacity] cursor-grab active:cursor-grabbing ${
+                    className={`relative group aspect-square rounded-xl overflow-hidden bg-black/5 dark:bg-black/20 border select-none transition-[border-color,box-shadow,opacity] cursor-grab active:cursor-grabbing ${
                       draggedIdx === idx
-                        ? 'opacity-30 border-dashed border-[#004AC6]'
+                        ? 'opacity-30 border-dashed border-[#004AC6] dark:border-blue-400'
                         : dragOverIdx === idx
-                        ? 'border-[#004AC6] ring-2 ring-[#004AC6] shadow-md bg-blue-50/20'
-                        : 'border-gray-200 shadow-xs'
+                        ? 'border-[#004AC6] dark:border-blue-400 ring-2 ring-[#004AC6] dark:ring-blue-400 shadow-md bg-blue-50/20 dark:bg-blue-900/20'
+                        : 'border-gray-200 dark:border-[#363636] shadow-xs'
                     }`}
                   >
                     {/* Index Badge */}
@@ -437,7 +437,7 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="aspect-square rounded-xl border-2 border-dashed border-gray-300 hover:border-[#004AC6] hover:bg-blue-50/50 flex flex-col items-center justify-center gap-1 text-gray-500 hover:text-[#004AC6] transition cursor-pointer"
+                    className="aspect-square rounded-xl border-2 border-dashed border-gray-300 dark:border-[#363636] hover:border-[#004AC6] dark:hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-950/30 flex flex-col items-center justify-center gap-1 text-gray-500 dark:text-[#A8A8A8] hover:text-[#004AC6] dark:hover:text-[#0095F6] transition cursor-pointer"
                   >
                     <Plus className="w-5 h-5" />
                     <span className="text-[10px] font-semibold">{t('feed.addPhotos')}</span>
@@ -463,15 +463,15 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
           />
 
           {/* Toolbar */}
-          <div className="border border-gray-200/80 rounded-2xl p-2.5 flex items-center justify-between shadow-xs bg-white">
-            <span className="text-xs font-semibold text-gray-700 pl-1">
+          <div className="border border-gray-200/80 dark:border-[#363636] rounded-2xl p-2.5 flex items-center justify-between shadow-xs bg-white dark:bg-[#262626]">
+            <span className="text-xs font-semibold text-gray-700 dark:text-[#D4D4D4] pl-1">
               Thêm vào bài viết
             </span>
             <div className="flex items-center gap-1 relative">
               {/* Photo/Video */}
               <button
                 type="button"
-                className="p-2 hover:bg-emerald-50 rounded-xl transition text-emerald-500 cursor-pointer"
+                className="p-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-xl transition text-emerald-500 dark:text-emerald-400 cursor-pointer"
                 title={t('feed.photoVideo')}
                 onClick={() => fileInputRef.current?.click()}
               >
@@ -483,7 +483,9 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
                 <button
                   type="button"
                   className={`px-2 py-1 rounded-xl text-xs font-black transition cursor-pointer ${
-                    isGifPickerOpen ? 'bg-[#004AC6] text-white' : 'hover:bg-purple-50 text-purple-600 bg-purple-50/60'
+                    isGifPickerOpen
+                      ? 'bg-[#004AC6] dark:bg-[#0095F6] text-white'
+                      : 'hover:bg-purple-50 dark:hover:bg-purple-950/40 text-purple-600 dark:text-purple-300 bg-purple-50/60 dark:bg-purple-900/30'
                   }`}
                   title={t('profile.addGif')}
                   onClick={() => {
@@ -508,7 +510,9 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
                 <button
                   type="button"
                   className={`p-2 rounded-xl transition cursor-pointer ${
-                    isEmojiPickerOpen ? 'bg-amber-100 text-amber-600' : 'hover:bg-amber-50 text-amber-500'
+                    isEmojiPickerOpen
+                      ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300'
+                      : 'hover:bg-amber-50 dark:hover:bg-amber-950/40 text-amber-500 dark:text-amber-400'
                   }`}
                   title={t('feed.feelingActivity')}
                   onClick={() => {
@@ -532,12 +536,12 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
         </div>
 
         {/* Footer actions */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50/50 rounded-b-3xl">
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 dark:border-[#262626] bg-gray-50/50 dark:bg-[#121212]/50 rounded-b-3xl">
           <button
             type="button"
             onClick={onClose}
             disabled={isSaving}
-            className="px-5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-200 transition cursor-pointer"
+            className="px-5 py-2 rounded-xl text-xs font-semibold text-gray-700 dark:text-[#D4D4D4] hover:bg-gray-200 dark:hover:bg-[#262626] transition cursor-pointer"
           >
             {t('common.cancel')}
           </button>
@@ -545,7 +549,7 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="px-6 py-2 rounded-xl text-xs font-semibold bg-[#004AC6] hover:bg-[#003da3] text-white transition flex items-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50"
+            className="px-6 py-2 rounded-xl text-xs font-semibold bg-[#004AC6] hover:bg-[#003da3] dark:bg-[#0095F6] dark:hover:bg-[#1877F2] text-white transition flex items-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50"
           >
             {isSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
             <span>{t('profile.saveChanges')}</span>

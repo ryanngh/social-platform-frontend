@@ -13,15 +13,20 @@ export default defineConfig({
     },
     proxy: {
       ...Object.fromEntries(
-        ['/auth',
-            '/users',
-            '/posts',
-            '/comments',
-            '/media',
-            '/friend-requests',
-            '/close-friends',
-            '/relationships']
-            .map((path) => [
+        [
+          '/auth',
+          '/users',
+          '/posts',
+          '/comments',
+          '/feed',
+          '/api',
+          '/media',
+          '/friend-requests',
+          '/close-friends',
+          '/relationships',
+          '/follows',
+          '/notifications',
+        ].map((path) => [
           path,
           {
             target: 'http://host.docker.internal:8080',
