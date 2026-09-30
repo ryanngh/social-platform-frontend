@@ -1,0 +1,12 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - VITE_BACKEND_URL=https://api.yourdomain.com
+        - VITE_MINIO_URL=https://storage.yourdomain.com/social-media/
+    container_name: social-platform-frontend-prod
+    restart: unless-stopped
+    ports:
+      - "80:80"
