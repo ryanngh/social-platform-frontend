@@ -17,8 +17,11 @@ import {
 import toast from 'react-hot-toast';
 import type { User } from '../../types';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { getAvatarUrl, getBannerUrl, DEFAULT_AVATAR_FALLBACK } from '../../utils/media';
+import { getBannerUrl } from '../../utils/media';
+
+
 import { copyToClipboard } from '../../utils/share';
+import UserAvatar from '../common/UserAvatar';
 
 interface ProfileHeaderProps {
   user: User;
@@ -163,16 +166,15 @@ export const ProfileHeader = ({
         {/* Avatar and Action Row */}
         <div className="flex justify-between items-end -mt-14 sm:-mt-16 mb-4">
           <div className="relative z-20">
-            <img
+            <UserAvatar
+              userId={isBlockedByThem ? undefined : user.id}
+              src={isBlockedByThem ? null : user.avatarUrl}
               alt={fullName}
+              size="2xl"
               className={`w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white dark:border-[#121212] object-cover shadow-md bg-white dark:bg-[#121212] ${
                 isBlockedByMe ? 'filter grayscale opacity-80' : ''
               }`}
-              src={getAvatarUrl(isBlockedByThem ? null : user.avatarUrl)}
-              onError={(e) => {
-                e.currentTarget.onerror = null;
-                e.currentTarget.src = DEFAULT_AVATAR_FALLBACK;
-              }}
+              isSelf={isOwnProfile}
             />
           </div>
 

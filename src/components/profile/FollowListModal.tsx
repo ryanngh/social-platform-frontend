@@ -2,10 +2,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { X, Users, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { getAvatarUrl, DEFAULT_AVATAR_FALLBACK } from '../../utils/media';
 import { getProfileUrl } from '../../utils/user';
+
 import { userService } from '../../services/userService';
 import type { UserSummary } from '../../types';
+import UserAvatar from '../common/UserAvatar';
 
 export type FollowListType = 'followers' | 'following';
 
@@ -260,14 +261,11 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="relative flex-shrink-0">
-                        <img
-                          src={getAvatarUrl(item.avatarUrl || undefined)}
+                        <UserAvatar
+                          userId={item.id}
+                          src={item.avatarUrl}
                           alt={displayName}
-                          className="w-10 h-10 rounded-full object-cover border border-gray-100 dark:border-[#363636]"
-                          onError={(e) => {
-                            e.currentTarget.onerror = null;
-                            e.currentTarget.src = DEFAULT_AVATAR_FALLBACK;
-                          }}
+                          size="md"
                         />
                       </div>
 

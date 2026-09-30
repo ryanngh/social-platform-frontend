@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Users, TrendingUp, Calendar } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { getProfileUrl } from '../../utils/user';
+import UserAvatar from '../common/UserAvatar';
 
 interface SuggestionItem {
   id: number;
@@ -52,10 +53,11 @@ const RightSidebar: React.FC = () => {
               <div key={user.id} className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Link to={getProfileUrl(user)} className="flex-shrink-0 hover:opacity-90 transition cursor-pointer">
-                    <img
-                      alt={user.name}
-                      className="w-10 h-10 rounded-full object-cover border border-gray-100 dark:border-[#363636]"
+                    <UserAvatar
+                      userId={String(user.id)}
                       src={user.avatar}
+                      alt={user.name}
+                      size="md"
                     />
                   </Link>
                   <div className="leading-tight">

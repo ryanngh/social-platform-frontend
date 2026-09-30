@@ -14,12 +14,15 @@ import {
   CornerDownRight
 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { getAvatarUrl, getMediaUrl, isVideoMedia } from '../../utils/media';
+import { getMediaUrl, isVideoMedia } from '../../utils/media';
+
+
 import { getProfileUrl } from '../../utils/user';
 import { commentService } from '../../services/commentService';
 import type { CommentResponse, ReplyResponse } from '../../types';
 import CommentMediaLightbox from './CommentMediaLightbox';
 import ConfirmModal from '../common/ConfirmModal';
+import UserAvatar from '../common/UserAvatar';
 import toast from 'react-hot-toast';
 
 interface CommentItemProps {
@@ -274,13 +277,14 @@ export const CommentItem: React.FC<CommentItemProps> = ({
       {/* Avatar */}
       <Link
         to={getProfileUrl(comment.author)}
-        className="flex-shrink-0 relative z-10 hover:opacity-95 transition-transform active:scale-95 cursor-pointer"
+        className="flex-shrink-0 relative z-10 hover:opacity-95 transition-transform active:scale-95 cursor-pointer mt-0.5"
         onClick={(e) => e.stopPropagation()}
       >
-        <img
-          src={getAvatarUrl(isDeleted ? null : comment.author.avatarUrl)}
+        <UserAvatar
+          userId={isDeleted ? undefined : comment.author.id}
+          src={isDeleted ? null : comment.author.avatarUrl}
           alt={isDeleted ? 'deleted' : comment.author.fullName || comment.author.username}
-          className="w-8 h-8 rounded-full object-cover ring-1 ring-slate-200/80 dark:ring-[#262626] hover:ring-blue-400/60 transition-all shadow-2xs mt-0.5"
+          size="sm"
         />
       </Link>
 
@@ -868,13 +872,14 @@ const ReplyItem: React.FC<ReplyItemProps> = ({
     <div className="flex gap-2.5 items-start group/reply relative">
       <Link
         to={getProfileUrl(reply.author)}
-        className="flex-shrink-0 hover:opacity-95 transition-transform active:scale-95 cursor-pointer relative z-10"
+        className="flex-shrink-0 hover:opacity-95 transition-transform active:scale-95 cursor-pointer relative z-10 mt-0.5"
         onClick={(e) => e.stopPropagation()}
       >
-        <img
-          src={getAvatarUrl(reply.author.avatarUrl)}
+        <UserAvatar
+          userId={reply.author.id}
+          src={reply.author.avatarUrl}
           alt={reply.author.fullName || reply.author.username}
-          className="w-6.5 h-6.5 rounded-full object-cover ring-1 ring-slate-200/80 dark:ring-[#262626] shadow-2xs mt-0.5"
+          size="xs"
         />
       </Link>
       <div className="flex-1 min-w-0">

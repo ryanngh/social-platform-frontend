@@ -1,4 +1,5 @@
 import api from '../lib/axios';
+import { extractHashtags } from '../utils/text';
 import type {
   PostResponse,
   PostShareResponse,
@@ -21,11 +22,13 @@ export const postService = {
   },
 
   async createPost(data: import('../types').CreatePostRequest): Promise<PostResponse> {
+    const extractedTags = data.content ? extractHashtags(data.content) : [];
+    const mergedHashtags = Array.from(new Set([...(data.hashtags || []), ...extractedTags]));
     const payload = {
       content: data.content,
       visibility: data.visibility || 'PUBLIC',
       media: data.media || [],
-      hashtags: data.hashtags || [],
+      hashtags: mergedHashtags,
       taggedUserIds: data.taggedUserIds || [],
     };
     const response = await api.post<import('../types').CreatePostResponse>('/posts', payload);
@@ -63,7 +66,11 @@ export const postService = {
   },
 
   async updatePost(postId: string, data: Partial<import('../types').CreatePostRequest>): Promise<PostResponse> {
-    const response = await api.put<PostResponse>(`/posts/${postId}`, data);
+    const payload: Partial<import('../types').CreatePostRequest> = { ...data };
+    if (data.content !== undefined && data.hashtags === undefined) {
+      payload.hashtags = extractHashtags(data.content);
+    }
+    const response = await api.put<PostResponse>(`/posts/${postId}`, payload);
     return response.data;
   },
 

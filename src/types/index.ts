@@ -383,7 +383,11 @@ export interface SliceResponse<T> {
   first: boolean;
   last: boolean;
   empty: boolean;
+  hasNext?: boolean;
 }
 
 export * from './notification';
+export * from './search';
+export * from './presence';
+
 

@@ -30,6 +30,7 @@ import {
   type ChatMessageItem,
   type ChatContact,
 } from '../mocks/messagesData';
+import UserAvatar from '../components/common/UserAvatar';
 import clsx from 'clsx';
 
 type ConversationTab = 'all' | 'unread' | 'groups';
@@ -318,16 +319,14 @@ export const MessagesPage: React.FC = () => {
                 className="flex flex-col items-center gap-1 shrink-0 cursor-pointer group"
                 title={contact.name}
               >
-                <div className="relative">
-                  <img
-                    src={contact.avatarUrl}
-                    alt={contact.name}
-                    className="w-11 h-11 rounded-full object-cover border-2 border-transparent group-hover:border-[#004AC6] dark:group-hover:border-[#0095F6] transition"
-                  />
-                  {contact.isOnline && (
-                    <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white dark:border-[#121212]" />
-                  )}
-                </div>
+                <UserAvatar
+                  userId={contact.id}
+                  src={contact.avatarUrl}
+                  alt={contact.name}
+                  presenceStatus={contact.isOnline ? 'online' : 'offline'}
+                  size="lg"
+                  className="w-11 h-11 border-2 border-transparent group-hover:border-[#004AC6] dark:group-hover:border-[#0095F6] transition"
+                />
                 <span className="text-[10px] text-gray-700 dark:text-[#D4D4D4] font-medium truncate max-w-[50px]">
                   {contact.name.split(' ')[0]}
                 </span>
@@ -393,16 +392,14 @@ export const MessagesPage: React.FC = () => {
                       : 'hover:bg-gray-50 dark:hover:bg-[#1A1A1A]'
                   )}
                 >
-                  <div className="relative shrink-0">
-                    <img
-                      src={conv.avatarUrl}
-                      alt={conv.name}
-                      className="w-12 h-12 rounded-full object-cover"
-                    />
-                    {conv.isOnline && (
-                      <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white dark:border-[#121212]" />
-                    )}
-                  </div>
+                  <UserAvatar
+                    userId={conv.partner?.id}
+                    src={conv.avatarUrl}
+                    alt={conv.name}
+                    presenceStatus={conv.isOnline ? 'online' : 'offline'}
+                    size="lg"
+                    className="w-12 h-12"
+                  />
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-0.5">
@@ -474,16 +471,13 @@ export const MessagesPage: React.FC = () => {
               <ArrowLeft className="w-5 h-5" />
             </button>
 
-            <div className="relative">
-              <img
-                src={activeConversation.avatarUrl}
-                alt={activeConversation.name}
-                className="w-10 h-10 rounded-full object-cover"
-              />
-              {activeConversation.isOnline && (
-                <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white dark:border-[#121212]" />
-              )}
-            </div>
+            <UserAvatar
+              userId={activeConversation.partner?.id}
+              src={activeConversation.avatarUrl}
+              alt={activeConversation.name}
+              presenceStatus={activeConversation.isOnline ? 'online' : 'offline'}
+              size="md"
+            />
 
             <div>
               <div className="flex items-center gap-1">
@@ -786,10 +780,13 @@ export const MessagesPage: React.FC = () => {
 
           {/* Partner Avatar & Profile Summary */}
           <div className="flex flex-col items-center text-center mb-6">
-            <img
+            <UserAvatar
+              userId={activeConversation.partner?.id}
               src={activeConversation.avatarUrl}
               alt={activeConversation.name}
-              className="w-16 h-16 rounded-full object-cover mb-2 border-2 border-white dark:border-[#262626] shadow-sm"
+              presenceStatus={activeConversation.isOnline ? 'online' : 'offline'}
+              size="xl"
+              className="w-16 h-16 mb-2 border-2 border-white dark:border-[#262626] shadow-sm"
             />
             <h4 className="font-bold text-sm text-gray-900 dark:text-[#F5F5F5]">
               {activeConversation.name}

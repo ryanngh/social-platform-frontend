@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { PresenceProvider } from './contexts/PresenceContext';
 
 import MainLayout from './components/layouts/MainLayout';
 import FeedPage from './pages/FeedPage';
@@ -19,6 +20,7 @@ import MessagesPage from './pages/MessagesPage';
 import StoragePage from './pages/StoragePage';
 import MarketplacePage from './pages/MarketplacePage';
 import SavedPage from './pages/SavedPage';
+import SearchPage from './pages/SearchPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -75,42 +77,45 @@ function App() {
           <LanguageProvider>
             <AuthProvider>
               <NotificationProvider>
-                <Toaster
-                  position="bottom-right"
-                  toastOptions={{
-                    className: 'dark:!bg-[#262626] dark:!text-[#F5F5F5] dark:!border dark:!border-[#363636]',
-                  }}
-                />
-                <Routes>
-                  <Route path="/signin" element={<SignInPage />} />
-                  <Route path="/signup" element={<SignUpPage />} />
+                <PresenceProvider>
+                  <Toaster
+                    position="bottom-right"
+                    toastOptions={{
+                      className: 'dark:!bg-[#262626] dark:!text-[#F5F5F5] dark:!border dark:!border-[#363636]',
+                    }}
+                  />
+                  <Routes>
+                    <Route path="/signin" element={<SignInPage />} />
+                    <Route path="/signup" element={<SignUpPage />} />
 
-                  {/* Main App Layout Routes */}
-                  <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
-                    <Route path="/feed" element={<FeedPage />} />
-                    <Route path="/trending" element={<FeedPage defaultTab="trending" />} />
-                    <Route path="/notifications" element={<NotificationsPage />} />
-                    <Route path="/explore" element={<ExplorePage />} />
-                    <Route path="/messages" element={<MessagesPage />} />
-                    <Route path="/messages/:chatId" element={<MessagesPage />} />
-                    <Route path="/drive" element={<StoragePage />} />
-                    <Route path="/storage" element={<StoragePage />} />
-                    <Route path="/marketplace" element={<MarketplacePage />} />
-                    <Route path="/marketplace/:itemId" element={<MarketplacePage />} />
-                    <Route path="/saved" element={<SavedPage />} />
-                    <Route path="/posts/:postId" element={<PostDetailPage />} />
-                    <Route path="/" element={<Navigate to="/feed" replace />} />
-                  </Route>
+                    {/* Main App Layout Routes */}
+                    <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
+                      <Route path="/feed" element={<FeedPage />} />
+                      <Route path="/trending" element={<FeedPage defaultTab="trending" />} />
+                      <Route path="/notifications" element={<NotificationsPage />} />
+                      <Route path="/explore" element={<ExplorePage />} />
+                      <Route path="/messages" element={<MessagesPage />} />
+                      <Route path="/messages/:chatId" element={<MessagesPage />} />
+                      <Route path="/drive" element={<StoragePage />} />
+                      <Route path="/storage" element={<StoragePage />} />
+                      <Route path="/marketplace" element={<MarketplacePage />} />
+                      <Route path="/marketplace/:itemId" element={<MarketplacePage />} />
+                      <Route path="/saved" element={<SavedPage />} />
+                      <Route path="/posts/:postId" element={<PostDetailPage />} />
+                      <Route path="/search" element={<SearchPage />} />
+                      <Route path="/" element={<Navigate to="/feed" replace />} />
+                    </Route>
 
-                  {/* Backward compatibility for /profile */}
-                  <Route path="/profile" element={<ProtectedRoute><ProfileRouteWrapper /></ProtectedRoute>} />
-                  <Route path="/profile/:identifier" element={<ProtectedRoute><ProfileIdentifierRedirect /></ProtectedRoute>} />
+                    {/* Backward compatibility for /profile */}
+                    <Route path="/profile" element={<ProtectedRoute><ProfileRouteWrapper /></ProtectedRoute>} />
+                    <Route path="/profile/:identifier" element={<ProtectedRoute><ProfileIdentifierRedirect /></ProtectedRoute>} />
 
-                  {/* Root parameter profile route */}
-                  <Route path="/:identifier" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+                    {/* Root parameter profile route */}
+                    <Route path="/:identifier" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
 
-                  <Route path="*" element={<Navigate to="/feed" replace />} />
-                </Routes>
+                    <Route path="*" element={<Navigate to="/feed" replace />} />
+                  </Routes>
+                </PresenceProvider>
               </NotificationProvider>
             </AuthProvider>
           </LanguageProvider>

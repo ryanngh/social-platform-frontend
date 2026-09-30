@@ -15,6 +15,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { postService } from '../../services/postService';
 import { mediaService } from '../../services/mediaService';
 import { getMediaUrl } from '../../utils/media';
+import { extractHashtags } from '../../utils/text';
 import type { PostResponse, PostVisibility, PostMediaRequest } from '../../types';
 import EmojiPickerPopover from '../common/EmojiPickerPopover';
 import GifPickerPopover from '../common/GifPickerPopover';
@@ -201,15 +202,18 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
       });
 
       // 3. Update post
+      const hashtags = extractHashtags(content);
       const updated = await postService.updatePost(post.id, {
         content: content.trim(),
         visibility,
         media: finalMedia,
+        hashtags,
       });
 
       onPostUpdated({
         ...post,
         ...updated,
+        hashtags: updated.hashtags ?? hashtags,
         media: updated.media || [],
       });
 

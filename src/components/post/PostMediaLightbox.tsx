@@ -28,16 +28,17 @@ import {
 import toast from 'react-hot-toast';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { getAvatarUrl, getMediaUrl, isVideoMedia } from '../../utils/media';
+import { getMediaUrl, isVideoMedia } from '../../utils/media';
 import { getProfileUrl } from '../../utils/user';
 import { commentService } from '../../services/commentService';
 import { postService } from '../../services/postService';
 import type { PostResponse, CommentResponse, CommentMediaRequest, PostVisibility } from '../../types';
-import { getContentWithoutHashtags } from '../../utils/text';
+import { getContentWithoutHashtags, extractHashtags } from '../../utils/text';
 import { handleCopyAndSharePost } from '../../utils/share';
 import PostMoreMenu from './PostMoreMenu';
 import CommentItem from './CommentItem';
 import CommentInput from './CommentInput';
+import UserAvatar from '../common/UserAvatar';
 import LikersModal from './LikersModal';
 import EditPostModal from './EditPostModal';
 import DeletePostModal from './DeletePostModal';
@@ -355,12 +356,15 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
     if (!editedPostContent.trim() || isSavingPostEdit) return;
     setIsSavingPostEdit(true);
     try {
+      const hashtags = extractHashtags(editedPostContent);
       const updated = await postService.updatePost(currentPost.id, {
         content: editedPostContent.trim(),
+        hashtags,
       });
       const updatedPostObj = {
         ...currentPost,
         content: updated.content,
+        hashtags: updated.hashtags ?? hashtags,
         updatedAt: new Date().toISOString(),
       };
       setCurrentPost(updatedPostObj);
@@ -796,15 +800,12 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
                 onClick={onClose}
                 className="hover:opacity-90 transition cursor-pointer"
               >
-                <div className="relative">
-                  <div className="p-[2px] rounded-full bg-gradient-to-tr from-[#004AC6] to-[#7EB0FF] dark:from-[#0095F6] dark:to-[#7EB0FF]">
-                    <img
-                      src={getAvatarUrl(currentPost.author.avatarUrl)}
-                      alt={authorName}
-                      className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-[#121212]"
-                    />
-                  </div>
-                </div>
+                <UserAvatar
+                  userId={currentPost.author.id}
+                  src={currentPost.author.avatarUrl}
+                  alt={authorName}
+                  size="md"
+                />
               </Link>
               <div className="flex flex-col">
                 <div className="flex items-center gap-1.5">

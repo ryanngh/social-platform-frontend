@@ -26,9 +26,9 @@ import { useAuth } from '../../contexts/AuthContext';
 import { postService } from '../../services/postService';
 import { repostService } from '../../services/repostService';
 import { commentService } from '../../services/commentService';
-import { getAvatarUrl, getMediaUrl, isVideoMedia, DEFAULT_AVATAR_FALLBACK } from '../../utils/media';
+import { getMediaUrl, isVideoMedia } from '../../utils/media';
 import { getProfileUrl } from '../../utils/user';
-import { getContentWithoutHashtags } from '../../utils/text';
+import { getContentWithoutHashtags, extractHashtags } from '../../utils/text';
 import { handleCopyAndSharePost } from '../../utils/share';
 import PostMoreMenu from './PostMoreMenu';
 import EditPostModal from './EditPostModal';
@@ -38,6 +38,7 @@ import { CommentInput } from './CommentInput';
 import LikersModal from './LikersModal';
 import RepostersModal from './RepostersModal';
 import CreateRepostModal from './CreateRepostModal';
+import UserAvatar from '../common/UserAvatar';
 import PostMediaLightbox from './PostMediaLightbox';
 import RepostBubble from './RepostBubble';
 import { usePostViewTracker } from '../../hooks/usePostViewTracker';
@@ -452,12 +453,15 @@ export const PostCard: React.FC<PostCardProps> = ({
     if (!editContent.trim() || isSaving) return;
     setIsSaving(true);
     try {
+      const hashtags = extractHashtags(editContent);
       const updated = await postService.updatePost(post.id, {
         content: editContent.trim(),
+        hashtags,
       });
       const updatedPostObj = {
         ...post,
         content: updated.content,
+        hashtags: updated.hashtags ?? hashtags,
         updatedAt: new Date().toISOString(),
       };
       onPostUpdated?.(updatedPostObj);
@@ -550,14 +554,11 @@ export const PostCard: React.FC<PostCardProps> = ({
             className="hover:opacity-90 transition flex-shrink-0 cursor-pointer"
             onClick={(e) => e.stopPropagation()}
           >
-            <img
+            <UserAvatar
+              userId={post.author.id}
+              src={post.author.avatarUrl}
               alt={authorName}
-              className="w-10 h-10 rounded-full object-cover border border-gray-100 dark:border-[#363636]"
-              src={getAvatarUrl(post.author.avatarUrl)}
-              onError={(e) => {
-                e.currentTarget.onerror = null;
-                e.currentTarget.src = DEFAULT_AVATAR_FALLBACK;
-              }}
+              size="md"
             />
           </Link>
           <div>

@@ -1,11 +1,12 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Search, Bell, Mail, MessageSquare, Globe, User as UserIcon, LogOut, Sun, Moon, Laptop } from 'lucide-react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Search, Bell, Mail, MessageSquare, Globe, User as UserIcon, LogOut, Sun, Moon, Laptop, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { NotificationPopup } from '../notifications/NotificationPopup';
+import SearchTypeaheadDropdown from '../search/SearchTypeaheadDropdown';
 import { getAvatarUrl, DEFAULT_AVATAR_FALLBACK } from '../../utils/media';
 import { getProfileUrl } from '../../utils/user';
 import clsx from 'clsx';
@@ -15,30 +16,68 @@ const TopNavBar: React.FC = () => {
   const { language, setLanguage, t } = useLanguage();
   const { theme, resolvedTheme, setTheme, toggleTheme } = useTheme();
   const { unreadCount } = useNotifications();
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotificationPopup, setShowNotificationPopup] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+
   const menuRef = useRef<HTMLDivElement>(null);
   const notifButtonRef = useRef<HTMLDivElement>(null);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync searchQuery when on /search?q=...
+  useEffect(() => {
+    if (location.pathname === '/search') {
+      const params = new URLSearchParams(location.search);
+      const q = params.get('q');
+      if (q !== null) {
+        setSearchQuery(q);
+      }
+    }
+  }, [location.pathname, location.search]);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = searchQuery.trim();
+    if (!trimmed) return;
+    setShowSearchDropdown(false);
+    searchInputRef.current?.blur();
+    navigate(`/search?q=${encodeURIComponent(trimmed)}`);
+  };
+
+  const handleClearSearch = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSearchQuery('');
+    searchInputRef.current?.focus();
+  };
+
 
   const displayName = user?.firstName
     ? `${user.firstName} ${user.lastName || ''}`.trim()
     : user?.username || t('topNav.userFallback');
   const username = user?.username || 'user';
 
-  // Close menu when clicking outside
+  // Close menu & search dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (menuRef.current && !menuRef.current.contains(target)) {
         setShowUserMenu(false);
       }
+      if (searchContainerRef.current && !searchContainerRef.current.contains(target)) {
+        setShowSearchDropdown(false);
+      }
     };
-    if (showUserMenu) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
+    document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showUserMenu]);
+  }, []);
+
 
   return (
     <header className="fixed top-0 left-0 right-0 h-16 bg-white dark:bg-[#121212] border-b border-gray-200/80 dark:border-[#262626] z-50 shadow-sm flex items-center justify-between px-4 sm:px-6 transition-colors duration-200">
@@ -47,14 +86,49 @@ const TopNavBar: React.FC = () => {
         <Link to="/feed" className="text-2xl font-black text-[#004AC6] dark:text-[#0095F6] tracking-tight hover:opacity-95 transition">
           RySocial
         </Link>
-        <div className="relative w-48 sm:w-64 md:w-[380px]">
-          <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400 dark:text-[#737373]">
-            <Search className="w-4 h-4" />
-          </span>
-          <input
-            className="w-full pl-10 pr-4 py-2 text-sm bg-gray-100/90 dark:bg-[#1A1A1A] border border-transparent dark:border-[#363636] rounded-full focus:bg-white dark:focus:bg-[#000000] focus:border-[#004AC6] dark:focus:border-[#0095F6] focus:ring-1 focus:ring-[#004AC6] dark:focus:ring-[#0095F6] text-gray-900 dark:text-[#F5F5F5] placeholder-gray-400 dark:placeholder-[#737373] transition outline-none"
-            placeholder={t('topNav.searchPlaceholder')}
-            type="text"
+        <div className="relative w-48 sm:w-64 md:w-[380px]" ref={searchContainerRef}>
+          <form onSubmit={handleSearchSubmit} className="relative w-full">
+            <button
+              type="submit"
+              className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400 dark:text-[#737373] hover:text-[#004AC6] dark:hover:text-[#0095F6] transition cursor-pointer"
+              title={t('topNav.searchPlaceholder')}
+            >
+              <Search className="w-4 h-4" />
+            </button>
+            <input
+              ref={searchInputRef}
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setShowSearchDropdown(true);
+              }}
+              onFocus={() => setShowSearchDropdown(true)}
+              className="w-full pl-10 pr-9 py-2 text-sm bg-gray-100/90 dark:bg-[#1A1A1A] border border-transparent dark:border-[#363636] rounded-full focus:bg-white dark:focus:bg-[#000000] focus:border-[#004AC6] dark:focus:border-[#0095F6] focus:ring-1 focus:ring-[#004AC6] dark:focus:ring-[#0095F6] text-gray-900 dark:text-[#F5F5F5] placeholder-gray-400 dark:placeholder-[#737373] transition outline-none"
+              placeholder={t('topNav.searchPlaceholder')}
+              type="text"
+              autoComplete="off"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 dark:hover:text-[#E5E5E5] transition cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </form>
+
+          {/* Typeahead & History Dropdown */}
+          <SearchTypeaheadDropdown
+            isOpen={showSearchDropdown}
+            onClose={() => setShowSearchDropdown(false)}
+            query={searchQuery}
+            onSelectQuery={(selectedText) => {
+              setSearchQuery(selectedText);
+              setShowSearchDropdown(false);
+            }}
+            inputRef={searchInputRef}
           />
         </div>
       </div>

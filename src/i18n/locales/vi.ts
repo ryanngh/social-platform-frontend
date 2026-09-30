@@ -613,8 +613,42 @@ export const vi = {
         noSavedItemsDesc: 'Khi bạn thấy bài viết, hình ảnh hoặc sản phẩm thú vị, hãy lưu lại để xem lại sau nhé!',
         exploreRySocial: 'Khám phá RySocial ngay',
     },
+    search: {
+        title: 'Tìm kiếm',
+        searchResultsFor: 'Kết quả tìm kiếm cho: "{query}"',
+        searchPlaceholder: 'Tìm kiếm mọi người, bài viết...',
+        tabs: {
+            all: 'Tất cả',
+            people: 'Mọi người',
+            posts: 'Bài viết',
+        },
+        recentSearches: 'Tìm kiếm gần đây',
+        clearAll: 'Xóa tất cả',
+        deleteItem: 'Xóa',
+        noRecentSearches: 'Chưa có lịch sử tìm kiếm',
+        noRecentSearchesDesc: 'Tìm kiếm bạn bè, bài viết hoặc chủ đề bạn quan tâm',
+        instantSuggestions: 'Gợi ý tức thì',
+        searchAllFor: 'Tìm kiếm tất cả kết quả cho "{query}"',
+        follow: 'Theo dõi',
+        following: 'Đang theo dõi',
+        unfollow: 'Hủy theo dõi',
+        friends: 'Bạn bè',
+        followers: 'người theo dõi',
+        followingCount: 'đang theo dõi',
+        noResultsTitle: 'Không tìm thấy kết quả nào phù hợp với "{query}"',
+        noResultsDesc: 'Hãy thử kiểm tra lại chính tả hoặc thử các từ khóa phổ biến hơn.',
+        noUsersDesc: 'Không tìm thấy người dùng nào phù hợp với từ khóa này.',
+        noPostsDesc: 'Không tìm thấy bài viết nào phù hợp với từ khóa này.',
+        startSearching: 'Bắt đầu tìm kiếm',
+        startSearchingDesc: 'Nhập từ khóa vào ô tìm kiếm ở trên để tìm bạn bè, người sáng tạo và các bài viết thú vị.',
+        exploreCommunity: 'Khám phá cộng đồng',
+        backToFeed: 'Quay lại Bảng tin',
+        allUsersLoaded: 'Đã hiển thị hết danh sách người dùng',
+        allPostsLoaded: 'Đã hiển thị hết bài viết',
+    },
 };
 
 export type Translations = typeof vi;
+
 
 

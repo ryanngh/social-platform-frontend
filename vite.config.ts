@@ -26,6 +26,8 @@ export default defineConfig({
           '/relationships',
           '/follows',
           '/notifications',
+          '/search',
+          '/presence',
         ].map((path) => [
           path,
           {
