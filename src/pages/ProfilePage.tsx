@@ -548,6 +548,7 @@ export const ProfilePage = () => {
                   user={displayUser}
                   isOwnProfile={!!isOwnProfile}
                   onEditProfile={() => setIsEditModalOpen(true)}
+                  onUserUpdate={(updated) => setUser(updated)}
                   activeTab={activeTab}
                   setActiveTab={setActiveTab}
                   isFollowing={isFollowing}

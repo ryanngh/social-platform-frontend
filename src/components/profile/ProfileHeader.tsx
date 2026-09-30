@@ -12,16 +12,18 @@ import {
   MoreHorizontal, 
   Loader2, 
   Share2, 
-  ShieldAlert 
+  ShieldAlert,
+  Camera
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import type { User } from '../../types';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { userService } from '../../services/userService';
 import { getBannerUrl } from '../../utils/media';
-
-
 import { copyToClipboard } from '../../utils/share';
 import UserAvatar from '../common/UserAvatar';
+import ImageCropModal from '../common/ImageCropModal';
 
 interface ProfileHeaderProps {
   user: User;
@@ -29,6 +31,7 @@ interface ProfileHeaderProps {
   onEditProfile: () => void;
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  onUserUpdate?: (updatedUser: User) => void;
   isFollowing?: boolean;
   isFollowPending?: boolean;
   isCloseFriend?: boolean;
@@ -50,6 +53,7 @@ export const ProfileHeader = ({
   onEditProfile,
   activeTab,
   setActiveTab,
+  onUserUpdate,
   isFollowing = false,
   isFollowPending = false,
   isCloseFriend = false,
@@ -65,10 +69,71 @@ export const ProfileHeader = ({
   onOpenFollowing,
 }: ProfileHeaderProps) => {
   const { t, language } = useLanguage();
+  const { refreshUser } = useAuth();
   const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ') || user.username || t('topNav.userFallback');
   const joinedDate = user.createdAt
     ? new Date(user.createdAt).toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', { month: 'long', year: 'numeric' })
     : language === 'vi' ? 'Tháng 10, 2021' : 'October 2021';
+
+  // Quick upload refs & states
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
+  const [isAvatarUploading, setIsAvatarUploading] = useState(false);
+  const [isBannerUploading, setIsBannerUploading] = useState(false);
+
+  const [cropModalState, setCropModalState] = useState<{
+    isOpen: boolean;
+    imageSrc: string | null;
+    cropType: 'avatar' | 'banner';
+  }>({
+    isOpen: false,
+    imageSrc: null,
+    cropType: 'avatar',
+  });
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'banner') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    e.target.value = '';
+    const previewUrl = URL.createObjectURL(file);
+    setCropModalState({
+      isOpen: true,
+      imageSrc: previewUrl,
+      cropType: type,
+    });
+  };
+
+  const handleCropComplete = async (croppedFile: File) => {
+    const isVi = language === 'vi';
+    if (cropModalState.cropType === 'avatar') {
+      try {
+        setIsAvatarUploading(true);
+        const updated = await userService.uploadAvatar(croppedFile);
+        await refreshUser();
+        onUserUpdate?.(updated);
+        toast.success(isVi ? 'Đã cập nhật ảnh đại diện thành công!' : 'Profile picture updated successfully!');
+      } catch (err) {
+        console.error('Upload avatar error:', err);
+        toast.error(isVi ? 'Không thể tải lên ảnh đại diện!' : 'Failed to upload profile picture!');
+      } finally {
+        setIsAvatarUploading(false);
+      }
+    } else {
+      try {
+        setIsBannerUploading(true);
+        const updated = await userService.uploadBanner(croppedFile);
+        await refreshUser();
+        onUserUpdate?.(updated);
+        toast.success(isVi ? 'Đã cập nhật ảnh bìa thành công!' : 'Cover photo updated successfully!');
+      } catch (err) {
+        console.error('Upload banner error:', err);
+        toast.error(isVi ? 'Không thể tải lên ảnh bìa!' : 'Failed to upload cover photo!');
+      } finally {
+        setIsBannerUploading(false);
+      }
+    }
+  };
 
   // Dropdown states
   const [isFollowingDropdownOpen, setIsFollowingDropdownOpen] = useState(false);
@@ -160,12 +225,41 @@ export const ProfileHeader = ({
             }}
           />
         )}
+
+        {/* Change Banner Quick Button (for own profile) */}
+        {isOwnProfile && !isBlockedByThem && (
+          <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-20">
+            <button
+              type="button"
+              onClick={() => bannerInputRef.current?.click()}
+              disabled={isBannerUploading}
+              className="px-3 py-1.5 bg-black/60 hover:bg-black/80 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 backdrop-blur-xs transition cursor-pointer shadow-sm disabled:opacity-50"
+              title={language === 'vi' ? 'Cập nhật ảnh bìa' : 'Update cover photo'}
+            >
+              {isBannerUploading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Camera className="w-4 h-4" />
+              )}
+              <span className="hidden sm:inline">
+                {language === 'vi' ? 'Cập nhật ảnh bìa' : 'Update cover'}
+              </span>
+            </button>
+            <input
+              ref={bannerInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => handleFileSelect(e, 'banner')}
+            />
+          </div>
+        )}
       </div>
 
       <div className="px-5 sm:px-6 pb-5">
         {/* Avatar and Action Row */}
         <div className="flex justify-between items-end -mt-14 sm:-mt-16 mb-4">
-          <div className="relative z-20">
+          <div className="relative z-20 group">
             <UserAvatar
               userId={isBlockedByThem ? undefined : user.id}
               src={isBlockedByThem ? null : user.avatarUrl}
@@ -176,6 +270,31 @@ export const ProfileHeader = ({
               }`}
               isSelf={isOwnProfile}
             />
+            {isOwnProfile && !isBlockedByThem && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => avatarInputRef.current?.click()}
+                  disabled={isAvatarUploading}
+                  aria-label={language === 'vi' ? 'Cập nhật ảnh đại diện' : 'Update avatar'}
+                  className="absolute bottom-0 right-0 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white dark:bg-[#262626] border-2 border-white dark:border-[#121212] text-gray-700 dark:text-[#F5F5F5] hover:bg-gray-100 dark:hover:bg-[#333333] shadow-md flex items-center justify-center transition cursor-pointer disabled:opacity-50"
+                  title={language === 'vi' ? 'Cập nhật ảnh đại diện' : 'Update avatar'}
+                >
+                  {isAvatarUploading ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-[#004AC6] dark:text-[#0095F6]" />
+                  ) : (
+                    <Camera className="w-4 h-4" />
+                  )}
+                </button>
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleFileSelect(e, 'avatar')}
+                />
+              </>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
@@ -532,6 +651,15 @@ export const ProfileHeader = ({
           ))}
         </nav>
       )}
+
+      {/* Image Crop Modal */}
+      <ImageCropModal
+        isOpen={cropModalState.isOpen}
+        imageSrc={cropModalState.imageSrc}
+        cropType={cropModalState.cropType}
+        onClose={() => setCropModalState((prev) => ({ ...prev, isOpen: false }))}
+        onCropComplete={handleCropComplete}
+      />
     </section>
   );
 };

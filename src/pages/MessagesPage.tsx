@@ -414,9 +414,6 @@ export const MessagesPage: React.FC = () => {
                         >
                           {conv.name}
                         </span>
-                        {conv.partner?.isVerified && (
-                          <span className="text-[#0095F6] text-[10px]">✓</span>
-                        )}
                       </div>
                       <span className="text-[10px] text-gray-400 dark:text-[#737373] shrink-0">
                         {conv.lastMessage.timestamp}
@@ -484,9 +481,6 @@ export const MessagesPage: React.FC = () => {
                 <h2 className="font-bold text-sm text-gray-900 dark:text-[#F5F5F5]">
                   {activeConversation.name}
                 </h2>
-                {activeConversation.partner?.isVerified && (
-                  <span className="text-[#0095F6] text-xs">✓</span>
-                )}
               </div>
               <p className="text-[11px] text-gray-400 dark:text-[#737373]">
                 {activeConversation.isGroup

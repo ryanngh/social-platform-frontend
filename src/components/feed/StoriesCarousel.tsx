@@ -5,7 +5,6 @@ import { useAuth } from '../../contexts/AuthContext';
 import { getAvatarUrl, DEFAULT_AVATAR_FALLBACK } from '../../utils/media';
 import { getProfileUrl } from '../../utils/user';
 import { userService } from '../../services/userService';
-import { friendService } from '../../services/friendService';
 import type { UserSummary } from '../../types';
 import UserAvatar from '../common/UserAvatar';
 
@@ -22,25 +21,10 @@ const StoriesCarousel: React.FC = () => {
 
     const loadUsers = async () => {
       try {
-        // Fetch following users first
+        // Fetch following users for the stories carousel
         const followingRes = await userService.getFollowing(user.id, { page: 0, size: 25 });
-        if (isMounted && followingRes.content && followingRes.content.length > 0) {
-          setUserList(followingRes.content);
-          return;
-        }
-
-        // Fallback to friends if following list is empty
-        const friendsRes = await friendService.getMyFriends({ page: 0, size: 25 });
-        if (isMounted && friendsRes.content && friendsRes.content.length > 0) {
-          const mapped: UserSummary[] = friendsRes.content.map((f) => ({
-            id: f.id,
-            username: f.username,
-            firstName: f.firstName,
-            lastName: f.lastName,
-            fullName: `${f.firstName || ''} ${f.lastName || ''}`.trim() || f.username,
-            avatarUrl: f.avatarUrl || null,
-          }));
-          setUserList(mapped);
+        if (isMounted) {
+          setUserList(followingRes.content || []);
         }
       } catch (err) {
         console.warn('[StoriesCarousel] Failed to load horizontal users list:', err);

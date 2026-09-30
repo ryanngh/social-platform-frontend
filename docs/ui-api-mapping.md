@@ -64,22 +64,24 @@
 
 ---
 
-## Friend Requests
+## Follow & Relationships
 
-### Send Friend Request
-- **UI**: ProfilePage visitor view
-- **API**: `POST /friend-requests`
-- **React**: `friendService.sendFriendRequest()`
+### Follow / Unfollow User
+- **UI**: ProfilePage visitor view, Follow buttons
+- **API**: `POST /users/{userId}/follow`, `DELETE /users/{userId}/follow`
+- **React**: `userService.followUser()`, `userService.unfollowUser()`
 - **Status**: ✅ Connected
 
-### Accept/Decline Request
-- **API**: `POST /friend-requests/:id/accept`, `POST /friend-requests/:id/decline`
-- **React**: `friendService.acceptFriendRequest()`, `friendService.declineFriendRequest()`
+### Get Following / Followers
+- **UI**: StoriesCarousel, Profile follow lists modal
+- **API**: `GET /users/{userId}/following`, `GET /users/{userId}/followers`
+- **React**: `userService.getFollowing()`, `userService.getFollowers()`
 - **Status**: ✅ Connected
 
-### Get Friends
-- **API**: `GET /friend-requests/friends`
-- **React**: `friendService.getMyFriends()`
+### Close Friends & Blocks
+- **UI**: ProfilePage close friends toggle & block actions
+- **API**: `/close-friends/*`, `/relationships/blocks/*`
+- **React**: `closeFriendService`, `relationshipService`
 - **Status**: ✅ Connected
 
 ---

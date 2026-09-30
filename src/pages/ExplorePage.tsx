@@ -302,11 +302,6 @@ export const ExplorePage: React.FC = () => {
                   alt={creator.name}
                   className="w-14 h-14 rounded-full object-cover border-2 border-white dark:border-[#262626] shadow-xs group-hover:scale-105 transition"
                 />
-                {creator.isVerified && (
-                  <span className="absolute bottom-0 right-0 w-4 h-4 bg-[#0095F6] text-white rounded-full flex items-center justify-center text-[9px] border-2 border-white dark:border-[#121212]">
-                    ✓
-                  </span>
-                )}
               </div>
               <h3 className="font-bold text-xs text-gray-900 dark:text-[#F5F5F5] truncate w-full">
                 {creator.name}
@@ -547,9 +542,6 @@ export const ExplorePage: React.FC = () => {
                         <span className="font-bold text-xs text-gray-900 dark:text-[#F5F5F5]">
                           {activeModalItem.author.name}
                         </span>
-                        {activeModalItem.author.isVerified && (
-                          <span className="text-[#0095F6] text-xs">✓</span>
-                        )}
                       </div>
                       <span className="text-[11px] text-gray-400 dark:text-[#737373]">
                         @{activeModalItem.author.username} · {activeModalItem.createdAt}

@@ -32,38 +32,31 @@ const sizeConfig: Record<
   {
     avatar: string;
     badge: string;
-    verified: string;
   }
 > = {
   xs: {
     avatar: 'w-6 h-6',
     badge: 'w-2 h-2 border-[1.5px] -bottom-0.5 -right-0.5',
-    verified: 'w-2.5 h-2.5 text-[7px] -bottom-0.5 -right-0.5 border',
   },
   sm: {
     avatar: 'w-8 h-8',
     badge: 'w-2.5 h-2.5 border-[1.5px] -bottom-0.5 -right-0.5',
-    verified: 'w-3 h-3 text-[8px] -bottom-0.5 -right-0.5 border',
   },
   md: {
     avatar: 'w-10 h-10',
     badge: 'w-3 h-3 border-2 bottom-0 right-0',
-    verified: 'w-3.5 h-3.5 text-[9px] -bottom-0.5 -right-0.5 border-2',
   },
   lg: {
     avatar: 'w-12 h-12',
     badge: 'w-3.5 h-3.5 border-2 bottom-0 right-0',
-    verified: 'w-4 h-4 text-[10px] -bottom-0.5 -right-0.5 border-2',
   },
   xl: {
     avatar: 'w-14 h-14 sm:w-16 sm:h-16',
     badge: 'w-4 h-4 border-2 bottom-0.5 right-0.5',
-    verified: 'w-5 h-5 text-xs bottom-0 right-0 border-2',
   },
   '2xl': {
     avatar: 'w-24 h-24 sm:w-32 sm:h-32',
     badge: 'w-6 h-6 border-[3px] bottom-1.5 right-1.5',
-    verified: 'w-7 h-7 text-sm bottom-1 right-1 border-2',
   },
 };
 
@@ -81,7 +74,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
   containerClassName,
   badgeBorderClassName,
   badgeClassName,
-  isVerified = false,
+  isVerified: _isVerified = false,
   onClick,
   title,
 }) => {
@@ -162,19 +155,6 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
         />
       )}
 
-      {/* Optional Verified Badge if no presence badge is overlapping */}
-      {isVerified && !hasVisiblePresence && (
-        <span
-          className={clsx(
-            'absolute bg-[#0095F6] text-white rounded-full flex items-center justify-center font-bold shadow-xs z-10',
-            defaultBorderClass,
-            resolvedSize?.verified || 'w-3.5 h-3.5 text-[9px] -bottom-0.5 -right-0.5 border-2'
-          )}
-          title={language === 'vi' ? 'Tài khoản đã xác minh' : 'Verified Account'}
-        >
-          ✓
-        </span>
-      )}
     </div>
   );
 };

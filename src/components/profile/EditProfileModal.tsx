@@ -4,7 +4,9 @@ import toast from 'react-hot-toast';
 import { userService } from '../../services/userService';
 import type { User, ProfileUpdateRequest } from '../../types';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { getAvatarUrl, getBannerUrl, DEFAULT_AVATAR_FALLBACK } from '../../utils/media';
+import ImageCropModal from '../common/ImageCropModal';
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -15,6 +17,7 @@ interface EditProfileModalProps {
 
 export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileModalProps) => {
   const { t, language } = useLanguage();
+  const { refreshUser } = useAuth();
   const [firstName, setFirstName] = useState(user.firstName || '');
   const [lastName, setLastName] = useState(user.lastName || '');
   const [username, setUsername] = useState(user.username || '');
@@ -38,18 +41,39 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
 
+  const [cropModalState, setCropModalState] = useState<{
+    isOpen: boolean;
+    imageSrc: string | null;
+    cropType: 'avatar' | 'banner';
+  }>({
+    isOpen: false,
+    imageSrc: null,
+    cropType: 'avatar',
+  });
+
   if (!isOpen) return null;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'banner') => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Reset value so user can select the same file again if desired
+    e.target.value = '';
+
     const previewUrl = URL.createObjectURL(file);
-    if (type === 'avatar') {
-      setAvatarFile(file);
+    setCropModalState({
+      isOpen: true,
+      imageSrc: previewUrl,
+      cropType: type,
+    });
+  };
+
+  const handleCropComplete = (croppedFile: File, previewUrl: string) => {
+    if (cropModalState.cropType === 'avatar') {
+      setAvatarFile(croppedFile);
       setAvatarPreview(previewUrl);
     } else {
-      setBannerFile(file);
+      setBannerFile(croppedFile);
       setBannerPreview(previewUrl);
     }
   };
@@ -88,6 +112,7 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
       };
 
       const finalUser = await userService.updateProfile(updateData);
+      await refreshUser();
       
       onSave(finalUser);
       toast.success(t('profile.updateSuccess'));
@@ -372,6 +397,15 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
           </button>
         </div>
       </div>
+
+      {/* Image Crop Modal */}
+      <ImageCropModal
+        isOpen={cropModalState.isOpen}
+        imageSrc={cropModalState.imageSrc}
+        cropType={cropModalState.cropType}
+        onClose={() => setCropModalState((prev) => ({ ...prev, isOpen: false }))}
+        onCropComplete={handleCropComplete}
+      />
     </div>
   );
 };

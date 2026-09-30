@@ -26,6 +26,27 @@ export interface RefreshTokenRequest {
   refreshToken: string;
 }
 
+export interface VerifyEmailRequest {
+  code: string;
+}
+
+export interface ApiResponse<T = void> {
+  success: boolean;
+  message: string;
+  data?: T;
+}
+
+export interface UserAccountResponse {
+  userId: string;
+  email: string | null;
+  phoneNumber: string;
+  status: 'ACTIVE' | 'DEACTIVATED' | 'SUSPENDED';
+  isVerified: boolean;
+  roles: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ============================================================
 // User Types
 // ============================================================
@@ -37,6 +58,7 @@ export interface User {
   phoneNumber?: string;
   firstName: string;
   lastName: string;
+  fullName?: string;
   avatarUrl?: string;
   bannerUrl?: string;
   bio?: string;

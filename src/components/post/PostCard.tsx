@@ -158,6 +158,42 @@ export const PostCard: React.FC<PostCardProps> = ({
     }
   };
 
+  // Eagerly detect natural dimensions for all media items to avoid ratio jump
+  useEffect(() => {
+    if (!post.media || post.media.length === 0) return;
+
+    post.media.forEach((item, idx) => {
+      if (item.width && item.height) {
+        setDetectedDimensions((prev) => {
+          if (prev[idx]?.width === item.width && prev[idx]?.height === item.height) return prev;
+          return { ...prev, [idx]: { width: item.width!, height: item.height! } };
+        });
+        return;
+      }
+
+      if (!isVideoMedia(item.mediaUrl, item.mediaType)) {
+        const fullUrl = getMediaUrl(item.mediaUrl);
+        const img = new Image();
+        img.src = fullUrl;
+        if (img.complete && img.naturalWidth && img.naturalHeight) {
+          setDetectedDimensions((prev) => {
+            if (prev[idx]?.width === img.naturalWidth && prev[idx]?.height === img.naturalHeight) return prev;
+            return { ...prev, [idx]: { width: img.naturalWidth, height: img.naturalHeight } };
+          });
+        } else {
+          img.onload = () => {
+            if (img.naturalWidth && img.naturalHeight) {
+              setDetectedDimensions((prev) => {
+                if (prev[idx]?.width === img.naturalWidth && prev[idx]?.height === img.naturalHeight) return prev;
+                return { ...prev, [idx]: { width: img.naturalWidth, height: img.naturalHeight } };
+              });
+            }
+          };
+        }
+      }
+    });
+  }, [post.media]);
+
   // Inline comments state
   const [comments, setComments] = useState<CommentResponse[]>([]);
   const [commentCount, setCommentCount] = useState(post.commentCount ?? 0);
@@ -650,7 +686,7 @@ export const PostCard: React.FC<PostCardProps> = ({
       {post.media && post.media.length > 0 && (() => {
         const currentItem = post.media[activeMediaIndex] || post.media[0];
         const isVid = isVideoMedia(currentItem.mediaUrl, currentItem.mediaType);
-        const detected = detectedDimensions[activeMediaIndex];
+        const detected = detectedDimensions[activeMediaIndex] || detectedDimensions[0];
         const effectiveWidth = currentItem.width || detected?.width;
         const effectiveHeight = currentItem.height || detected?.height;
         const fallbackRatio = isVid ? 16 / 9 : 1;
@@ -727,6 +763,13 @@ export const PostCard: React.FC<PostCardProps> = ({
                   className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
                   src={getMediaUrl(currentItem.mediaUrl)}
                   onLoad={(e) => handleImageLoad(activeMediaIndex, e)}
+                  ref={(imgEl) => {
+                    if (imgEl && imgEl.complete && imgEl.naturalWidth && imgEl.naturalHeight) {
+                      if (!detectedDimensions[activeMediaIndex]) {
+                        handleImageLoad(activeMediaIndex, { currentTarget: imgEl } as any);
+                      }
+                    }
+                  }}
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 flex items-center justify-center">
                   <ImageIcon className="w-8 h-8 text-white opacity-0 group-hover:opacity-60 transition-opacity" />

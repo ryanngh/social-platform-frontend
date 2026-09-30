@@ -503,9 +503,6 @@ export const MarketplacePage: React.FC = () => {
                           <span className="font-bold text-xs text-gray-900 dark:text-[#F5F5F5]">
                             {activeDetailItem.seller.name}
                           </span>
-                          {activeDetailItem.seller.isVerified && (
-                            <span className="text-[#0095F6] text-[10px]">✓</span>
-                          )}
                         </div>
                         <div className="flex items-center gap-1 text-[11px] text-amber-500 font-semibold">
                           <Star className="w-3 h-3 fill-current" />

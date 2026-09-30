@@ -217,11 +217,6 @@ export const SearchTypeaheadDropdown: React.FC<SearchTypeaheadDropdownProps> = (
                             <span className="font-bold text-xs text-gray-900 dark:text-[#F5F5F5] truncate">
                               {displayName}
                             </span>
-                            {user.isVerified && (
-                              <span className="text-[#0095F6] text-xs font-bold shrink-0">
-                                ✓
-                              </span>
-                            )}
                           </div>
                           <p className="text-[11px] text-gray-400 dark:text-[#A8A8A8] truncate">
                             @{userHandle}
