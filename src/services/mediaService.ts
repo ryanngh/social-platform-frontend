@@ -109,7 +109,11 @@ export const mediaService = {
     file: File,
     onProgress?: (progress: number) => void
   ): Promise<void> {
-    await axios.put(uploadUrl, file, {
+    let targetUrl = uploadUrl;
+    if (typeof window !== 'undefined') {
+      targetUrl = targetUrl.replace(/^https?:\/\/(minio|host\.docker\.internal|localhost):9000/, window.location.origin);
+    }
+    await axios.put(targetUrl, file, {
       headers: {
         'Content-Type': file.type,
       },

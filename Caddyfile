@@ -1,0 +1,34 @@
+www.rysocial.app {
+    redir https://rysocial.app{uri} permanent
+}
+
+rysocial.app {
+    log {
+        output stdout
+        format formatted "{request>headers>Cf-Connecting-Ip>[0]:request>headers>X-Forwarded-For>[0]:request>client_ip} - - [{ts}] \"{request>method} {request>uri} {request>proto}\" {status} {size}" {
+            time_format "02/Jan/2006:15:04:05 -0700"
+        }
+    }
+    # 1. Chuyển toàn bộ API về backend Spring Boot (hq)
+    @api path /auth /auth/* /users /users/* /posts /posts/* /comments /comments/* /feed /feed/* /api /api/* /media /media/* /friend-requests /friend-requests/* /close-friends /close-friends/* /relationships /relationships/* /follows /follows/* /notifications /notifications/* /search /search/* /presence /presence/* /actuator /actuator/*
+    handle @api {
+        reverse_proxy hq:8080
+    }
+
+    # 2. Chuyển WebSocket về Switchboard
+    handle /ws* {
+        reverse_proxy switchboard:8081
+    }
+
+    # 3. Chuyển ảnh/storage về MinIO
+    handle /social-media/* {
+        reverse_proxy minio:9000 {
+            header_up Host {upstream_hostport}
+        }
+    }
+
+    # 4. Giao diện Frontend
+    handle {
+        reverse_proxy frontend:80
+    }
+}

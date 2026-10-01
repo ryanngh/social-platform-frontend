@@ -4,9 +4,35 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        - VITE_BACKEND_URL=https://api.yourdomain.com
-        - VITE_MINIO_URL=https://storage.yourdomain.com/social-media/
+        - VITE_API_BASE_URL=
+        - VITE_MINIO_URL=/social-media/
+        - VITE_WS_URL=wss://rysocial.app/ws
     container_name: social-platform-frontend-prod
+    image: social-platform-frontend-prod:latest
+    restart: unless-stopped
+    expose:
+      - "80"
+
+  caddy:
+    build:
+      context: .
+      dockerfile: Dockerfile.caddy
+    image: social-platform-caddy:latest
     restart: unless-stopped
     ports:
       - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:
+  
+  
+networks:
+  default:
+    name: social-network
+    external: true
