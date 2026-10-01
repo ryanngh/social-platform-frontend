@@ -71,6 +71,8 @@ export interface User {
   followersCount?: number;
   followerCount?: number;
   isFollowing?: boolean;
+  isFollower?: boolean;
+  isMutual?: boolean;
   isCloseFriend?: boolean;
   isBlocked?: boolean;
   isBlockedBy?: boolean;
@@ -411,5 +413,7 @@ export interface SliceResponse<T> {
 export * from './notification';
 export * from './search';
 export * from './presence';
+export * from './trending';
+export * from './explore';
 
 

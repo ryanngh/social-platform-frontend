@@ -91,6 +91,8 @@ export const ProfileHeader = ({
     cropType: 'avatar',
   });
 
+  const [isBioExpanded, setIsBioExpanded] = useState(false);
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'banner') => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -373,7 +375,11 @@ export const ProfileHeader = ({
                     ) : (
                       <UserPlus className="w-4 h-4" />
                     )}
-                    <span>{t('profile.follow')}</span>
+                    <span>
+                      {user.isFollower
+                        ? t('profile.followBack', { defaultValue: 'Theo dõi lại' })
+                        : t('profile.follow')}
+                    </span>
                   </button>
                 ) : (
                   <div className="relative" ref={followingMenuRef}>
@@ -553,9 +559,16 @@ export const ProfileHeader = ({
             )}
           </div>
           {!isBlockedByThem && (
-            <p className="text-xs sm:text-sm text-gray-500 dark:text-[#A8A8A8] font-normal">
-              @{user.username || 'user'}
-            </p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-[#A8A8A8] font-normal">
+                @{user.username || 'user'}
+              </p>
+              {!isOwnProfile && user.isFollower && (
+                <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-gray-100 dark:bg-[#262626] text-gray-600 dark:text-gray-300 border border-gray-200/60 dark:border-[#363636]">
+                  {t('profile.followsYou', { defaultValue: 'Theo dõi bạn' })}
+                </span>
+              )}
+            </div>
           )}
         </div>
 
@@ -590,9 +603,28 @@ export const ProfileHeader = ({
 
             {/* Bio */}
             {user.bio ? (
-              <p className="text-xs sm:text-sm text-gray-800 dark:text-[#E5E5E5] pt-0.5 leading-relaxed">
-                {user.bio}
-              </p>
+              (() => {
+                const normalizedBio = user.bio.replace(/\\n/g, '\n');
+                const isLongBio = normalizedBio.length > 160 || normalizedBio.split('\n').length > 3;
+                return (
+                  <div className="pt-0.5">
+                    <p className={`text-xs sm:text-sm text-gray-800 dark:text-[#E5E5E5] leading-relaxed whitespace-pre-line break-words ${!isBioExpanded && isLongBio ? 'line-clamp-3' : ''}`}>
+                      {normalizedBio}
+                    </p>
+                    {isLongBio && (
+                      <button
+                        type="button"
+                        onClick={() => setIsBioExpanded(!isBioExpanded)}
+                        className="mt-1 text-xs font-semibold text-[#004AC6] dark:text-[#0095F6] hover:underline cursor-pointer"
+                      >
+                        {isBioExpanded
+                          ? t('common.showLess', { defaultValue: 'Thu gọn' })
+                          : t('common.seeMore', { defaultValue: 'Xem thêm' })}
+                      </button>
+                    )}
+                  </div>
+                );
+              })()
             ) : isOwnProfile ? (
               <p className="text-xs sm:text-sm text-gray-400 dark:text-[#737373] italic pt-0.5 leading-relaxed">
                 {language === 'vi' 

@@ -27,3 +27,15 @@ export function getContentWithoutHashtags(content: string): string {
     .replace(/\n{3,}/g, '\n\n') // Tránh các dòng trống liên tiếp
     .trim();
 }
+
+/**
+ * Deduplicate leading @username tag if replying to a user to avoid '@user @user comment' duplication
+ */
+export function getCleanReplyContent(content?: string | null, replyToUsername?: string | null): string {
+  if (!content) return '';
+  if (!replyToUsername) return content;
+  const escaped = replyToUsername.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(`^@${escaped}(?:[:\\s]+|$)`, 'i');
+  return content.replace(regex, '').trim();
+}
+

@@ -26,6 +26,7 @@ interface GifPickerPopoverProps {
   onClose: () => void;
   onSelectGif: (gifUrl: string) => void;
   className?: string;
+  embedded?: boolean;
 }
 
 export const GifPickerPopover: React.FC<GifPickerPopoverProps> = ({
@@ -33,6 +34,7 @@ export const GifPickerPopover: React.FC<GifPickerPopoverProps> = ({
   onClose,
   onSelectGif,
   className = '',
+  embedded = false,
 }) => {
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [search, setSearch] = useState<string>('');
@@ -49,9 +51,9 @@ export const GifPickerPopover: React.FC<GifPickerPopoverProps> = ({
   const offsetRef = useRef<number>(0);
   const isFetchingRef = useRef<boolean>(false);
 
-  // Close on outside click
+  // Close on outside click (only for non-embedded popover)
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || embedded) return;
     const handleClickOutside = (e: MouseEvent) => {
       if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
         onClose();
@@ -59,7 +61,7 @@ export const GifPickerPopover: React.FC<GifPickerPopoverProps> = ({
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen, onClose]);
+  }, [isOpen, embedded, onClose]);
 
   // Debounce search input (350ms)
   useEffect(() => {
@@ -156,22 +158,28 @@ export const GifPickerPopover: React.FC<GifPickerPopoverProps> = ({
   return (
     <div
       ref={popoverRef}
-      className={`bg-white dark:bg-[#262626] rounded-2xl shadow-2xl border border-gray-100 dark:border-[#363636] p-3.5 w-84 max-w-[92vw] z-50 flex flex-col gap-2.5 animate-fadeIn select-none ${className}`}
+      className={
+        embedded
+          ? `w-full flex-1 flex flex-col gap-3 select-none ${className}`
+          : `bg-white dark:bg-[#262626] rounded-2xl shadow-2xl border border-gray-100 dark:border-[#363636] p-3.5 w-84 max-w-[92vw] z-50 flex flex-col gap-2.5 animate-fadeIn select-none ${className}`
+      }
       onClick={(e) => e.stopPropagation()}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-bold text-gray-900 dark:text-[#F5F5F5] uppercase tracking-wider flex items-center gap-1.5">
-          <span className="px-1.5 py-0.5 rounded bg-[#004AC6] text-white text-[10px] font-black tracking-normal">
-            GIF
+      {/* Header - only for popup mode */}
+      {!embedded && (
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-bold text-gray-900 dark:text-[#F5F5F5] uppercase tracking-wider flex items-center gap-1.5">
+            <span className="px-1.5 py-0.5 rounded bg-[#004AC6] text-white text-[10px] font-black tracking-normal">
+              GIF
+            </span>
+            Kho ảnh động
           </span>
-          Kho ảnh động
-        </span>
-        <div className="flex items-center gap-1 text-[10px] text-gray-400 dark:text-[#A8A8A8] font-medium">
-          <span>Powered by</span>
-          <span className="font-extrabold text-[#004AC6] dark:text-[#0095F6]">GIPHY</span>
+          <div className="flex items-center gap-1 text-[10px] text-gray-400 dark:text-[#A8A8A8] font-medium">
+            <span>Powered by</span>
+            <span className="font-extrabold text-[#004AC6] dark:text-[#0095F6]">GIPHY</span>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Search Input */}
       <div className="relative flex items-center">
@@ -181,7 +189,7 @@ export const GifPickerPopover: React.FC<GifPickerPopoverProps> = ({
           value={search}
           onChange={handleSearchChange}
           placeholder="Tìm kiếm GIF trên GIPHY..."
-          className="w-full bg-gray-50 dark:bg-[#1A1A1A] border border-gray-100 dark:border-[#363636] rounded-xl pl-8 pr-3 py-1.5 text-xs text-gray-800 dark:text-[#F5F5F5] placeholder-gray-400 dark:placeholder-[#737373] outline-none focus:border-[#004AC6] dark:focus:border-[#0095F6] focus:bg-white dark:focus:bg-slate-800 transition"
+          className="w-full bg-gray-50 dark:bg-[#1A1A1A] border border-gray-100 dark:border-[#363636] rounded-xl pl-8 pr-3 py-2 text-xs text-gray-800 dark:text-[#F5F5F5] placeholder-gray-400 dark:placeholder-[#737373] outline-none focus:border-[#004AC6] dark:focus:border-[#0095F6] focus:bg-white dark:focus:bg-slate-800 transition shadow-2xs"
           autoFocus
         />
         {loading && (
@@ -196,7 +204,7 @@ export const GifPickerPopover: React.FC<GifPickerPopoverProps> = ({
             key={cat.value}
             type="button"
             onClick={() => handleCategorySelect(cat.value)}
-            className={`px-2.5 py-1 rounded-full text-[11px] font-medium whitespace-nowrap transition cursor-pointer ${
+            className={`px-3 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap transition cursor-pointer ${
               activeCategory === cat.value
                 ? 'bg-[#004AC6] text-white shadow-xs font-semibold'
                 : 'bg-gray-100 dark:bg-[#1A1A1A] text-gray-600 dark:text-[#D4D4D4] hover:bg-gray-200 dark:hover:bg-[#363636]'
@@ -211,7 +219,11 @@ export const GifPickerPopover: React.FC<GifPickerPopoverProps> = ({
       <div
         ref={gridContainerRef}
         onScroll={handleScroll}
-        className="grid grid-cols-2 gap-2 max-h-64 min-h-[160px] overflow-y-auto custom-scrollbar pr-1"
+        className={
+          embedded
+            ? 'grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-[52vh] min-h-[220px] overflow-y-auto custom-scrollbar pr-1'
+            : 'grid grid-cols-2 gap-2 max-h-64 min-h-[160px] overflow-y-auto custom-scrollbar pr-1'
+        }
       >
         {/* Loading Skeletons */}
         {loading && (

@@ -102,7 +102,7 @@ export interface NotificationTypeMeta {
   badgeBg: string;
   badgeText: string;
   borderBadge: string;
-  category: 'reaction' | 'comment' | 'mention' | 'friend';
+  category: 'reaction' | 'comment' | 'mention' | 'friend' | 'repost' | 'share';
 }
 
 export function getNotificationTypeMeta(type: NotificationType): NotificationTypeMeta {
@@ -137,6 +137,20 @@ export function getNotificationTypeMeta(type: NotificationType): NotificationTyp
         badgeText: 'text-white',
         borderBadge: 'border-white dark:border-[#121212]',
         category: 'friend',
+      };
+    case 'POST_REPOSTED':
+      return {
+        badgeBg: 'bg-teal-500',
+        badgeText: 'text-white',
+        borderBadge: 'border-white dark:border-[#121212]',
+        category: 'repost',
+      };
+    case 'POST_SHARED':
+      return {
+        badgeBg: 'bg-sky-500',
+        badgeText: 'text-white',
+        borderBadge: 'border-white dark:border-[#121212]',
+        category: 'share',
       };
     default:
       return {

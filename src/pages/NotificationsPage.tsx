@@ -8,6 +8,7 @@ import {
   MessageCircle,
   AtSign,
   UserPlus,
+  Repeat,
   Inbox,
   Loader2,
   Sparkles,
@@ -19,7 +20,7 @@ import { NotificationSettingsModal } from '../components/notifications/Notificat
 import { getNotificationTimeGroup, getTimeGroupTitle } from '../utils/notification';
 import type { NotificationItem } from '../types';
 
-type FilterTab = 'all' | 'unread' | 'reactions' | 'comments' | 'mentions' | 'friends';
+type FilterTab = 'all' | 'unread' | 'reactions' | 'comments' | 'mentions' | 'friends' | 'reposts';
 
 export const NotificationsPage: React.FC = () => {
   const { t, language } = useLanguage();
@@ -63,6 +64,9 @@ export const NotificationsPage: React.FC = () => {
       }
       if (activeTab === 'friends') {
         return item.type === 'USER_FOLLOWED' || item.type === 'FRIEND_REQUEST';
+      }
+      if (activeTab === 'reposts') {
+        return item.type === 'POST_REPOSTED' || item.type === 'POST_SHARED';
       }
       return true;
     });
@@ -119,6 +123,7 @@ export const NotificationsPage: React.FC = () => {
     { key: 'comments', label: t('notifications.tabs.comments'), icon: MessageCircle },
     { key: 'mentions', label: t('notifications.tabs.mentions'), icon: AtSign },
     { key: 'friends', label: t('notifications.tabs.friends'), icon: UserPlus },
+    { key: 'reposts', label: t('notifications.tabs.reposts'), icon: Repeat },
   ];
 
   const getEmptyMessage = () => {
@@ -152,6 +157,12 @@ export const NotificationsPage: React.FC = () => {
           title: t('notifications.emptyFriends'),
           desc: t('notifications.emptyFriendsDesc'),
           icon: UserPlus,
+        };
+      case 'reposts':
+        return {
+          title: t('notifications.emptyReposts'),
+          desc: t('notifications.emptyRepostsDesc'),
+          icon: Repeat,
         };
       default:
         return {

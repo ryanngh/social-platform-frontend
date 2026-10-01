@@ -146,6 +146,13 @@ export const UserSearchCard: React.FC<UserSearchCardProps> = ({
                 </span>
               )}
 
+              {/* Follows You Badge */}
+              {!isMe && user.isFollower && !user.isMutual && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-gray-100 dark:bg-[#262626] text-gray-600 dark:text-gray-300 border border-gray-200/60 dark:border-[#363636]">
+                  {t('search.followsYou', { defaultValue: 'Theo dõi bạn' })}
+                </span>
+              )}
+
               {/* You Badge */}
               {isMe && (
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 dark:bg-blue-950/60 text-[#004AC6] dark:text-[#0095F6] border border-blue-200/60 dark:border-blue-800/40">
@@ -179,11 +186,11 @@ export const UserSearchCard: React.FC<UserSearchCardProps> = ({
             {user?.bio && (
               <p
                 className={clsx(
-                  'text-xs text-gray-600 dark:text-[#CCCCCC] leading-relaxed',
+                  'text-xs text-gray-600 dark:text-[#CCCCCC] leading-relaxed whitespace-pre-line break-words',
                   compact ? 'line-clamp-1' : 'line-clamp-2'
                 )}
               >
-                {user.bio}
+                {user.bio.replace(/\\n/g, '\n')}
               </p>
             )}
           </div>
@@ -220,7 +227,11 @@ export const UserSearchCard: React.FC<UserSearchCardProps> = ({
               ) : (
                 <>
                   <UserPlus className="w-3.5 h-3.5" />
-                  <span>{t('search.follow')}</span>
+                  <span>
+                    {user.isFollower
+                      ? t('search.followBack', { defaultValue: 'Theo dõi lại' })
+                      : t('search.follow')}
+                  </span>
                 </>
               )}
             </button>

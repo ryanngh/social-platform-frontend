@@ -9,7 +9,8 @@ import {
   Smile, 
   Loader2, 
   ChevronDown,
-  ImagePlay
+  ImagePlay,
+  ArrowLeft
 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { postService } from '../../services/postService';
@@ -238,9 +239,25 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-[#262626]">
-          <h3 className="text-base font-bold text-gray-900 dark:text-[#F5F5F5]">
-            {t('profile.editPostTitle')}
-          </h3>
+          {isGifPickerOpen ? (
+            <button
+              type="button"
+              onClick={() => setIsGifPickerOpen(false)}
+              className="flex items-center gap-1.5 text-xs font-bold text-gray-700 dark:text-[#E5E5E5] hover:text-[#004AC6] dark:hover:text-[#0095F6] transition cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>{t('common.cancel', { defaultValue: 'Quay lại' })}</span>
+            </button>
+          ) : (
+            <h3 className="text-base font-bold text-gray-900 dark:text-[#F5F5F5]">
+              {t('profile.editPostTitle')}
+            </h3>
+          )}
+          {isGifPickerOpen && (
+            <h3 className="text-base font-bold text-gray-900 dark:text-[#F5F5F5]">
+              Chọn ảnh GIF
+            </h3>
+          )}
           <button
             type="button"
             onClick={onClose}
@@ -251,7 +268,22 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
         </div>
 
         {/* Body */}
-        <div className="p-6 flex flex-col gap-4 overflow-y-auto custom-scrollbar flex-1">
+        {isGifPickerOpen ? (
+          <div className="p-4 sm:p-6 flex flex-col gap-3 overflow-hidden flex-1 min-h-[400px]">
+            <GifPickerPopover
+              isOpen={isGifPickerOpen}
+              onClose={() => setIsGifPickerOpen(false)}
+              onSelectGif={(gifUrl) => {
+                handleSelectGif(gifUrl);
+                setIsGifPickerOpen(false);
+              }}
+              embedded
+              className="w-full flex-1"
+            />
+          </div>
+        ) : (
+          <>
+            <div className="p-6 flex flex-col gap-4 overflow-y-auto custom-scrollbar flex-1">
           {/* Audience Selector */}
           <div className="relative inline-block self-start" ref={audienceMenuRef}>
             <button
@@ -483,7 +515,7 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
               </button>
 
               {/* GIF Button */}
-              <div className="relative">
+              <div>
                 <button
                   type="button"
                   className={`px-2 py-1 rounded-xl text-xs font-black transition cursor-pointer ${
@@ -493,20 +525,12 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
                   }`}
                   title={t('profile.addGif')}
                   onClick={() => {
-                    setIsGifPickerOpen(!isGifPickerOpen);
+                    setIsGifPickerOpen(true);
                     setIsEmojiPickerOpen(false);
                   }}
                 >
                   GIF
                 </button>
-                {isGifPickerOpen && (
-                  <GifPickerPopover
-                    isOpen={isGifPickerOpen}
-                    onClose={() => setIsGifPickerOpen(false)}
-                    onSelectGif={handleSelectGif}
-                    className="absolute right-0 bottom-full mb-3"
-                  />
-                )}
               </div>
 
               {/* Emoji Button */}
@@ -559,6 +583,8 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
             <span>{t('profile.saveChanges')}</span>
           </button>
         </div>
+        </>
+        )}
       </div>
     </div>
   );

@@ -222,8 +222,11 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
         socketRef.current.close();
       }
 
-      const host = window.location.hostname || 'localhost';
-      const defaultWsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${host}:8081/ws?token=${token}`;
+      const isDevServer = window.location.port === '5173' || window.location.port === '3000';
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const defaultWsUrl = isDevServer
+        ? `${protocol}//${window.location.hostname}:8081/ws?token=${token}`
+        : `${protocol}//${window.location.host}/ws?token=${token}`;
       const wsUrl = import.meta.env.VITE_WS_URL ? `${import.meta.env.VITE_WS_URL}?token=${token}` : defaultWsUrl;
 
       try {

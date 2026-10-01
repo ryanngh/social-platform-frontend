@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, MessageCircle, AtSign, UserPlus, Bell, Check, CheckCheck } from 'lucide-react';
+import { Heart, MessageCircle, AtSign, UserPlus, Bell, Check, CheckCheck, Repeat, Share2 } from 'lucide-react';
 import type { NotificationItem, NotificationType } from '../../types';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { getAvatarUrl, DEFAULT_AVATAR_FALLBACK } from '../../utils/media';
@@ -40,6 +40,10 @@ export const NotificationItemComponent: React.FC<NotificationItemComponentProps>
       case 'USER_FOLLOWED':
       case 'FRIEND_REQUEST':
         return <UserPlus className="w-2.5 h-2.5 stroke-[2.5]" />;
+      case 'POST_REPOSTED':
+        return <Repeat className="w-2.5 h-2.5 stroke-[2.5]" />;
+      case 'POST_SHARED':
+        return <Share2 className="w-2.5 h-2.5 stroke-[2.5]" />;
       default:
         return <Bell className="w-2.5 h-2.5" />;
     }

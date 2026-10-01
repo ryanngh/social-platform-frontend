@@ -23,7 +23,7 @@ export const getMediaUrl = (path?: string | null, fallbackUrl: string = ''): str
   if (!path || !path.trim()) return fallbackUrl;
   if (path.startsWith('data:') || path.startsWith('blob:')) return path;
 
-  let clean = path.trim().replace(/^https?:\/\/(host\.docker\.internal|localhost|minio):9000\/?/, '');
+  let clean = path.trim().replace(/^https?:\/\/(host\.docker\.internal|localhost|minio|127\.0\.0\.1):9000\/?/, '');
   if (clean.startsWith('http://') || clean.startsWith('https://')) return clean;
 
   clean = clean.replace(/^\/+/, '').replace(/^social-media\/?/, '');

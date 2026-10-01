@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Heart, MessageCircle, AtSign, UserPlus, Bell } from 'lucide-react';
+import { X, Heart, MessageCircle, AtSign, UserPlus, Bell, Repeat, Share2 } from 'lucide-react';
 import type { NotificationItem, NotificationType } from '../../types';
 import { getAvatarUrl, DEFAULT_AVATAR_FALLBACK } from '../../utils/media';
 import { parsePreviewText, getNotificationTypeMeta } from '../../utils/notification';
@@ -36,6 +36,10 @@ export const NotificationToastContainer: React.FC<NotificationToastContainerProp
       case 'USER_FOLLOWED':
       case 'FRIEND_REQUEST':
         return <UserPlus className="w-2.5 h-2.5 stroke-[2.5] text-white" />;
+      case 'POST_REPOSTED':
+        return <Repeat className="w-2.5 h-2.5 stroke-[2.5] text-white" />;
+      case 'POST_SHARED':
+        return <Share2 className="w-2.5 h-2.5 stroke-[2.5] text-white" />;
       default:
         return <Bell className="w-2.5 h-2.5 text-white" />;
     }

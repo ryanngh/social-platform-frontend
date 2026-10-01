@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import {
   X,
@@ -39,6 +40,7 @@ import PostMoreMenu from './PostMoreMenu';
 import CommentItem from './CommentItem';
 import CommentInput from './CommentInput';
 import UserAvatar from '../common/UserAvatar';
+import FormattedText from '../common/FormattedText';
 import LikersModal from './LikersModal';
 import EditPostModal from './EditPostModal';
 import DeletePostModal from './DeletePostModal';
@@ -282,6 +284,16 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, totalMedia]);
+
+  // Lock body scroll when lightbox is active
+  useEffect(() => {
+    if (!isOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [isOpen]);
 
   // ============================================================
   // Interactions
@@ -557,11 +569,11 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+  const modalContent = (
+    <div className="fixed inset-0 z-[99999] w-screen h-screen flex items-center justify-center select-none">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/85 backdrop-blur-md"
+        className="absolute inset-0 bg-black/90 backdrop-blur-md"
         onClick={onClose}
       />
 
@@ -905,7 +917,7 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
                   const cleanContent = getContentWithoutHashtags(currentPost.content);
                   return cleanContent ? (
                     <p className="text-[15px] text-[#1A1C1E] dark:text-[#F5F5F5] leading-relaxed select-text">
-                      {cleanContent}
+                      <FormattedText text={cleanContent} />
                     </p>
                   ) : null;
                 })()
@@ -1157,6 +1169,8 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
       />
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
 };
 
 export default PostMediaLightbox;

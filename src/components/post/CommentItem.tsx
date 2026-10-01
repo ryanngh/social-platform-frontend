@@ -18,11 +18,13 @@ import { getMediaUrl, isVideoMedia } from '../../utils/media';
 
 
 import { getProfileUrl } from '../../utils/user';
+import { getCleanReplyContent } from '../../utils/text';
 import { commentService } from '../../services/commentService';
 import type { CommentResponse, ReplyResponse } from '../../types';
 import CommentMediaLightbox from './CommentMediaLightbox';
 import ConfirmModal from '../common/ConfirmModal';
 import UserAvatar from '../common/UserAvatar';
+import FormattedText from '../common/FormattedText';
 import toast from 'react-hot-toast';
 
 interface CommentItemProps {
@@ -285,6 +287,7 @@ export const CommentItem: React.FC<CommentItemProps> = ({
           src={isDeleted ? null : comment.author.avatarUrl}
           alt={isDeleted ? 'deleted' : comment.author.fullName || comment.author.username}
           size="sm"
+          showPresence={false}
         />
       </Link>
 
@@ -459,7 +462,7 @@ export const CommentItem: React.FC<CommentItemProps> = ({
               <p className={`text-[13px] leading-relaxed break-words whitespace-pre-wrap select-text ${
                 isDeleted ? 'text-slate-400 italic' : 'text-slate-900 dark:text-[#F5F5F5]'
               }`}>
-                {currentContent}
+                <FormattedText text={currentContent} />
               </p>
             ) : null
           )}
@@ -752,7 +755,7 @@ const ReplyItem: React.FC<ReplyItemProps> = ({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [editContent, setEditContent] = useState<string>(reply.content || '');
+  const [editContent, setEditContent] = useState<string>(getCleanReplyContent(reply.content, reply.replyToUser?.username) || '');
   const [currentContent, setCurrentContent] = useState(reply.content);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [isEdited, setIsEdited] = useState(!!reply.editedAt);
@@ -776,7 +779,7 @@ const ReplyItem: React.FC<ReplyItemProps> = ({
       handleSaveEdit();
     } else if (e.key === 'Escape') {
       e.preventDefault();
-      setEditContent(currentContent || '');
+      setEditContent(getCleanReplyContent(currentContent, reply.replyToUser?.username) || '');
       setIsEditing(false);
     }
   };
@@ -880,6 +883,7 @@ const ReplyItem: React.FC<ReplyItemProps> = ({
           src={reply.author.avatarUrl}
           alt={reply.author.fullName || reply.author.username}
           size="xs"
+          showPresence={false}
         />
       </Link>
       <div className="flex-1 min-w-0">
@@ -1000,14 +1004,24 @@ const ReplyItem: React.FC<ReplyItemProps> = ({
               </div>
             </div>
           ) : (
-            (reply.replyToUser || currentContent) ? (
-              <p className="text-xs text-slate-900 dark:text-[#F5F5F5] leading-relaxed break-words whitespace-pre-wrap select-text">
-                {reply.replyToUser && (
-                  <span className="text-blue-600 dark:text-[#0095F6] font-semibold mr-1">@{reply.replyToUser.username}</span>
-                )}
-                {currentContent}
-              </p>
-            ) : null
+            (() => {
+              const cleanReplyContent = getCleanReplyContent(currentContent, reply.replyToUser?.username);
+              if (!reply.replyToUser && !cleanReplyContent) return null;
+              return (
+                <p className="text-xs text-slate-900 dark:text-[#F5F5F5] leading-relaxed break-words whitespace-pre-wrap select-text">
+                  {reply.replyToUser && (
+                    <Link
+                      to={getProfileUrl(reply.replyToUser)}
+                      className="text-blue-600 dark:text-[#0095F6] font-semibold mr-1 hover:underline cursor-pointer inline-flex items-center"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      @{reply.replyToUser.username}
+                    </Link>
+                  )}
+                  {cleanReplyContent ? <FormattedText text={cleanReplyContent} /> : null}
+                </p>
+              );
+            })()
           )}
 
           {/* Media in reply */}

@@ -20,9 +20,11 @@ import {
   VolumeX,
   Shield,
   Trash2,
+  PhoneIncoming,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useCall } from '../contexts/CallContext';
 import {
   INITIAL_CONVERSATIONS,
   INITIAL_ACTIVE_CONTACTS,
@@ -37,6 +39,7 @@ type ConversationTab = 'all' | 'unread' | 'groups';
 
 export const MessagesPage: React.FC = () => {
   const { t } = useLanguage();
+  const { startCall, simulateIncomingCall } = useCall();
 
   const [conversations, setConversations] = useState<ChatConversation[]>(INITIAL_CONVERSATIONS);
   const [activeChatId, setActiveChatId] = useState<string>(INITIAL_CONVERSATIONS[0].id);
@@ -494,20 +497,59 @@ export const MessagesPage: React.FC = () => {
 
           {/* Header Action Buttons */}
           <div className="flex items-center gap-1">
+            {/* Audio Call */}
             <button
-              onClick={() => toast.success(t('messages.callingToast', { name: activeConversation.name }))}
+              onClick={() => {
+                const target = activeConversation.partner || {
+                  id: activeConversation.id,
+                  name: activeConversation.name,
+                  username: activeConversation.name.toLowerCase().replace(/\s+/g, '_'),
+                  avatarUrl: activeConversation.avatarUrl,
+                };
+                startCall(target, 'audio');
+              }}
               className="p-2 text-gray-600 dark:text-[#D4D4D4] hover:bg-gray-100 dark:hover:bg-[#1A1A1A] hover:text-[#004AC6] rounded-2xl transition cursor-pointer"
               title={t('messages.audioCall')}
             >
               <Phone className="w-4 h-4" />
             </button>
+
+            {/* Video Call */}
             <button
-              onClick={() => toast.success(`Đang mở camera và gọi video tới ${activeConversation.name}...`)}
+              onClick={() => {
+                const target = activeConversation.partner || {
+                  id: activeConversation.id,
+                  name: activeConversation.name,
+                  username: activeConversation.name.toLowerCase().replace(/\s+/g, '_'),
+                  avatarUrl: activeConversation.avatarUrl,
+                };
+                startCall(target, 'video');
+              }}
               className="p-2 text-gray-600 dark:text-[#D4D4D4] hover:bg-gray-100 dark:hover:bg-[#1A1A1A] hover:text-[#004AC6] rounded-2xl transition cursor-pointer"
               title={t('messages.videoCall')}
             >
               <Video className="w-4 h-4" />
             </button>
+
+            {/* Simulate Incoming Call Demo Trigger */}
+            <button
+              onClick={() => {
+                const target = activeConversation.partner || {
+                  id: activeConversation.id,
+                  name: activeConversation.name,
+                  username: activeConversation.name.toLowerCase().replace(/\s+/g, '_'),
+                  avatarUrl: activeConversation.avatarUrl,
+                };
+                simulateIncomingCall(target, 'video');
+              }}
+              className="p-1.5 px-2.5 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 rounded-xl transition cursor-pointer flex items-center gap-1.5 text-xs font-semibold"
+              title="Thử nghiệm nhận cuộc gọi đến từ bạn này"
+            >
+              <PhoneIncoming className="w-3.5 h-3.5" />
+              <span className="hidden xl:inline">Thử gọi đến</span>
+            </button>
+
+            {/* Info Drawer Toggle */}
             <button
               onClick={() => setShowInfoDrawer(!showInfoDrawer)}
               className={clsx(
@@ -791,11 +833,45 @@ export const MessagesPage: React.FC = () => {
 
             <div className="flex items-center gap-2">
               <button
+                onClick={() => {
+                  const target = activeConversation.partner || {
+                    id: activeConversation.id,
+                    name: activeConversation.name,
+                    username: activeConversation.name.toLowerCase().replace(/\s+/g, '_'),
+                    avatarUrl: activeConversation.avatarUrl,
+                  };
+                  startCall(target, 'audio');
+                }}
+                className="p-2 px-3 rounded-xl bg-[#EFF6FF] dark:bg-blue-950/60 text-[#004AC6] dark:text-[#0095F6] hover:bg-blue-100 text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                title="Gọi thoại"
+              >
+                <Phone className="w-3.5 h-3.5" />
+                <span>Thoại</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  const target = activeConversation.partner || {
+                    id: activeConversation.id,
+                    name: activeConversation.name,
+                    username: activeConversation.name.toLowerCase().replace(/\s+/g, '_'),
+                    avatarUrl: activeConversation.avatarUrl,
+                  };
+                  startCall(target, 'video');
+                }}
+                className="p-2 px-3 rounded-xl bg-[#EFF6FF] dark:bg-blue-950/60 text-[#004AC6] dark:text-[#0095F6] hover:bg-blue-100 text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                title="Gọi video"
+              >
+                <Video className="w-3.5 h-3.5" />
+                <span>Video</span>
+              </button>
+
+              <button
                 onClick={() => toast.success('Đã tắt thông báo cho cuộc trò chuyện này')}
                 className="p-2 rounded-xl bg-gray-100 dark:bg-[#1A1A1A] text-gray-700 dark:text-[#D4D4D4] hover:bg-gray-200 text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                title="Tắt thông báo"
               >
                 <VolumeX className="w-3.5 h-3.5" />
-                <span>{t('messages.muteNotifications')}</span>
               </button>
             </div>
           </div>

@@ -5,7 +5,9 @@ export type NotificationType =
   | 'COMMENT_REACTED'
   | 'FRIEND_REQUEST'
   | 'USER_FOLLOWED'
-  | 'USER_MENTIONED';
+  | 'USER_MENTIONED'
+  | 'POST_REPOSTED'
+  | 'POST_SHARED';
 
 export type TargetType = 'POST' | 'COMMENT' | 'USER';
 

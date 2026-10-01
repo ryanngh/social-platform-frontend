@@ -45,16 +45,9 @@ export const CommentInput: React.FC<CommentInputProps> = ({
   const textInputRef = useRef<HTMLInputElement>(null);
   const dragCounter = useRef(0);
 
-  // Auto-tag user and focus input when replyingTo changes
+  // Focus input when replyingTo changes
   useEffect(() => {
     if (replyingTo?.username) {
-      const tag = `@${replyingTo.username} `;
-      setContent((prev) => {
-        if (!prev.startsWith(tag)) {
-          return `${tag}${prev}`;
-        }
-        return prev;
-      });
       setTimeout(() => textInputRef.current?.focus(), 50);
     }
   }, [replyingTo]);

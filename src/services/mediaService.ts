@@ -111,7 +111,7 @@ export const mediaService = {
   ): Promise<void> {
     let targetUrl = uploadUrl;
     if (typeof window !== 'undefined') {
-      targetUrl = targetUrl.replace(/^https?:\/\/(minio|host\.docker\.internal|localhost):9000/, window.location.origin);
+      targetUrl = targetUrl.replace(/^https?:\/\/(minio|host\.docker\.internal|localhost|127\.0\.0\.1):9000/, window.location.origin);
     }
     await axios.put(targetUrl, file, {
       headers: {

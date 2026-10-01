@@ -39,6 +39,7 @@ import LikersModal from './LikersModal';
 import RepostersModal from './RepostersModal';
 import CreateRepostModal from './CreateRepostModal';
 import UserAvatar from '../common/UserAvatar';
+import FormattedText from '../common/FormattedText';
 import PostMediaLightbox from './PostMediaLightbox';
 import RepostBubble from './RepostBubble';
 import { usePostViewTracker } from '../../hooks/usePostViewTracker';
@@ -679,7 +680,9 @@ export const PostCard: React.FC<PostCardProps> = ({
           </div>
         </div>
       ) : cleanContent ? (
-        <p className="text-[15px] sm:text-base leading-relaxed text-gray-800 dark:text-[#E5E5E5] mb-3.5 whitespace-pre-line">{cleanContent}</p>
+        <p className="text-[15px] sm:text-base leading-relaxed text-gray-800 dark:text-[#E5E5E5] mb-3.5 whitespace-pre-line select-text">
+          <FormattedText text={cleanContent} />
+        </p>
       ) : null}
 
       {/* Media Attachment (Self-adapting aspect ratio) */}

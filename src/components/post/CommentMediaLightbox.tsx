@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Download } from 'lucide-react';
 import { getMediaUrl } from '../../utils/media';
 import CustomVideoPlayer from '../media/CustomVideoPlayer';
@@ -19,7 +20,7 @@ export const CommentMediaLightbox: React.FC<CommentMediaLightboxProps> = ({
   media,
   authorName,
 }) => {
-  // Listen for Escape key to close
+  // Listen for Escape key to close & lock body scroll
   useEffect(() => {
     if (!isOpen) return;
 
@@ -29,8 +30,14 @@ export const CommentMediaLightbox: React.FC<CommentMediaLightboxProps> = ({
       }
     };
 
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
     document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = originalOverflow;
+    };
   }, [isOpen, onClose]);
 
   if (!isOpen || !media) return null;
@@ -38,13 +45,13 @@ export const CommentMediaLightbox: React.FC<CommentMediaLightboxProps> = ({
   const resolvedUrl = getMediaUrl(media.url);
   const isVideo = media.type === 'VIDEO' || /\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(media.url);
 
-  return (
+  const modalContent = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-10 bg-black/85 backdrop-blur-md animate-fadeIn select-none"
+      className="fixed inset-0 z-[99999] w-screen h-screen flex items-center justify-center p-4 sm:p-6 md:p-10 bg-black/90 backdrop-blur-md animate-fadeIn select-none"
       onClick={onClose}
     >
       {/* Top Action Bar (Close & Download) */}
-      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-50 flex items-center gap-3">
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-[100000] flex items-center gap-3">
         <a
           href={resolvedUrl}
           download
@@ -91,6 +98,8 @@ export const CommentMediaLightbox: React.FC<CommentMediaLightboxProps> = ({
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
 };
 
 export default CommentMediaLightbox;
