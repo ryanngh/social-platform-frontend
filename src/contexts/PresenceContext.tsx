@@ -42,10 +42,12 @@ export const PresenceProvider: React.FC<{ children: ReactNode }> = ({ children }
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectAttemptsRef = useRef<number>(0);
 
-  // Client status & 5-minute idle/away timer
+  // Client status & 5-minute away / 10-minute offline inactivity timers
   const currentStatusRef = useRef<PresenceStatus>('online');
   const awayTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const IDLE_AWAY_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+  const offlineTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const IDLE_AWAY_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes -> away
+  const IDLE_OFFLINE_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes -> offline
 
   // Ref counts for user subscriptions to manage viewport lifecycle
   const subscriptionCountsRef = useRef<Map<string, number>>(new Map());
@@ -297,14 +299,18 @@ export const PresenceProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     connectWebSocket();
 
-    // 5-Minute Inactivity & Tab Leaving Away Management
+    // 5-Minute Away & 10-Minute Offline Inactivity Management
     const markUserActive = () => {
       if (awayTimeoutRef.current) {
         clearTimeout(awayTimeoutRef.current);
         awayTimeoutRef.current = null;
       }
+      if (offlineTimeoutRef.current) {
+        clearTimeout(offlineTimeoutRef.current);
+        offlineTimeoutRef.current = null;
+      }
 
-      if (currentStatusRef.current === 'away') {
+      if (currentStatusRef.current !== 'online') {
         currentStatusRef.current = 'online';
         sendHeartbeat('online');
       }
@@ -314,16 +320,28 @@ export const PresenceProvider: React.FC<{ children: ReactNode }> = ({ children }
         currentStatusRef.current = 'away';
         sendHeartbeat('away');
       }, IDLE_AWAY_TIMEOUT_MS);
+
+      // Schedule transition to offline after 10 minutes of continuous inactivity
+      offlineTimeoutRef.current = setTimeout(() => {
+        currentStatusRef.current = 'offline';
+        sendHeartbeat('offline');
+      }, IDLE_OFFLINE_TIMEOUT_MS);
     };
 
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        // When tab is hidden, wait 5 minutes before transitioning to away
+        // When tab is hidden, schedule away (5 mins) and offline (10 mins)
         if (!awayTimeoutRef.current) {
           awayTimeoutRef.current = setTimeout(() => {
             currentStatusRef.current = 'away';
             sendHeartbeat('away');
           }, IDLE_AWAY_TIMEOUT_MS);
+        }
+        if (!offlineTimeoutRef.current) {
+          offlineTimeoutRef.current = setTimeout(() => {
+            currentStatusRef.current = 'offline';
+            sendHeartbeat('offline');
+          }, IDLE_OFFLINE_TIMEOUT_MS);
         }
       } else {
         // When tab becomes visible again, mark user active immediately
@@ -354,6 +372,7 @@ export const PresenceProvider: React.FC<{ children: ReactNode }> = ({ children }
       window.removeEventListener('scroll', handleUserActivity);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       if (awayTimeoutRef.current) clearTimeout(awayTimeoutRef.current);
+      if (offlineTimeoutRef.current) clearTimeout(offlineTimeoutRef.current);
       if (heartbeatTimerRef.current) clearInterval(heartbeatTimerRef.current);
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
       if (batchTimerRef.current) clearTimeout(batchTimerRef.current);
@@ -373,20 +392,31 @@ export const PresenceProvider: React.FC<{ children: ReactNode }> = ({ children }
     [presenceMap]
   );
 
-  const isOnline = useCallback(
-    (userId?: string | null): boolean => {
-      if (!userId) return false;
-      return presenceMap[userId]?.status === 'online';
+  const getStatus = useCallback(
+    (userId?: string | null): PresenceStatus => {
+      if (!userId) return 'offline';
+      const p = presenceMap[userId];
+      if (!p) return 'offline';
+
+      // Dynamic calculation based on lastSeen timestamp delta
+      if (p.lastSeen) {
+        const nowSec = Math.floor(Date.now() / 1000);
+        const diff = Math.max(0, nowSec - p.lastSeen);
+        if (diff >= 600) return 'offline'; // >= 10 mins -> offline
+        if (diff >= 300) return 'away'; // >= 5 mins -> away
+      }
+
+      return p.status || 'offline';
     },
     [presenceMap]
   );
 
-  const getStatus = useCallback(
-    (userId?: string | null): PresenceStatus => {
-      if (!userId) return 'offline';
-      return presenceMap[userId]?.status || 'offline';
+  const isOnline = useCallback(
+    (userId?: string | null): boolean => {
+      if (!userId) return false;
+      return getStatus(userId) === 'online';
     },
-    [presenceMap]
+    [getStatus]
   );
 
   const formatLastSeenHelper = useCallback(

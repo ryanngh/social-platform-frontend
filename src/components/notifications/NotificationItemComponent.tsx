@@ -2,7 +2,7 @@ import React from 'react';
 import { Heart, MessageCircle, AtSign, UserPlus, Bell, Check, CheckCheck, Repeat, Share2 } from 'lucide-react';
 import type { NotificationItem, NotificationType } from '../../types';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { getAvatarUrl, DEFAULT_AVATAR_FALLBACK } from '../../utils/media';
+import { getAvatarUrl, getMediaUrl, isVideoMedia, DEFAULT_AVATAR_FALLBACK } from '../../utils/media';
 import {
   formatNotificationTime,
   parsePreviewText,
@@ -122,16 +122,38 @@ export const NotificationItemComponent: React.FC<NotificationItemComponentProps>
         </div>
       </div>
 
-      {/* 3. Right Thumbnail (if post/comment has image) */}
+      {/* 3. Right Thumbnail (if post/comment has image or video) */}
       {item.target?.thumbnailUrl && (
         <div className="shrink-0 self-center">
-          <img
-            src={item.target.thumbnailUrl}
-            alt="Thumbnail"
-            className={`${
-              isFull ? 'w-14 h-14 rounded-xl' : 'w-11 h-11 rounded-lg'
-            } object-cover border border-gray-200 dark:border-[#2F2F2F] shadow-xs group-hover:scale-105 transition-transform duration-200`}
-          />
+          {isVideoMedia(item.target.thumbnailUrl) ? (
+            <div className="relative overflow-hidden rounded-xl">
+              <video
+                src={getMediaUrl(item.target.thumbnailUrl)}
+                className={`${
+                  isFull ? 'w-14 h-14 rounded-xl' : 'w-11 h-11 rounded-lg'
+                } object-cover border border-gray-200 dark:border-[#2F2F2F] shadow-xs bg-black`}
+                muted
+                playsInline
+                preload="metadata"
+              />
+              <div className="absolute inset-0 bg-black/20 flex items-center justify-center pointer-events-none">
+                <span className="w-4 h-4 rounded-full bg-black/60 text-white flex items-center justify-center text-[8px] pl-0.5">
+                  ▶
+                </span>
+              </div>
+            </div>
+          ) : (
+            <img
+              src={getMediaUrl(item.target.thumbnailUrl)}
+              alt="Thumbnail"
+              className={`${
+                isFull ? 'w-14 h-14 rounded-xl' : 'w-11 h-11 rounded-lg'
+              } object-cover border border-gray-200 dark:border-[#2F2F2F] shadow-xs group-hover:scale-105 transition-transform duration-200`}
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          )}
         </div>
       )}
 

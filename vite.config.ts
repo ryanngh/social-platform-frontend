@@ -6,6 +6,7 @@ import { defineConfig, loadEnv } from 'vite'
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const backendTarget = env.VITE_BACKEND_TARGET || env.BACKEND_TARGET || 'http://localhost:8080'
+  const chatTarget = env.VITE_CHAT_TARGET || env.CHAT_TARGET || 'http://localhost:8081'
   const minioTarget = env.VITE_MINIO_TARGET || env.MINIO_TARGET || 'http://localhost:9000'
 
   return {
@@ -17,6 +18,17 @@ export default defineConfig(({ mode }) => {
         usePolling: true, // Cần thiết trên Windows / Docker để hot-reload nhận file thay đổi
       },
       proxy: {
+        // Go Switchboard Chat REST API & WebSocket (port 8081)
+        '/api/v1': {
+          target: chatTarget,
+          changeOrigin: true,
+        },
+        '/ws': {
+          target: chatTarget,
+          ws: true,
+          changeOrigin: true,
+        },
+        // Spring Boot HQ REST APIs (port 8080)
         ...Object.fromEntries(
           [
             '/auth',
@@ -24,7 +36,9 @@ export default defineConfig(({ mode }) => {
             '/posts',
             '/comments',
             '/feed',
-            '/api',
+            '/explore',
+            '/reposts',
+            '/reactions',
             '/media',
             '/friend-requests',
             '/close-friends',

@@ -196,9 +196,6 @@ export const NotificationsPage: React.FC = () => {
                   </span>
                 )}
               </div>
-              <p className="text-xs text-gray-500 dark:text-[#8E8E8E] mt-0.5">
-                Cập nhật mọi tương tác, phản hồi và kết nối mới nhất của bạn
-              </p>
             </div>
           </div>
 

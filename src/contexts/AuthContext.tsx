@@ -119,6 +119,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
+      try {
+        for (let i = sessionStorage.length - 1; i >= 0; i--) {
+          const key = sessionStorage.key(i);
+          if (key && key.startsWith('rysocial_docked_chats')) {
+            sessionStorage.removeItem(key);
+          }
+        }
+      } catch {}
       setUser(null);
       viewTracker.resetSession();
     }

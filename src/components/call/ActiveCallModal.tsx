@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useCall } from '../../contexts/CallContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { getAvatarUrl, DEFAULT_AVATAR_FALLBACK } from '../../utils/media';
 import AudioVisualizer from './AudioVisualizer';
 import CallReactionsOverlay from './CallReactionsOverlay';
 import InCallChatDrawer from './InCallChatDrawer';
@@ -256,11 +257,12 @@ export const ActiveCallModal: React.FC = () => {
                     /* Mock local video user avatar */
                     <div className="flex flex-col items-center">
                       <img
-                        src={
-                          user?.avatarUrl ||
-                          'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'
-                        }
+                        src={getAvatarUrl(user?.avatarUrl)}
                         alt="You"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = DEFAULT_AVATAR_FALLBACK;
+                        }}
                         className={`w-14 sm:w-16 h-14 sm:h-16 rounded-full object-cover border-2 ${
                           isLocalSpeaking ? 'border-emerald-400 ring-4 ring-emerald-400/20' : 'border-white/30'
                         }`}
@@ -292,8 +294,12 @@ export const ActiveCallModal: React.FC = () => {
                 <div className="flex flex-col items-center">
                   <div className="relative">
                     <img
-                      src={partner.avatarUrl}
+                      src={getAvatarUrl(partner.avatarUrl)}
                       alt={partner.name}
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = DEFAULT_AVATAR_FALLBACK;
+                      }}
                       className={`w-24 sm:w-28 h-24 sm:h-28 rounded-full object-cover border-3 shadow-2xl transition-all ${
                         isPartnerSpeaking
                           ? 'border-emerald-400 ring-8 ring-emerald-400/25 scale-105'
@@ -315,11 +321,12 @@ export const ActiveCallModal: React.FC = () => {
                 <div className="flex flex-col items-center">
                   <div className="relative">
                     <img
-                      src={
-                        user?.avatarUrl ||
-                        'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'
-                      }
+                      src={getAvatarUrl(user?.avatarUrl)}
                       alt="You"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = DEFAULT_AVATAR_FALLBACK;
+                      }}
                       className={`w-24 sm:w-28 h-24 sm:h-28 rounded-full object-cover border-3 shadow-2xl transition-all ${
                         isLocalSpeaking && !isMuted
                           ? 'border-emerald-400 ring-8 ring-emerald-400/25 scale-105'

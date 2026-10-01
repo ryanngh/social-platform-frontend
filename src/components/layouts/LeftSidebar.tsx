@@ -16,6 +16,7 @@ import {
 import {useAuth} from '../../contexts/AuthContext';
 import {useLanguage} from '../../contexts/LanguageContext';
 import {useNotifications} from '../../contexts/NotificationContext';
+import {useChat} from '../../contexts/ChatContext';
 import {getAvatarUrl, DEFAULT_AVATAR_FALLBACK} from '../../utils/media';
 import {getProfileUrl} from '../../utils/user';
 import clsx from 'clsx';
@@ -24,6 +25,7 @@ const LeftSidebar: React.FC = () => {
     const {user} = useAuth();
     const {t} = useLanguage();
     const {unreadCount} = useNotifications();
+    const {unreadTotal} = useChat();
     const location = useLocation();
 
     const navItems = [
@@ -37,7 +39,13 @@ const LeftSidebar: React.FC = () => {
             path: '/notifications',
             badge: unreadCount > 0 ? (unreadCount > 99 ? '99+' : String(unreadCount)) : undefined,
         },
-        {key: 'leftNav.messages', name: t('leftNav.messages'), icon: MessageSquare, path: '/messages'},
+        {
+            key: 'leftNav.messages',
+            name: t('leftNav.messages'),
+            icon: MessageSquare,
+            path: '/messages',
+            badge: unreadTotal > 0 ? (unreadTotal > 99 ? '99+' : String(unreadTotal)) : undefined,
+        },
         {key: 'leftNav.storage', name: t('leftNav.storage'), icon: Cloud, path: '/drive'},
         {key: 'leftNav.marketplace', name: t('leftNav.marketplace'), icon: Store, path: '/marketplace'},
         {key: 'leftNav.saved', name: t('leftNav.saved'), icon: Bookmark, path: '/saved'},

@@ -78,6 +78,7 @@ interface EmojiPickerPopoverProps {
   onClose: () => void;
   onSelectEmoji: (emoji: string) => void;
   className?: string;
+  embedded?: boolean;
 }
 
 export const EmojiPickerPopover: React.FC<EmojiPickerPopoverProps> = ({
@@ -85,14 +86,15 @@ export const EmojiPickerPopover: React.FC<EmojiPickerPopoverProps> = ({
   onClose,
   onSelectEmoji,
   className = '',
+  embedded = false,
 }) => {
   const [activeCategory, setActiveCategory] = useState<string>('smileys');
   const [search, setSearch] = useState('');
   const popoverRef = useRef<HTMLDivElement>(null);
 
-  // Click outside detection
+  // Click outside detection (only for non-embedded popover)
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || embedded) return;
     const handleClickOutside = (e: MouseEvent) => {
       if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
         onClose();
@@ -100,7 +102,7 @@ export const EmojiPickerPopover: React.FC<EmojiPickerPopoverProps> = ({
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen, onClose]);
+  }, [isOpen, embedded, onClose]);
 
   if (!isOpen) return null;
 
@@ -115,7 +117,11 @@ export const EmojiPickerPopover: React.FC<EmojiPickerPopoverProps> = ({
   return (
     <div
       ref={popoverRef}
-      className={`bg-white dark:bg-[#262626] rounded-2xl shadow-xl border border-gray-100 dark:border-[#363636] p-3 w-80 max-w-[90vw] z-50 flex flex-col gap-2.5 animate-fadeIn ${className}`}
+      className={
+        embedded
+          ? `w-full flex-1 flex flex-col gap-2.5 select-none ${className}`
+          : `bg-white dark:bg-[#262626] rounded-2xl shadow-xl border border-gray-100 dark:border-[#363636] p-3 w-80 max-w-[90vw] z-50 flex flex-col gap-2.5 animate-fadeIn select-none ${className}`
+      }
       onClick={(e) => e.stopPropagation()}
     >
       {/* Search Input */}
@@ -148,7 +154,7 @@ export const EmojiPickerPopover: React.FC<EmojiPickerPopoverProps> = ({
       </div>
 
       {/* Emoji Grid */}
-      <div className="max-h-48 overflow-y-auto custom-scrollbar flex flex-col gap-3 pr-1">
+      <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar flex flex-col gap-3 pr-1">
         {filteredCategories
           .filter((cat) => !search || activeCategory === cat.id)
           .map((cat) => (

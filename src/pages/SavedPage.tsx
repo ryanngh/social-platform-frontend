@@ -22,6 +22,7 @@ import {
   type SavedCollection,
   type SavedItemType,
 } from '../mocks/savedData';
+import { getMediaUrl } from '../utils/media';
 import clsx from 'clsx';
 
 export const SavedPage: React.FC = () => {
@@ -344,9 +345,12 @@ export const SavedPage: React.FC = () => {
               {item.mediaUrl && (
                 <div className="w-full sm:w-36 h-28 sm:h-auto rounded-2xl overflow-hidden bg-gray-100 dark:bg-[#1A1A1A] shrink-0">
                   <img
-                    src={item.mediaUrl}
+                    src={getMediaUrl(item.mediaUrl)}
                     alt={item.title}
                     className="w-full h-full object-cover hover:scale-105 transition duration-300"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
                   />
                 </div>
               )}

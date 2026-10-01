@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Search, Loader2, RefreshCw, AlertCircle } from 'lucide-react';
+import { Search, Loader2, RefreshCw, AlertCircle, X } from 'lucide-react';
 import { giphyService, type GiphyGifItem } from '../../services/giphyService';
 
 interface CategoryOption {
@@ -161,28 +161,36 @@ export const GifPickerPopover: React.FC<GifPickerPopoverProps> = ({
       className={
         embedded
           ? `w-full flex-1 flex flex-col gap-3 select-none ${className}`
-          : `bg-white dark:bg-[#262626] rounded-2xl shadow-2xl border border-gray-100 dark:border-[#363636] p-3.5 w-84 max-w-[92vw] z-50 flex flex-col gap-2.5 animate-fadeIn select-none ${className}`
+          : `bg-white dark:bg-[#262626] rounded-2xl shadow-2xl border border-gray-100 dark:border-[#363636] p-3 w-80 sm:w-84 max-w-[calc(100vw-24px)] z-50 flex flex-col gap-2.5 animate-fadeIn select-none ${className}`
       }
       onClick={(e) => e.stopPropagation()}
     >
-      {/* Header - only for popup mode */}
-      {!embedded && (
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-bold text-gray-900 dark:text-[#F5F5F5] uppercase tracking-wider flex items-center gap-1.5">
-            <span className="px-1.5 py-0.5 rounded bg-[#004AC6] text-white text-[10px] font-black tracking-normal">
-              GIF
-            </span>
-            Kho ảnh động
+      {/* Header */}
+      <div className="flex items-center justify-between pb-1 border-b border-gray-100 dark:border-[#333333] shrink-0">
+        <span className="text-xs font-bold text-gray-900 dark:text-[#F5F5F5] uppercase tracking-wider flex items-center gap-1.5">
+          <span className="px-1.5 py-0.5 rounded bg-[#004AC6] dark:bg-[#0084FF] text-white text-[10px] font-black tracking-normal">
+            GIF
           </span>
+          Kho ảnh động
+        </span>
+        <div className="flex items-center gap-2">
           <div className="flex items-center gap-1 text-[10px] text-gray-400 dark:text-[#A8A8A8] font-medium">
             <span>Powered by</span>
             <span className="font-extrabold text-[#004AC6] dark:text-[#0095F6]">GIPHY</span>
           </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full cursor-pointer transition hover:bg-gray-100 dark:hover:bg-[#333333]"
+            title="Đóng"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
-      )}
+      </div>
 
       {/* Search Input */}
-      <div className="relative flex items-center">
+      <div className="relative flex items-center shrink-0">
         <Search className="w-3.5 h-3.5 text-gray-400 dark:text-[#737373] absolute left-3 pointer-events-none" />
         <input
           type="text"
@@ -198,7 +206,7 @@ export const GifPickerPopover: React.FC<GifPickerPopoverProps> = ({
       </div>
 
       {/* Categories Bar */}
-      <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 text-xs">
+      <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 text-xs shrink-0">
         {GIF_CATEGORIES.map((cat) => (
           <button
             key={cat.value}
@@ -219,11 +227,7 @@ export const GifPickerPopover: React.FC<GifPickerPopoverProps> = ({
       <div
         ref={gridContainerRef}
         onScroll={handleScroll}
-        className={
-          embedded
-            ? 'grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-[52vh] min-h-[220px] overflow-y-auto custom-scrollbar pr-1'
-            : 'grid grid-cols-2 gap-2 max-h-64 min-h-[160px] overflow-y-auto custom-scrollbar pr-1'
-        }
+        className="flex-1 min-h-0 grid grid-cols-2 auto-rows-[88px] gap-2 overflow-y-auto custom-scrollbar pr-1 content-start"
       >
         {/* Loading Skeletons */}
         {loading && (
@@ -231,7 +235,7 @@ export const GifPickerPopover: React.FC<GifPickerPopoverProps> = ({
             {Array.from({ length: 8 }).map((_, i) => (
               <div
                 key={`skeleton-${i}`}
-                className="rounded-xl aspect-video bg-gray-100 dark:bg-[#1A1A1A] animate-pulse border border-gray-100 dark:border-[#363636]"
+                className="h-[88px] w-full rounded-xl bg-gray-100 dark:bg-[#1A1A1A] animate-pulse border border-gray-100 dark:border-[#363636]"
               />
             ))}
           </>
@@ -273,12 +277,12 @@ export const GifPickerPopover: React.FC<GifPickerPopoverProps> = ({
                 onClose();
               }}
               title={gif.title}
-              className="group relative rounded-xl overflow-hidden aspect-video bg-gray-100 dark:bg-[#1A1A1A] border border-gray-100 dark:border-[#363636] hover:opacity-90 hover:scale-[1.02] transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#004AC6]"
+              className="h-[88px] w-full group relative rounded-xl overflow-hidden bg-gray-100 dark:bg-[#1A1A1A] border border-gray-100 dark:border-[#363636] hover:opacity-90 hover:scale-[1.02] transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#004AC6] shrink-0 block"
             >
               <img
                 src={gif.previewUrl}
                 alt={gif.title}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover block"
                 loading="lazy"
               />
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-1.5 opacity-0 group-hover:opacity-100 transition-opacity">

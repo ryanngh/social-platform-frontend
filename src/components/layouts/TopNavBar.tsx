@@ -1,11 +1,13 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Search, Bell, Mail, MessageSquare, Globe, User as UserIcon, LogOut, Sun, Moon, Laptop, X } from 'lucide-react';
+import { Search, Bell, MessageSquare, Globe, User as UserIcon, LogOut, Sun, Moon, Laptop, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useNotifications } from '../../contexts/NotificationContext';
+import { useChat } from '../../contexts/ChatContext';
 import { NotificationPopup } from '../notifications/NotificationPopup';
+import MessagesDropdown from '../chat/MessagesDropdown';
 import SearchTypeaheadDropdown from '../search/SearchTypeaheadDropdown';
 import { getAvatarUrl, DEFAULT_AVATAR_FALLBACK } from '../../utils/media';
 import { getProfileUrl } from '../../utils/user';
@@ -16,16 +18,19 @@ const TopNavBar: React.FC = () => {
   const { language, setLanguage, t } = useLanguage();
   const { theme, resolvedTheme, setTheme, toggleTheme } = useTheme();
   const { unreadCount } = useNotifications();
+  const { unreadTotal } = useChat();
   const navigate = useNavigate();
   const location = useLocation();
 
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotificationPopup, setShowNotificationPopup] = useState(false);
+  const [showMessagesPopup, setShowMessagesPopup] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
 
   const menuRef = useRef<HTMLDivElement>(null);
   const notifButtonRef = useRef<HTMLDivElement>(null);
+  const messagesButtonRef = useRef<HTMLDivElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -70,6 +75,9 @@ const TopNavBar: React.FC = () => {
       }
       if (searchContainerRef.current && !searchContainerRef.current.contains(target)) {
         setShowSearchDropdown(false);
+      }
+      if (messagesButtonRef.current && !messagesButtonRef.current.contains(target)) {
+        setShowMessagesPopup(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -152,7 +160,11 @@ const TopNavBar: React.FC = () => {
         {/* Notification Icon & Dropdown Popup */}
         <div className="relative" ref={notifButtonRef}>
           <button
-            onClick={() => setShowNotificationPopup(!showNotificationPopup)}
+            onClick={() => {
+              setShowNotificationPopup(!showNotificationPopup);
+              setShowMessagesPopup(false);
+              setShowUserMenu(false);
+            }}
             className={clsx(
               'p-2 text-gray-600 dark:text-[#D4D4D4] hover:text-gray-900 dark:hover:text-white rounded-full transition relative cursor-pointer',
               showNotificationPopup
@@ -176,24 +188,36 @@ const TopNavBar: React.FC = () => {
           />
         </div>
 
+        {/* Messages Dropdown & Icon */}
+        <div className="relative" ref={messagesButtonRef}>
+          <button
+            onClick={() => {
+              setShowMessagesPopup(!showMessagesPopup);
+              setShowNotificationPopup(false);
+              setShowUserMenu(false);
+            }}
+            className={clsx(
+              'p-2 text-gray-600 dark:text-[#D4D4D4] hover:text-gray-900 dark:hover:text-white rounded-full transition cursor-pointer relative',
+              showMessagesPopup
+                ? 'bg-blue-50 dark:bg-blue-950/60 text-[#004AC6] dark:text-[#0095F6]'
+                : 'hover:bg-gray-100 dark:hover:bg-[#262626]'
+            )}
+            title={t('topNav.messages')}
+            aria-label={t('topNav.messages')}
+          >
+            <MessageSquare className="w-5 h-5" />
+            {unreadTotal > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-[#004AC6] dark:bg-[#0095F6] text-white rounded-full border-2 border-white dark:border-[#121212] text-[10px] font-bold flex items-center justify-center animate-pulse">
+                {unreadTotal > 99 ? '99+' : unreadTotal}
+              </span>
+            )}
+          </button>
 
-        {/* Messages Icon */}
-        <Link
-          to="/messages"
-          className="p-2 text-gray-600 dark:text-[#D4D4D4] hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#262626] rounded-full transition hidden sm:flex cursor-pointer"
-          title={t('topNav.inbox')}
-        >
-          <Mail className="w-5 h-5" />
-        </Link>
-
-        {/* Chat Bubble Icon */}
-        <Link
-          to="/messages"
-          className="p-2 text-gray-600 dark:text-[#D4D4D4] hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#262626] rounded-full transition cursor-pointer"
-          title={t('topNav.messages')}
-        >
-          <MessageSquare className="w-5 h-5" />
-        </Link>
+          <MessagesDropdown
+            isOpen={showMessagesPopup}
+            onClose={() => setShowMessagesPopup(false)}
+          />
+        </div>
 
         {/* Separator */}
         <div className="h-6 w-px bg-gray-200 dark:bg-[#1A1A1A] mx-1"></div>
@@ -201,7 +225,11 @@ const TopNavBar: React.FC = () => {
         {/* User Info & Switch */}
         <div className="relative" ref={menuRef}>
           <div
-            onClick={() => setShowUserMenu(!showUserMenu)}
+            onClick={() => {
+              setShowUserMenu(!showUserMenu);
+              setShowNotificationPopup(false);
+              setShowMessagesPopup(false);
+            }}
             className="flex items-center gap-2.5 cursor-pointer pl-1 py-1 hover:bg-gray-50 dark:hover:bg-[#1A1A1A] rounded-full sm:rounded-xl transition"
           >
             <img

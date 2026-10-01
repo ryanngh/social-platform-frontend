@@ -1,34 +1,41 @@
 www.rysocial.app {
-    redir https://rysocial.app{uri} permanent
+	redir https://rysocial.app{uri} permanent
 }
 
 rysocial.app {
-    log {
-        output stdout
-        format formatted "{request>headers>Cf-Connecting-Ip>[0]:request>headers>X-Forwarded-For>[0]:request>client_ip} - - [{ts}] \"{request>method} {request>uri} {request>proto}\" {status} {size}" {
-            time_format "02/Jan/2006:15:04:05 -0700"
-        }
-    }
-    # 1. Chuyển toàn bộ API về backend Spring Boot (hq)
-    @api path /auth /auth/* /users /users/* /posts /posts/* /comments /comments/* /feed /feed/* /api /api/* /media /media/* /friend-requests /friend-requests/* /close-friends /close-friends/* /relationships /relationships/* /follows /follows/* /notifications /notifications/* /search /search/* /presence /presence/* /actuator /actuator/*
-    handle @api {
-        reverse_proxy hq:8080
-    }
+	log {
+		output stdout
+		format formatted "{request>headers>Cf-Connecting-Ip>[0]:request>headers>X-Forwarded-For>[0]:request>client_ip} - - [{ts}] \"{request>method} {request>uri} {request>proto}\" {status} {size}" {
+			time_format "02/Jan/2006:15:04:05 -0700"
+		}
+	}
 
-    # 2. Chuyển WebSocket về Switchboard
-    handle /ws* {
-        reverse_proxy switchboard:8081
-    }
+	# 1. Chuyển WebSocket về Switchboard
+	handle /ws* {
+		reverse_proxy switchboard:8081
+	}
 
-    # 3. Chuyển ảnh/storage về MinIO
-    handle /social-media/* {
-        reverse_proxy minio:9000 {
-            header_up Host {upstream_hostport}
-        }
-    }
+	# 2. Chuyển ảnh/storage về MinIO
+	handle /social-media/* {
+		reverse_proxy minio:9000 {
+			header_up Host {upstream_hostport}
+		}
+	}
 
-    # 4. Giao diện Frontend
-    handle {
-        reverse_proxy frontend:80
-    }
+	# 3. Chuyển toàn bộ API về backend Spring Boot (hq)
+	# Lưu ý: "not header Accept *text/html*" giúp phân biệt giữa:
+	# - Browser navigation (F5 / gõ URL trực tiếp / link reload): có header Accept text/html -> chuyển tiếp xuống Frontend SPA
+	# - API requests (Axios / Fetch / Mobile / cURL): Accept application/json hoặc không chứa text/html -> reverse_proxy hq:8080
+	@api {
+		path /auth /auth/* /users /users/* /posts /posts/* /comments /comments/* /feed /feed/* /hashtags /hashtags/* /api /api/* /media /media/* /friend-requests /friend-requests/* /close-friends /close-friends/* /relationships /relationships/* /follows /follows/* /notifications /notifications/* /search /search/* /presence /presence/* /actuator /actuator/* /internal /internal/*
+		not header Accept *text/html*
+	}
+	handle @api {
+		reverse_proxy hq:8080
+	}
+
+	# 4. Giao diện Frontend (SPA - React Router)
+	handle {
+		reverse_proxy frontend:80
+	}
 }

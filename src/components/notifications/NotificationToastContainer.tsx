@@ -1,7 +1,7 @@
 import React from 'react';
 import { X, Heart, MessageCircle, AtSign, UserPlus, Bell, Repeat, Share2 } from 'lucide-react';
 import type { NotificationItem, NotificationType } from '../../types';
-import { getAvatarUrl, DEFAULT_AVATAR_FALLBACK } from '../../utils/media';
+import { getAvatarUrl, getMediaUrl, isVideoMedia, DEFAULT_AVATAR_FALLBACK } from '../../utils/media';
 import { parsePreviewText, getNotificationTypeMeta } from '../../utils/notification';
 
 export interface FloatingToast {
@@ -105,11 +105,31 @@ export const NotificationToastContainer: React.FC<NotificationToastContainerProp
             {/* 3. Right Thumbnail (if post has thumbnail) */}
             {item.target?.thumbnailUrl && (
               <div className="shrink-0 self-center">
-                <img
-                  src={item.target.thumbnailUrl}
-                  alt="Post thumbnail"
-                  className="w-11 h-11 rounded-xl object-cover border border-gray-200 dark:border-[#363636] shadow-xs group-hover:scale-105 transition-transform"
-                />
+                {isVideoMedia(item.target.thumbnailUrl) ? (
+                  <div className="relative overflow-hidden rounded-xl">
+                    <video
+                      src={getMediaUrl(item.target.thumbnailUrl)}
+                      className="w-11 h-11 rounded-xl object-cover border border-gray-200 dark:border-[#363636] shadow-xs bg-black"
+                      muted
+                      playsInline
+                      preload="metadata"
+                    />
+                    <div className="absolute inset-0 bg-black/20 flex items-center justify-center pointer-events-none">
+                      <span className="w-3.5 h-3.5 rounded-full bg-black/60 text-white flex items-center justify-center text-[7px] pl-0.5">
+                        ▶
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <img
+                    src={getMediaUrl(item.target.thumbnailUrl)}
+                    alt="Post thumbnail"
+                    className="w-11 h-11 rounded-xl object-cover border border-gray-200 dark:border-[#363636] shadow-xs group-hover:scale-105 transition-transform"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                )}
               </div>
             )}
 
