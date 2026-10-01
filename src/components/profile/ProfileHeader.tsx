@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   MapPin, 
   Link2, 
@@ -20,6 +21,7 @@ import type { User } from '../../types';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDockedChat } from '../../contexts/DockedChatContext';
+import { useChat } from '../../contexts/ChatContext';
 import { userService } from '../../services/userService';
 import { getBannerUrl } from '../../utils/media';
 import { copyToClipboard } from '../../utils/share';
@@ -70,8 +72,10 @@ export const ProfileHeader = ({
   onOpenFollowing,
 }: ProfileHeaderProps) => {
   const { t, language } = useLanguage();
+  const navigate = useNavigate();
   const { refreshUser } = useAuth();
   const { openMiniChatWithUser } = useDockedChat();
+  const { startOrOpenDM } = useChat();
   const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ') || user.username || t('topNav.userFallback');
   const joinedDate = user.createdAt
     ? new Date(user.createdAt).toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', { month: 'long', year: 'numeric' })
@@ -488,13 +492,26 @@ export const ProfileHeader = ({
                   type="button"
                   onClick={async () => {
                     if (!user.id) return;
-                    await openMiniChatWithUser(user.id, {
-                      id: user.id,
-                      username: user.username,
-                      firstName: user.firstName,
-                      lastName: user.lastName,
-                      avatarUrl: user.avatarUrl,
-                    });
+                    if (window.innerWidth < 768) {
+                      const convId = await startOrOpenDM(user.id, {
+                        id: user.id,
+                        username: user.username,
+                        firstName: user.firstName,
+                        lastName: user.lastName,
+                        avatarUrl: user.avatarUrl,
+                      });
+                      if (convId) {
+                        navigate(`/messages/${convId}`);
+                      }
+                    } else {
+                      await openMiniChatWithUser(user.id, {
+                        id: user.id,
+                        username: user.username,
+                        firstName: user.firstName,
+                        lastName: user.lastName,
+                        avatarUrl: user.avatarUrl,
+                      });
+                    }
                   }}
                   className="h-9 px-3.5 border border-gray-200 dark:border-[#363636] hover:bg-gray-50 dark:hover:bg-[#262626] text-gray-800 dark:text-[#F5F5F5] text-xs sm:text-sm font-semibold rounded-xl transition cursor-pointer flex items-center gap-1.5"
                 >

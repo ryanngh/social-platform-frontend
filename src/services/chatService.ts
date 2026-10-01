@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { refreshAccessToken } from '../lib/axios';
 import type {
   ConversationResponse,
   ConversationDetailResponse,
@@ -20,7 +21,7 @@ const chatApi = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000,
+  timeout: 15000,
 });
 
 // Attach JWT access token to every request
@@ -33,6 +34,25 @@ chatApi.interceptors.request.use(
     return config;
   },
   (error) => Promise.reject(error)
+);
+
+// Auto-refresh token on 401
+chatApi.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    if (error.response?.status === 401 && !originalRequest?._retry) {
+      originalRequest._retry = true;
+      try {
+        const newToken = await refreshAccessToken();
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        return chatApi(originalRequest);
+      } catch {
+        return Promise.reject(error);
+      }
+    }
+    return Promise.reject(error);
+  }
 );
 
 export const chatService = {
@@ -182,8 +202,12 @@ export const chatService = {
     contentType: string,
     onProgress?: (percent: number) => void
   ): Promise<void> {
+    let targetUrl = presignedUrl;
+    if (typeof window !== 'undefined') {
+      targetUrl = targetUrl.replace(/^https?:\/\/(minio|host\.docker\.internal|localhost|127\.0\.0\.1):9000/, window.location.origin);
+    }
     // Dùng axios instance riêng không có default Authorization interceptor
-    await axios.put(presignedUrl, file, {
+    await axios.put(targetUrl, file, {
       headers: {
         'Content-Type': contentType || 'application/octet-stream',
       },

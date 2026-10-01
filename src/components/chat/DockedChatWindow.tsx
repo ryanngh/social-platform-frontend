@@ -25,6 +25,7 @@ import { useUserPresence } from '../../contexts/PresenceContext';
 import chatService from '../../services/chatService';
 import chatSocket from '../../services/chatSocket';
 import { playMessageSound } from '../../utils/sound';
+import { generateUUID } from '../../utils/uuid';
 import UserAvatar from '../common/UserAvatar';
 import ChatMessageItem from './ChatMessageItem';
 import { EmojiPickerPopover } from '../common/EmojiPickerPopover';
@@ -409,7 +410,7 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
           (percent) => setUploadPercent(percent)
         );
 
-        const clientMsgId = crypto.randomUUID();
+        const clientMsgId = generateUUID();
         const optimisticMessage: ChatMessage = {
           conversationId,
           senderId: currentUserId,
@@ -463,7 +464,7 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
     const text = (customText !== undefined ? customText : messageText).trim();
     if (!text) return;
 
-    const clientMsgId = crypto.randomUUID();
+    const clientMsgId = generateUUID();
     const optimisticMessage: ChatMessage = {
       conversationId,
       senderId: currentUserId,
@@ -569,7 +570,7 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
         try {
           const fileName = `voice_${Date.now()}.webm`;
           const uploadRes = await chatService.uploadChatAttachment(conversationId, audioBlob, fileName);
-          const clientMsgId = crypto.randomUUID();
+          const clientMsgId = generateUUID();
           chatSocket.sendMessage(conversationId, clientMsgId, uploadRes.mediaUrl || '', null);
           toast.success(t('messages.sentAudio'));
         } catch {
@@ -1028,6 +1029,12 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
                   ? 'Thêm chú thích...'
                   : t('messages.typeMessagePlaceholder')
               }
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  void handleSendMessage();
+                }
+              }}
               className="flex-1 bg-transparent text-[13px] text-gray-900 dark:text-[#F5F5F5] placeholder-gray-400 outline-none leading-normal min-w-0"
             />
 
@@ -1035,8 +1042,13 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
             {messageText.trim() || stagedAttachment ? (
               <button
                 type="submit"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={(e) => {
+                  e.preventDefault();
+                  void handleSendMessage();
+                }}
                 disabled={isRateLimited || isUploading}
-                className="text-xs font-bold text-[#0084FF] dark:text-[#3797F0] hover:text-[#0066CC] px-1.5 py-0.5 transition cursor-pointer shrink-0 disabled:opacity-50"
+                className="text-xs font-bold text-[#0084FF] dark:text-[#3797F0] hover:text-[#0066CC] px-2 py-1 min-h-[32px] transition cursor-pointer shrink-0 disabled:opacity-50 select-none flex items-center gap-1"
                 title={t('messages.send')}
               >
                 {isUploading ? (
@@ -1154,7 +1166,7 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
             onClose={() => setShowGifPicker(false)}
             onSelectGif={async (url) => {
               setShowGifPicker(false);
-              const clientMsgId = crypto.randomUUID();
+              const clientMsgId = generateUUID();
               chatSocket.sendMessage(conversationId, clientMsgId, url, null);
               toast.success(t('messages.sentGif'));
             }}

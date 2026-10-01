@@ -15,7 +15,7 @@ const PostComposer: React.FC<PostComposerProps> = ({ onOpenCreateModal }) => {
   const firstName = user?.firstName || user?.username || t('topNav.userFallback');
 
   return (
-    <article className="bg-white dark:bg-[#121212] rounded-3xl p-4 sm:p-5 shadow-sm border border-gray-100 dark:border-[#262626] transition-colors duration-200">
+    <article className="bg-white dark:bg-[#121212] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 shadow-2xs border border-gray-100 dark:border-[#262626] transition-colors duration-200">
       <div className="flex items-center gap-3 mb-3.5">
         <img
           alt={firstName}

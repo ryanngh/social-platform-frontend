@@ -64,7 +64,6 @@ export const PostMoreMenu: React.FC<PostMoreMenuProps> = ({
   if (!isOpen) return null;
 
   const handleSave = () => {
-    toast(t('postDetail.savedToast'), { icon: '🔖' });
     onClose();
   };
 

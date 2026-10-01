@@ -282,14 +282,13 @@ export const MarketplacePage: React.FC = () => {
           <button
             onClick={() => setActiveTab('saved')}
             className={clsx(
-              'px-4 py-2 rounded-2xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5',
+              'px-4 py-2 rounded-2xl text-xs font-bold transition cursor-pointer',
               activeTab === 'saved'
                 ? 'bg-[#004AC6] dark:bg-[#0095F6] text-white shadow-xs'
                 : 'text-gray-600 dark:text-[#A8A8A8] hover:bg-gray-100 dark:hover:bg-[#1A1A1A]'
             )}
           >
-            <Heart className="w-3.5 h-3.5" />
-            <span>{t('marketplace.tabs.saved')}</span>
+            {t('marketplace.tabs.saved')}
           </button>
           <button
             onClick={() => setActiveTab('myListings')}
@@ -422,11 +421,11 @@ export const MarketplacePage: React.FC = () => {
       {/* 5. Product Detail Modal */}
       {activeDetailItem && (
         <div
-          className="fixed inset-0 bg-black/75 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-6 animate-fadeIn"
+          className="fixed inset-0 bg-black/75 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-6 animate-fadeIn"
           onClick={() => setActiveDetailItem(null)}
         >
           <div
-            className="bg-white dark:bg-[#121212] rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-hidden shadow-2xl flex flex-col md:flex-row border border-gray-100 dark:border-[#262626]"
+            className="bg-white dark:bg-[#121212] rounded-t-3xl sm:rounded-3xl max-w-3xl w-full max-h-[92dvh] sm:max-h-[90vh] overflow-hidden shadow-2xl flex flex-col md:flex-row border-t sm:border border-gray-100 dark:border-[#262626] pb-safe sm:pb-0"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Media Image Slider */}
@@ -553,11 +552,11 @@ export const MarketplacePage: React.FC = () => {
       {/* 6. Create Listing Modal */}
       {showCreateModal && (
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-fadeIn"
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fadeIn"
           onClick={() => setShowCreateModal(false)}
         >
           <div
-            className="bg-white dark:bg-[#121212] rounded-3xl max-w-lg w-full p-5 sm:p-6 border border-gray-100 dark:border-[#262626] shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar"
+            className="bg-white dark:bg-[#121212] rounded-t-3xl sm:rounded-3xl max-w-lg w-full p-4 sm:p-6 border-t sm:border border-gray-100 dark:border-[#262626] shadow-2xl max-h-[92dvh] sm:max-h-[90vh] overflow-y-auto custom-scrollbar pb-safe sm:pb-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-[#262626] mb-4">
@@ -566,7 +565,7 @@ export const MarketplacePage: React.FC = () => {
               </h3>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="p-1 text-gray-400 hover:text-gray-600 rounded-full"
+                className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-600 rounded-full"
               >
                 <X className="w-5 h-5" />
               </button>

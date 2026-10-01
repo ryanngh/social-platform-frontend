@@ -146,12 +146,10 @@ export const CommentItem: React.FC<CommentItemProps> = ({
         const res = await commentService.likeComment(comment.id);
         setLikeCount(res.likeCount);
         setIsLiked(res.liked);
-        toast(t('postDetail.commentLikedToast'), { icon: '❤️' });
       } else {
         const res = await commentService.unlikeComment(comment.id);
         setLikeCount(res.likeCount);
         setIsLiked(res.liked);
-        toast(t('postDetail.commentUnlikedToast'), { icon: '🤍' });
       }
       onLike?.(comment.id);
     } catch (err) {
@@ -808,12 +806,10 @@ const ReplyItem: React.FC<ReplyItemProps> = ({
         const res = await commentService.likeComment(reply.id);
         setLikeCount(res.likeCount);
         setIsLiked(res.liked);
-        toast(t('postDetail.commentLikedToast'), { icon: '❤️' });
       } else {
         const res = await commentService.unlikeComment(reply.id);
         setLikeCount(res.likeCount);
         setIsLiked(res.liked);
-        toast(t('postDetail.commentUnlikedToast'), { icon: '🤍' });
       }
     } catch (err) {
       console.error('Failed to toggle reply like:', err);

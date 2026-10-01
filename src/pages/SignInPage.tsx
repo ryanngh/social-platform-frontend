@@ -101,7 +101,7 @@ export const SignInPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#EEF2F6] dark:bg-[#0B0F19] flex flex-col items-center justify-center p-3 sm:p-6 lg:p-10 transition-colors duration-200">
+    <div className="min-h-[100dvh] bg-[#EEF2F6] dark:bg-[#0B0F19] flex flex-col items-center justify-center p-3 sm:p-6 lg:p-10 pt-[calc(0.75rem+env(safe-area-inset-top,0px))] pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] transition-colors duration-200">
       {/* Top Bar with Language Selector & Theme Toggle */}
       <div className="w-full max-w-[1240px] flex justify-between items-center mb-4 sm:mb-6 px-1">
         <Link to="/feed" className="flex items-center gap-2">
@@ -166,13 +166,13 @@ export const SignInPage: React.FC = () => {
       </div>
 
       {/* Main Split-Screen Authentication Shell */}
-      <div className="bg-white dark:bg-[#111827] max-w-[1240px] w-full min-h-[760px] rounded-3xl shadow-sm border border-gray-100 dark:border-[#1F2937] flex flex-col lg:flex-row overflow-hidden transition-colors">
+      <div className="bg-white dark:bg-[#111827] max-w-[1240px] w-full min-h-0 lg:min-h-[760px] rounded-3xl shadow-sm border border-gray-100 dark:border-[#1F2937] flex flex-col lg:flex-row overflow-hidden transition-colors">
         
         {/* Left Hero & Identity Panel */}
         <AuthHeroPanel mode="signin" />
 
         {/* Right Functional Stage Panel */}
-        <div className="w-full lg:w-7/12 p-6 sm:p-10 lg:p-12 xl:p-14 flex flex-col justify-center">
+        <div className="w-full lg:w-7/12 p-5 sm:p-10 lg:p-12 xl:p-14 flex flex-col justify-center">
           <div className="max-w-[420px] w-full mx-auto flex-1 flex flex-col justify-center">
             
             {showVerification && unverifiedUserData ? (

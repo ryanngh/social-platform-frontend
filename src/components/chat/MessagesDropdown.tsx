@@ -86,8 +86,7 @@ export const MessagesDropdown: React.FC<MessagesDropdownProps> = ({ isOpen, onCl
 
   const handleConversationClick = (conv: ChatConversationItem) => {
     onClose();
-    // If currently on /messages page, navigate or select in full page
-    if (location.pathname.startsWith('/messages')) {
+    if (window.innerWidth < 768 || location.pathname.startsWith('/messages')) {
       selectConversation(conv.id);
       navigate(`/messages/${conv.id}`);
     } else {

@@ -411,16 +411,21 @@ export const CommentInput: React.FC<CommentInputProps> = ({
 
         <button
           type="button"
+          onMouseDown={(e) => e.preventDefault()}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            void handleSubmit();
+          }}
           onClick={handleSubmit}
           disabled={!canSend}
-          className="h-10 px-4 bg-[#004AC6] hover:bg-[#003A9F] dark:bg-[#0095F6] dark:hover:bg-[#1877F2] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-semibold flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-95 flex-shrink-0 cursor-pointer"
+          className="h-10 px-3.5 sm:px-4 bg-[#004AC6] hover:bg-[#003A9F] dark:bg-[#0095F6] dark:hover:bg-[#1877F2] disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-semibold flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-95 flex-shrink-0 cursor-pointer min-h-[44px] min-w-[44px] select-none"
           title={t('postDetail.send')}
         >
           {busy ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
             <>
-              <span className="text-xs sm:text-sm hidden sm:inline">{t('postDetail.send')}</span>
+              <span className="text-xs sm:text-sm font-medium">{t('postDetail.send')}</span>
               <Send className="w-4 h-4" />
             </>
           )}

@@ -443,12 +443,10 @@ export const PostCard: React.FC<PostCardProps> = ({
         const res = await postService.likePost(post.id);
         setLikeCount(res.likeCount);
         setIsLiked(res.liked);
-        toast(t('postDetail.likedToast'), { icon: '❤️' });
       } else {
         const res = await postService.unlikePost(post.id);
         setLikeCount(res.likeCount);
         setIsLiked(res.liked);
-        toast(t('postDetail.unlikedToast'), { icon: '🤍' });
       }
       onPostUpdated?.({
         ...post,
@@ -467,9 +465,6 @@ export const PostCard: React.FC<PostCardProps> = ({
 
   const toggleBookmark = () => {
     setIsBookmarked(!isBookmarked);
-    toast(isBookmarked ? t('feed.unsavedToast') : t('postDetail.savedToast'), {
-      icon: isBookmarked ? '🗑️' : '🔖',
-    });
   };
 
   const handleShare = async () => {
@@ -581,7 +576,7 @@ export const PostCard: React.FC<PostCardProps> = ({
   return (
     <article
       ref={postCardRef}
-      className="bg-white dark:bg-[#121212] rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-[#262626] transition-colors duration-200"
+      className="bg-white dark:bg-[#121212] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 shadow-2xs border border-gray-100 dark:border-[#262626] transition-colors duration-200"
     >
       {/* Author Header */}
       <div className="flex items-center justify-between mb-3">

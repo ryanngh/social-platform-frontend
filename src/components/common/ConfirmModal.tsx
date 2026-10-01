@@ -156,7 +156,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             type="button"
             onClick={onConfirm}
             disabled={isLoading}
-            className={`w-full py-2.5 px-4 font-semibold text-xs sm:text-sm rounded-2xl shadow-sm transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed hover:shadow-md min-h-[42px] ${styles.confirmBtn}`}
+            className={`w-full py-2.5 px-4 font-semibold text-xs sm:text-sm rounded-2xl shadow-sm transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed hover:shadow-md min-h-[44px] ${styles.confirmBtn}`}
           >
             {isLoading ? (
               <>
@@ -172,7 +172,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="w-full py-2.5 px-4 bg-gray-100 hover:bg-gray-200 dark:bg-[#1E1E1E] dark:hover:bg-[#2A2A2A] active:scale-[0.98] text-gray-700 dark:text-[#E5E5E5] font-semibold text-xs sm:text-sm rounded-2xl transition-all cursor-pointer disabled:opacity-50 min-h-[42px]"
+            className="w-full py-2.5 px-4 bg-gray-100 hover:bg-gray-200 dark:bg-[#1E1E1E] dark:hover:bg-[#2A2A2A] active:scale-[0.98] text-gray-700 dark:text-[#E5E5E5] font-semibold text-xs sm:text-sm rounded-2xl transition-all cursor-pointer disabled:opacity-50 min-h-[44px]"
           >
             {cancelText || t('postDetail.cancel', { defaultValue: 'Hủy' })}
           </button>

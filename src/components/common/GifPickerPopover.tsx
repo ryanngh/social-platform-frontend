@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Search, Loader2, RefreshCw, AlertCircle, X } from 'lucide-react';
 import { giphyService, type GiphyGifItem } from '../../services/giphyService';
 
@@ -50,10 +51,19 @@ export const GifPickerPopover: React.FC<GifPickerPopoverProps> = ({
   const gridContainerRef = useRef<HTMLDivElement>(null);
   const offsetRef = useRef<number>(0);
   const isFetchingRef = useRef<boolean>(false);
+  const [isMobile, setIsMobile] = useState<boolean>(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 640 : false
+  );
 
-  // Close on outside click (only for non-embedded popover)
   useEffect(() => {
-    if (!isOpen || embedded) return;
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Close on outside click (only for non-embedded popover on desktop)
+  useEffect(() => {
+    if (!isOpen || embedded || isMobile) return;
     const handleClickOutside = (e: MouseEvent) => {
       if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
         onClose();
@@ -61,7 +71,7 @@ export const GifPickerPopover: React.FC<GifPickerPopoverProps> = ({
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen, embedded, onClose]);
+  }, [isOpen, embedded, isMobile, onClose]);
 
   // Debounce search input (350ms)
   useEffect(() => {
@@ -155,16 +165,13 @@ export const GifPickerPopover: React.FC<GifPickerPopoverProps> = ({
 
   if (!isOpen) return null;
 
-  return (
-    <div
-      ref={popoverRef}
-      className={
-        embedded
-          ? `w-full flex-1 flex flex-col gap-3 select-none ${className}`
-          : `bg-white dark:bg-[#262626] rounded-2xl shadow-2xl border border-gray-100 dark:border-[#363636] p-3 w-80 sm:w-84 max-w-[calc(100vw-24px)] z-50 flex flex-col gap-2.5 animate-fadeIn select-none ${className}`
-      }
-      onClick={(e) => e.stopPropagation()}
-    >
+  const pickerContent = (
+    <>
+      {/* Mobile Top Pill Handle */}
+      {isMobile && !embedded && (
+        <div className="w-10 h-1 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto -mt-1 mb-0.5 shrink-0" />
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between pb-1 border-b border-gray-100 dark:border-[#333333] shrink-0">
         <span className="text-xs font-bold text-gray-900 dark:text-[#F5F5F5] uppercase tracking-wider flex items-center gap-1.5">
@@ -181,10 +188,10 @@ export const GifPickerPopover: React.FC<GifPickerPopoverProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full cursor-pointer transition hover:bg-gray-100 dark:hover:bg-[#333333]"
+            className="p-1.5 -mr-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full cursor-pointer transition hover:bg-gray-100 dark:hover:bg-[#333333] min-w-[36px] min-h-[36px] flex items-center justify-center"
             title="Đóng"
           >
-            <X className="w-3.5 h-3.5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -198,7 +205,7 @@ export const GifPickerPopover: React.FC<GifPickerPopoverProps> = ({
           onChange={handleSearchChange}
           placeholder="Tìm kiếm GIF trên GIPHY..."
           className="w-full bg-gray-50 dark:bg-[#1A1A1A] border border-gray-100 dark:border-[#363636] rounded-xl pl-8 pr-3 py-2 text-xs text-gray-800 dark:text-[#F5F5F5] placeholder-gray-400 dark:placeholder-[#737373] outline-none focus:border-[#004AC6] dark:focus:border-[#0095F6] focus:bg-white dark:focus:bg-slate-800 transition shadow-2xs"
-          autoFocus
+          autoFocus={!isMobile}
         />
         {loading && (
           <Loader2 className="w-3.5 h-3.5 text-blue-500 animate-spin absolute right-3 pointer-events-none" />
@@ -227,7 +234,7 @@ export const GifPickerPopover: React.FC<GifPickerPopoverProps> = ({
       <div
         ref={gridContainerRef}
         onScroll={handleScroll}
-        className="flex-1 min-h-0 grid grid-cols-2 auto-rows-[88px] gap-2 overflow-y-auto custom-scrollbar pr-1 content-start"
+        className="flex-1 min-h-0 grid grid-cols-2 auto-rows-[105px] sm:auto-rows-[88px] gap-2 overflow-y-auto custom-scrollbar pr-1 content-start"
       >
         {/* Loading Skeletons */}
         {loading && (
@@ -235,7 +242,7 @@ export const GifPickerPopover: React.FC<GifPickerPopoverProps> = ({
             {Array.from({ length: 8 }).map((_, i) => (
               <div
                 key={`skeleton-${i}`}
-                className="h-[88px] w-full rounded-xl bg-gray-100 dark:bg-[#1A1A1A] animate-pulse border border-gray-100 dark:border-[#363636]"
+                className="h-[105px] sm:h-[88px] w-full rounded-xl bg-gray-100 dark:bg-[#1A1A1A] animate-pulse border border-gray-100 dark:border-[#363636]"
               />
             ))}
           </>
@@ -277,7 +284,7 @@ export const GifPickerPopover: React.FC<GifPickerPopoverProps> = ({
                 onClose();
               }}
               title={gif.title}
-              className="h-[88px] w-full group relative rounded-xl overflow-hidden bg-gray-100 dark:bg-[#1A1A1A] border border-gray-100 dark:border-[#363636] hover:opacity-90 hover:scale-[1.02] transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#004AC6] shrink-0 block"
+              className="h-[105px] sm:h-[88px] w-full group relative rounded-xl overflow-hidden bg-gray-100 dark:bg-[#1A1A1A] border border-gray-100 dark:border-[#363636] hover:opacity-90 hover:scale-[1.02] transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#004AC6] shrink-0 block"
             >
               <img
                 src={gif.previewUrl}
@@ -300,6 +307,49 @@ export const GifPickerPopover: React.FC<GifPickerPopoverProps> = ({
           </div>
         )}
       </div>
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <div
+        ref={popoverRef}
+        className={`w-full flex-1 flex flex-col gap-3 select-none ${className}`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {pickerContent}
+      </div>
+    );
+  }
+
+  if (isMobile) {
+    return createPortal(
+      <div className="fixed inset-0 z-[99999] flex flex-col justify-end pointer-events-none">
+        {/* Backdrop */}
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity pointer-events-auto animate-fadeIn"
+          onClick={onClose}
+        />
+        {/* Drawer */}
+        <div
+          ref={popoverRef}
+          className="relative z-10 w-full bg-white dark:bg-[#1E1E1E] rounded-t-3xl border-t border-gray-200 dark:border-[#333333] shadow-2xl p-4 max-h-[70vh] flex flex-col gap-3 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] animate-slideUp pointer-events-auto select-none"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {pickerContent}
+        </div>
+      </div>,
+      document.body
+    );
+  }
+
+  return (
+    <div
+      ref={popoverRef}
+      className={`bg-white dark:bg-[#262626] rounded-2xl shadow-2xl border border-gray-100 dark:border-[#363636] p-3 w-80 sm:w-84 max-w-[calc(100vw-24px)] z-50 flex flex-col gap-2.5 animate-fadeIn select-none ${className}`}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {pickerContent}
     </div>
   );
 };

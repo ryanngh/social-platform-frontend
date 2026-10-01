@@ -26,21 +26,24 @@ export const ExploreCard: React.FC<ExploreCardProps> = ({
   onToggleLike,
   onToggleSave,
 }) => {
-  const [isLikedLocally, setIsLikedLocally] = useState(Boolean(post.isLiked));
-  const [likesCountLocally, setLikesCountLocally] = useState(post.metrics.likesCount);
-  const [isSavedLocally, setIsSavedLocally] = useState(Boolean(post.isSaved));
+  const [isLikedLocally, setIsLikedLocally] = useState(Boolean(post?.isLiked));
+  const [likesCountLocally, setLikesCountLocally] = useState(post?.metrics?.likesCount ?? 0);
+  const [isSavedLocally, setIsSavedLocally] = useState(Boolean(post?.isSaved));
   const [isLiking, setIsLiking] = useState(false);
 
   // Sync state if post props change
   useEffect(() => {
+    if (!post) return;
     setIsLikedLocally(Boolean(post.isLiked));
-    setLikesCountLocally(post.metrics.likesCount);
+    setLikesCountLocally(post.metrics?.likesCount ?? 0);
     setIsSavedLocally(Boolean(post.isSaved));
-  }, [post.isLiked, post.metrics.likesCount, post.isSaved]);
+  }, [post?.isLiked, post?.metrics?.likesCount, post?.isSaved]);
+
+  if (!post) return null;
 
   const mediaUrl = getMediaUrl(post.media?.url);
   const isVideo = isVideoMedia(post.media?.url, post.media?.mediaType);
-  const hasMultiple = Boolean(post.media?.hasMultipleMedia && post.media.mediaCount > 1);
+  const hasMultiple = Boolean(post.media?.hasMultipleMedia && (post.media.mediaCount ?? 0) > 1);
 
   // Handle Like Action with API Call & Optimistic Update
   const handleLikeClick = async (e: React.MouseEvent) => {
@@ -54,9 +57,6 @@ export const ExploreCard: React.FC<ExploreCardProps> = ({
     // Optimistic UI state
     setIsLikedLocally(nextLiked);
     setLikesCountLocally(nextCount);
-    if (nextLiked) {
-      toast.success('Đã thích bài viết', { icon: '❤️' });
-    }
 
     onToggleLike?.(post.id, nextLiked, nextCount);
 
@@ -85,9 +85,6 @@ export const ExploreCard: React.FC<ExploreCardProps> = ({
     e.preventDefault();
     const next = !isSavedLocally;
     setIsSavedLocally(next);
-    toast.success(next ? 'Đã lưu bài viết vào mục Đã lưu' : 'Đã bỏ lưu bài viết', {
-      icon: next ? '🔖' : '🗑️',
-    });
     onToggleSave?.(post.id, next);
   };
 
@@ -162,14 +159,14 @@ export const ExploreCard: React.FC<ExploreCardProps> = ({
           {/* Author line */}
           <div className="flex items-center gap-2 mb-1.5">
             <img
-              src={getMediaUrl(post.author.avatarUrl) || '/default-avatar.png'}
-              alt={post.author.fullName || post.author.username}
+              src={getMediaUrl(post.author?.avatarUrl) || '/default-avatar.png'}
+              alt={post.author?.fullName || post.author?.username || 'Tác giả'}
               className="w-5 h-5 rounded-full object-cover border border-white/60"
             />
             <span className="text-xs font-semibold truncate drop-shadow-sm">
-              {post.author.fullName || post.author.username}
+              {post.author?.fullName || post.author?.username || 'Người dùng'}
             </span>
-            {post.author.isVerified && (
+            {post.author?.isVerified && (
               <CheckCircle className="w-3 h-3 text-sky-400 fill-sky-400 shrink-0" />
             )}
           </div>
@@ -204,7 +201,7 @@ export const ExploreCard: React.FC<ExploreCardProps> = ({
 
             <span className="flex items-center gap-1">
               <MessageCircle className="w-3.5 h-3.5" />
-              <span className="tabular-nums">{post.metrics.commentsCount}</span>
+              <span className="tabular-nums">{post.metrics?.commentsCount ?? 0}</span>
             </span>
           </div>
         </div>

@@ -37,7 +37,7 @@ export const BlockUserModal = ({
   const displayName =
     [user.firstName, user.lastName].filter(Boolean).join(' ') ||
     user.username ||
-    'User';
+    t('topNav.userFallback');
 
   return (
     <div
@@ -55,8 +55,9 @@ export const BlockUserModal = ({
           type="button"
           onClick={onClose}
           disabled={isLoading}
+          aria-label={t('common.close')}
           className="absolute top-4 right-4 text-gray-400 dark:text-[#A8A8A8] hover:text-gray-600 dark:hover:text-[#F5F5F5] p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-[#262626] transition cursor-pointer disabled:opacity-50"
-          title={t('profile.cancel', { defaultValue: 'Hủy' })}
+          title={t('common.close')}
         >
           <X className="w-4 h-4" />
         </button>
@@ -74,12 +75,12 @@ export const BlockUserModal = ({
               }}
             />
             <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-rose-50 dark:bg-rose-950/80 border border-white dark:border-[#121212] flex items-center justify-center text-rose-600 dark:text-rose-400 shadow-xs">
-              <ShieldAlert className="w-3.5 h-3.5" />
+              <ShieldAlert className="w-3.5 h-3.5" aria-hidden="true" />
             </div>
           </div>
           <div className="min-w-0">
             <h3 className="text-base font-bold text-gray-900 dark:text-[#F5F5F5] leading-snug">
-              {t('profile.blockConfirmTitle', { username: user.username, defaultValue: `Chặn @${user.username}?` })}
+              {t('profile.blockConfirmTitle', { username: user.username })}
             </h3>
             <p className="text-xs text-gray-400 dark:text-[#A8A8A8] truncate">{displayName}</p>
           </div>
@@ -88,21 +89,21 @@ export const BlockUserModal = ({
         {/* Warning Bullet Points */}
         <div className="bg-rose-50/50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/40 rounded-2xl p-3.5 mb-5 space-y-2.5 text-xs text-gray-700 dark:text-[#D4D4D4]">
           <div className="flex items-start gap-2.5">
-            <EyeOff className="w-4 h-4 text-rose-600 dark:text-rose-400 flex-shrink-0 mt-0.5" />
-            <span>Họ sẽ không thể tìm thấy trang cá nhân, bài viết hoặc nhắn tin cho bạn.</span>
+            <EyeOff className="w-4 h-4 text-rose-600 dark:text-rose-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+            <span>{t('profile.blockConfirmPoint1')}</span>
           </div>
           <div className="flex items-start gap-2.5">
-            <UserMinus className="w-4 h-4 text-rose-600 dark:text-rose-400 flex-shrink-0 mt-0.5" />
-            <span>Hệ thống sẽ tự động hủy theo dõi cả hai chiều nếu đang theo dõi nhau.</span>
+            <UserMinus className="w-4 h-4 text-rose-600 dark:text-rose-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+            <span>{t('profile.blockConfirmPoint2')}</span>
           </div>
           <div className="flex items-start gap-2.5">
-            <Sparkles className="w-4 h-4 text-rose-600 dark:text-rose-400 flex-shrink-0 mt-0.5" />
-            <span>Xóa sạch quan hệ bạn thân giữa cả hai bên để đảm bảo tính riêng tư.</span>
+            <Sparkles className="w-4 h-4 text-rose-600 dark:text-rose-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
+            <span>{t('profile.blockConfirmPoint3')}</span>
           </div>
         </div>
 
         <p className="text-[11px] text-gray-400 dark:text-[#737373] mb-6 italic text-center">
-          Họ sẽ không được thông báo rằng bạn đã chặn họ.
+          {t('profile.blockConfirmNote')}
         </p>
 
         {/* Action Buttons */}
@@ -113,7 +114,7 @@ export const BlockUserModal = ({
             disabled={isLoading}
             className="py-2.5 px-4 bg-gray-100 dark:bg-[#1A1A1A] hover:bg-gray-200 dark:hover:bg-[#363636] text-gray-700 dark:text-[#E5E5E5] font-semibold text-xs rounded-2xl transition-colors cursor-pointer disabled:opacity-50"
           >
-            {t('profile.cancel', { defaultValue: 'Hủy' })}
+            {t('profile.cancel')}
           </button>
 
           <button
@@ -124,11 +125,11 @@ export const BlockUserModal = ({
           >
             {isLoading ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>{t('profile.loadingMore', { defaultValue: 'Đang xử lý...' })}</span>
+                <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                <span>{t('profile.blocking')}</span>
               </>
             ) : (
-              <span>{t('profile.blockConfirmBtn', { defaultValue: 'Chặn' })}</span>
+              <span>{t('profile.blockConfirmBtn')}</span>
             )}
           </button>
         </div>

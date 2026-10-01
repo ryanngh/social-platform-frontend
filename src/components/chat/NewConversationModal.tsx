@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Search, Users, User as UserIcon, Check, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { X, Search, Check, Loader2 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useChat } from '../../contexts/ChatContext';
@@ -18,6 +19,7 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
   isOpen,
   onClose,
 }) => {
+  const navigate = useNavigate();
   const { t } = useLanguage();
   const { user } = useAuth();
   const { startOrOpenDM, createGroup } = useChat();
@@ -138,8 +140,11 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      await startOrOpenDM(targetId, contact);
+      const convId = await startOrOpenDM(targetId, contact);
       onClose();
+      if (convId) {
+        navigate(`/messages/${convId}`);
+      }
     } catch {
       // Error handled in ChatContext toast
     } finally {
@@ -159,8 +164,11 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      await createGroup(groupTitle.trim(), selectedMemberIds);
+      const convId = await createGroup(groupTitle.trim(), selectedMemberIds);
       onClose();
+      if (convId) {
+        navigate(`/messages/${convId}`);
+      }
     } catch {
       // Error handled in ChatContext
     } finally {
@@ -170,51 +178,49 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-fadeIn"
+      className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fadeIn"
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-[#121212] rounded-3xl max-w-md w-full border border-gray-100 dark:border-[#262626] shadow-2xl overflow-hidden animate-scaleIn transition-colors"
+        className="bg-white dark:bg-[#121212] rounded-t-3xl sm:rounded-3xl max-w-md w-full max-h-[90dvh] sm:max-h-[85vh] border-t sm:border border-gray-100 dark:border-[#262626] shadow-2xl overflow-hidden animate-scaleIn transition-colors flex flex-col pb-safe sm:pb-0"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-4 border-b border-gray-100 dark:border-[#262626] flex items-center justify-between">
+        <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 dark:border-[#262626] flex items-center justify-between flex-shrink-0">
           <h3 className="font-bold text-base text-gray-900 dark:text-[#F5F5F5]">
             {t('messages.newMessageModalTitle')}
           </h3>
           <button
             onClick={onClose}
-            className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full cursor-pointer transition"
+            className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-full cursor-pointer transition"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tab Selection */}
-        <div className="flex border-b border-gray-100 dark:border-[#262626] text-xs font-bold">
+        <div className="flex border-b border-gray-100 dark:border-[#262626] text-xs font-bold flex-shrink-0">
           <button
             onClick={() => setActiveTab('dm')}
             className={clsx(
-              'flex-1 py-3 flex items-center justify-center gap-1.5 border-b-2 cursor-pointer transition',
+              'flex-1 py-3 flex items-center justify-center border-b-2 cursor-pointer transition min-h-[44px]',
               activeTab === 'dm'
                 ? 'border-[#0084FF] text-[#0084FF] dark:border-[#3797F0] dark:text-[#3797F0] bg-blue-50/50 dark:bg-blue-950/20'
                 : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-[#F5F5F5]'
             )}
           >
-            <UserIcon className="w-4 h-4" />
             <span>{t('messages.dmTab')}</span>
           </button>
 
           <button
             onClick={() => setActiveTab('group')}
             className={clsx(
-              'flex-1 py-3 flex items-center justify-center gap-1.5 border-b-2 cursor-pointer transition',
+              'flex-1 py-3 flex items-center justify-center border-b-2 cursor-pointer transition min-h-[44px]',
               activeTab === 'group'
                 ? 'border-[#0084FF] text-[#0084FF] dark:border-[#3797F0] dark:text-[#3797F0] bg-blue-50/50 dark:bg-blue-950/20'
                 : 'border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-[#F5F5F5]'
             )}
           >
-            <Users className="w-4 h-4" />
             <span>{t('messages.groupTab')}</span>
           </button>
         </div>

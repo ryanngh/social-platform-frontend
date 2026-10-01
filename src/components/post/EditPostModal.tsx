@@ -230,20 +230,20 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fadeIn"
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto animate-fadeIn"
       onClick={onClose}
     >
       <div 
-        className="bg-white dark:bg-[#121212] rounded-3xl shadow-2xl border border-gray-100 dark:border-[#262626] w-full max-w-xl max-h-[90vh] flex flex-col relative"
+        className="bg-white dark:bg-[#121212] rounded-t-3xl sm:rounded-3xl shadow-2xl border-t sm:border border-gray-100 dark:border-[#262626] w-full max-w-xl h-[100dvh] sm:h-auto sm:max-h-[90vh] flex flex-col relative pb-safe sm:pb-0"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-[#262626]">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 pt-[calc(0.875rem+env(safe-area-inset-top,0px))] sm:pt-4 border-b border-gray-100 dark:border-[#262626]">
           {isGifPickerOpen ? (
             <button
               type="button"
               onClick={() => setIsGifPickerOpen(false)}
-              className="flex items-center gap-1.5 text-xs font-bold text-gray-700 dark:text-[#E5E5E5] hover:text-[#004AC6] dark:hover:text-[#0095F6] transition cursor-pointer"
+              className="flex items-center gap-1.5 text-xs font-bold text-gray-700 dark:text-[#E5E5E5] hover:text-[#004AC6] dark:hover:text-[#0095F6] transition cursor-pointer min-h-[36px]"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>{t('common.cancel', { defaultValue: 'Quay lại' })}</span>
@@ -261,9 +261,9 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-[#1A1A1A] dark:hover:bg-[#363636] text-gray-500 dark:text-[#A8A8A8] flex items-center justify-center transition cursor-pointer"
+            className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-[#1A1A1A] dark:hover:bg-[#363636] text-gray-500 dark:text-[#A8A8A8] flex items-center justify-center transition cursor-pointer"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -564,12 +564,12 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
         </div>
 
         {/* Footer actions */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 dark:border-[#262626] bg-gray-50/50 dark:bg-[#121212]/50 rounded-b-3xl">
+        <div className="flex items-center justify-end gap-3 px-4 sm:px-6 py-3.5 sm:py-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] sm:pb-4 border-t border-gray-100 dark:border-[#262626] bg-gray-50/50 dark:bg-[#121212]/50 rounded-b-3xl">
           <button
             type="button"
             onClick={onClose}
             disabled={isSaving}
-            className="px-5 py-2 rounded-xl text-xs font-semibold text-gray-700 dark:text-[#D4D4D4] hover:bg-gray-200 dark:hover:bg-[#262626] transition cursor-pointer"
+            className="px-5 py-2.5 min-h-[44px] sm:min-h-0 rounded-xl text-xs sm:text-sm font-semibold text-gray-700 dark:text-[#D4D4D4] hover:bg-gray-200 dark:hover:bg-[#262626] transition cursor-pointer"
           >
             {t('common.cancel')}
           </button>
@@ -577,7 +577,7 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="px-6 py-2 rounded-xl text-xs font-semibold bg-[#004AC6] hover:bg-[#003da3] dark:bg-[#0095F6] dark:hover:bg-[#1877F2] text-white transition flex items-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50"
+            className="px-6 py-2.5 min-h-[44px] sm:min-h-0 rounded-xl text-xs sm:text-sm font-semibold bg-[#004AC6] hover:bg-[#003da3] dark:bg-[#0095F6] dark:hover:bg-[#1877F2] text-white transition flex items-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50"
           >
             {isSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
             <span>{t('profile.saveChanges')}</span>

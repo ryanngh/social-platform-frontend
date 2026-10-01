@@ -36,15 +36,11 @@ export const ImageFeedPost: React.FC = () => {
     } else {
       setIsLiked(true);
       setLikeCount((prev) => prev + 1);
-      toast('Đã thích bài viết', { icon: '❤️' });
     }
   };
 
   const toggleBookmark = () => {
     setIsBookmarked(!isBookmarked);
-    toast(isBookmarked ? 'Đã bỏ lưu bài viết' : 'Đã lưu bài viết vào mục Đã lưu', {
-      icon: isBookmarked ? '🗑️' : '🔖',
-    });
   };
 
   return (
@@ -163,15 +159,13 @@ export const ImageFeedPost: React.FC = () => {
       <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-[#262626] text-xs text-gray-500 dark:text-[#A8A8A8] font-medium">
         <div className="flex items-center gap-6">
           <button 
-            onClick={() => toast('Mở khung bình luận', { icon: '💬' })}
-            className="flex items-center gap-1.5 hover:text-gray-800 transition"
+            className="flex items-center gap-1.5 hover:text-gray-800 transition cursor-pointer"
           >
             <MessageSquare className="w-4 h-4" />
             <span>42</span>
           </button>
           <button 
-            onClick={() => toast.success('Đã chia sẻ lại bài viết')}
-            className="flex items-center gap-1.5 hover:text-gray-800 transition"
+            className="flex items-center gap-1.5 hover:text-gray-800 transition cursor-pointer"
           >
             <Repeat2 className="w-4 h-4" />
             <span>12</span>
@@ -311,15 +305,13 @@ export const PollFeedPost: React.FC = () => {
       <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-[#262626] text-xs text-gray-500 dark:text-[#A8A8A8] font-medium">
         <div className="flex items-center gap-6">
           <button 
-            onClick={() => toast('Mở khung bình luận', { icon: '💬' })}
-            className="flex items-center gap-1.5 hover:text-gray-800 dark:hover:text-[#F5F5F5] transition"
+            className="flex items-center gap-1.5 hover:text-gray-800 dark:hover:text-[#F5F5F5] transition cursor-pointer"
           >
             <MessageSquare className="w-4 h-4" />
             <span>16</span>
           </button>
           <button 
-            onClick={() => toast.success('Đã chia sẻ lại bài viết')}
-            className="flex items-center gap-1.5 hover:text-gray-800 dark:hover:text-[#F5F5F5] transition"
+            className="flex items-center gap-1.5 hover:text-gray-800 dark:hover:text-[#F5F5F5] transition cursor-pointer"
           >
             <Repeat2 className="w-4 h-4" />
             <span>3</span>
@@ -329,7 +321,7 @@ export const PollFeedPost: React.FC = () => {
               setIsLiked(!isLiked);
               setLikeCount(isLiked ? likeCount - 1 : likeCount + 1);
             }}
-            className={`flex items-center gap-1.5 transition ${isLiked ? 'text-rose-500' : 'hover:text-rose-500'}`}
+            className={`flex items-center gap-1.5 transition cursor-pointer ${isLiked ? 'text-rose-500' : 'hover:text-rose-500'}`}
           >
             <Heart className={`w-4 h-4 ${isLiked ? 'fill-rose-500 text-rose-500' : ''}`} />
             <span>{likeCount}</span>
@@ -344,18 +336,16 @@ export const PollFeedPost: React.FC = () => {
           <button 
             onClick={() => {
               setIsBookmarked(!isBookmarked);
-              toast(isBookmarked ? 'Đã bỏ lưu bài viết' : 'Đã lưu bài viết', { icon: '🔖' });
             }}
-            className="hover:text-gray-600 dark:hover:text-[#F5F5F5] transition"
+            className="hover:text-gray-600 dark:hover:text-[#F5F5F5] transition cursor-pointer"
           >
             <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-[#004AC6] text-[#004AC6]' : ''}`} />
           </button>
           <button 
             onClick={async () => {
               await copyToClipboard(`${window.location.origin}/posts/mock-poll-post`);
-              toast.success('Đã sao chép liên kết vào bộ nhớ tạm!');
             }}
-            className="hover:text-gray-600 dark:hover:text-[#F5F5F5] transition"
+            className="hover:text-gray-600 dark:hover:text-[#F5F5F5] transition cursor-pointer"
           >
             <Share2 className="w-4 h-4" />
           </button>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useChat } from '../contexts/ChatContext';
 import ChatSidebar from '../components/chat/ChatSidebar';
 import ChatHeader from '../components/chat/ChatHeader';
@@ -14,6 +14,7 @@ import clsx from 'clsx';
 
 export const MessagesPage: React.FC = () => {
   const { chatId } = useParams<{ chatId?: string }>();
+  const navigate = useNavigate();
   const { selectConversation, activeConversationId, conversations } = useChat();
 
   const [showInfoDrawer, setShowInfoDrawer] = useState(false);
@@ -21,17 +22,28 @@ export const MessagesPage: React.FC = () => {
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
   const [showClearHistoryModal, setShowClearHistoryModal] = useState(false);
   const [replyingMessage, setReplyingMessage] = useState<ChatMessage | null>(null);
-  const [isMobileChatOpen, setIsMobileChatOpen] = useState(false);
+  const [isMobileChatOpen, setIsMobileChatOpen] = useState(Boolean(chatId));
 
   // Sync route param chatId
   useEffect(() => {
-    if (chatId && chatId !== activeConversationId) {
-      selectConversation(chatId);
+    if (chatId) {
+      if (chatId !== activeConversationId) {
+        selectConversation(chatId);
+      }
       setIsMobileChatOpen(true);
-    } else if (!chatId && !activeConversationId && conversations.length > 0) {
-      selectConversation(conversations[0].id);
+    } else {
+      setIsMobileChatOpen(false);
+      if (!activeConversationId && conversations.length > 0) {
+        selectConversation(conversations[0].id);
+      }
     }
   }, [chatId, activeConversationId, conversations, selectConversation]);
+
+  const handleSelectConversation = (id: string) => {
+    selectConversation(id);
+    navigate(`/messages/${id}`);
+    setIsMobileChatOpen(true);
+  };
 
   const handleReplyMessage = (message: ChatMessage) => {
     setReplyingMessage(message);
@@ -42,11 +54,12 @@ export const MessagesPage: React.FC = () => {
   };
 
   return (
-    <div className="bg-white dark:bg-[#121212] rounded-3xl border border-gray-100 dark:border-[#262626] shadow-sm overflow-hidden flex h-[calc(100vh-6.5rem)] min-h-[580px] max-h-[820px] transition-colors duration-200">
+    <div className="bg-white dark:bg-[#121212] rounded-none sm:rounded-3xl border-0 sm:border border-gray-100 dark:border-[#262626] shadow-none sm:shadow-2xs overflow-hidden flex h-[calc(100dvh-3.5rem-env(safe-area-inset-top,0px))] sm:h-[calc(100vh-6.5rem)] min-h-0 sm:min-h-[580px] sm:max-h-[820px] transition-colors duration-200">
       {/* 1. Left Conversation List Sidebar */}
       <ChatSidebar
         onOpenNewChatModal={() => setShowNewChatModal(true)}
         isMobileChatOpen={isMobileChatOpen}
+        onSelectConversation={handleSelectConversation}
       />
 
       {/* 2. Main Active Chat Pane */}
@@ -58,7 +71,10 @@ export const MessagesPage: React.FC = () => {
       >
         {/* Chat Header */}
         <ChatHeader
-          onBackMobile={() => setIsMobileChatOpen(false)}
+          onBackMobile={() => {
+            setIsMobileChatOpen(false);
+            navigate('/messages');
+          }}
           showInfoDrawer={showInfoDrawer}
           onToggleInfoDrawer={() => setShowInfoDrawer(!showInfoDrawer)}
         />

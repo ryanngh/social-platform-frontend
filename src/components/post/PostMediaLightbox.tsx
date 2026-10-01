@@ -44,6 +44,7 @@ import FormattedText from '../common/FormattedText';
 import LikersModal from './LikersModal';
 import EditPostModal from './EditPostModal';
 import DeletePostModal from './DeletePostModal';
+import CreateRepostModal from './CreateRepostModal';
 import CustomVideoPlayer from '../media/CustomVideoPlayer';
 
 // ============================================================
@@ -110,8 +111,9 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
 
   // Media navigation
   const [currentIndex, setCurrentIndex] = useState(initialMediaIndex);
-  const totalMedia = currentPost.media.length;
-  const currentMedia = currentPost.media[currentIndex] || null;
+  const totalMedia = currentPost.media?.length || 0;
+  const safeCurrentIndex = totalMedia > 0 ? Math.max(0, Math.min(currentIndex, totalMedia - 1)) : 0;
+  const currentMedia = totalMedia > 0 && currentPost.media ? currentPost.media[safeCurrentIndex] : null;
   const mediaTheaterRef = useRef<HTMLElement>(null);
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
@@ -119,6 +121,7 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const panStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const touchStartXRef = useRef<number | null>(null);
   const [isEditPostModalOpen, setIsEditPostModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -129,10 +132,13 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
 
   // Post interactions (optimistic)
   const [isLiked, setIsLiked] = useState(initialPost.isLiked ?? initialPost.liked ?? false);
-  const [likeCount, setLikeCount] = useState(currentPost.reactionCount);
+  const [likeCount, setLikeCount] = useState(currentPost.reactionCount || 0);
   const [shareCount, setShareCount] = useState(initialPost.shareCount ?? 0);
   const [isLiking, setIsLiking] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
+  const [isCreateRepostOpen, setIsCreateRepostOpen] = useState(false);
+  const [isReposted, setIsReposted] = useState(initialPost.isReposted ?? false);
+  const [repostCount, setRepostCount] = useState(initialPost.repostCount ?? 0);
 
   // Likers Modal state
   const [isLikersOpen, setIsLikersOpen] = useState(false);
@@ -170,22 +176,25 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
   useEffect(() => {
     if (isOpen) {
       setCurrentPost(initialPost);
-      setEditedPostContent(initialPost.content);
+      setEditedPostContent(initialPost.content || '');
       setIsEditingPost(false);
       setReplyingTo(null);
-      setCurrentIndex(initialMediaIndex);
+      const safeIndex = Math.max(0, Math.min(initialMediaIndex, (initialPost.media?.length || 1) - 1));
+      setCurrentIndex(safeIndex);
       setZoom(1);
       setRotation(0);
       setIsLiked(initialPost.isLiked ?? initialPost.liked ?? false);
-      setLikeCount(initialPost.reactionCount);
+      setLikeCount(initialPost.reactionCount || 0);
+      setIsReposted(initialPost.isReposted ?? false);
+      setRepostCount(initialPost.repostCount ?? 0);
       setIsBookmarked(false);
       setComments([]);
-      setCommentCount(initialPost.commentCount);
+      setCommentCount(initialPost.commentCount || 0);
       setShareCount(initialPost.shareCount ?? 0);
       loadComments();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, initialPost.id]);
+  }, [isOpen, initialPost, initialMediaIndex]);
 
   useEffect(() => {
     const syncFullscreenState = () => {
@@ -258,18 +267,40 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
   };
 
   const selectMedia = (index: number) => {
+    if (totalMedia === 0) return;
     resetMediaTransform();
-    setCurrentIndex(index);
+    setCurrentIndex(Math.max(0, Math.min(index, totalMedia - 1)));
   };
 
-  const goToPrev = () => {
+  const goToPrev = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (totalMedia <= 1) return;
     resetMediaTransform();
     setCurrentIndex((prev) => (prev > 0 ? prev - 1 : totalMedia - 1));
   };
 
-  const goToNext = () => {
+  const goToNext = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (totalMedia <= 1) return;
     resetMediaTransform();
     setCurrentIndex((prev) => (prev < totalMedia - 1 ? prev + 1 : 0));
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartXRef.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartXRef.current === null) return;
+    const diff = e.changedTouches[0].clientX - touchStartXRef.current;
+    if (Math.abs(diff) > 40) {
+      if (diff > 0) {
+        goToPrev();
+      } else {
+        goToNext();
+      }
+    }
+    touchStartXRef.current = null;
   };
 
   // Keyboard navigation
@@ -315,12 +346,10 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
         const res = await postService.likePost(currentPost.id);
         setLikeCount(res.likeCount);
         setIsLiked(res.liked);
-        toast(t('postDetail.likedToast'), { icon: '❤️' });
       } else {
         const res = await postService.unlikePost(currentPost.id);
         setLikeCount(res.likeCount);
         setIsLiked(res.liked);
-        toast(t('postDetail.unlikedToast'), { icon: '🤍' });
       }
       const updated = {
         ...currentPost,
@@ -341,13 +370,6 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
 
   const toggleBookmark = () => {
     setIsBookmarked(!isBookmarked);
-    toast(isBookmarked ? t('feed.unsavedToast') : t('postDetail.savedToast'), {
-      icon: isBookmarked ? '🗑️' : '🔖',
-    });
-  };
-
-  const handleRepost = () => {
-    toast.success(t('postDetail.repostedToast'));
   };
 
   const handleShare = async () => {
@@ -358,9 +380,27 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
         setCurrentPost(updated);
         onPostUpdated?.(updated);
       },
-      successMessage: t('postDetail.copiedToast'),
-      errorMessage: t('postDetail.copyLinkFailed'),
     });
+  };
+
+  const handleRepostSuccess = (newReposted: boolean, newCount: number, caption?: string | null) => {
+    setIsReposted(newReposted);
+    setRepostCount(newCount);
+    const updated = {
+      ...currentPost,
+      isReposted: newReposted,
+      repostCount: newCount,
+      myRepostCaption: caption ?? null,
+    };
+    setCurrentPost(updated);
+    onPostUpdated?.(updated);
+  };
+
+  const handleFocusCommentInput = () => {
+    const inputEl = document.querySelector<HTMLInputElement | HTMLTextAreaElement>(
+      'input[placeholder*="Bình luận"], textarea[placeholder*="Bình luận"], input[placeholder*="Comment"], textarea[placeholder*="Comment"]'
+    );
+    inputEl?.focus();
   };
 
   // --- Post Author Actions ---
@@ -561,7 +601,11 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
   // Author info
   // ============================================================
 
-  const authorName = currentPost.author.fullName || `${currentPost.author.firstName} ${currentPost.author.lastName}`.trim() || currentPost.author.username;
+  const authorName =
+    currentPost.author?.fullName ||
+    `${currentPost.author?.firstName || ''} ${currentPost.author?.lastName || ''}`.trim() ||
+    currentPost.author?.username ||
+    '';
 
   // ============================================================
   // Don't render if closed
@@ -577,35 +621,25 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
         onClick={onClose}
       />
 
-      {/* Top close button (mobile/overlay fallback) */}
-      <button
-        type="button"
-        onClick={onClose}
-        className="absolute top-4 right-5 z-[60] text-white/80 hover:text-white bg-black/40 hover:bg-black/70 p-2.5 rounded-full transition-all flex items-center justify-center backdrop-blur-md md:hidden shadow-lg active:scale-95"
-        title={t('postDetail.closeLightbox')}
-      >
-        <X className="w-5 h-5" />
-      </button>
-
       {/* ==========================================
           MAIN MODAL CONTAINER
          ========================================== */}
-      <div className="relative z-[51] w-full max-w-[1560px] h-[94vh] max-h-[980px] bg-white dark:bg-[#121212] rounded-2xl overflow-hidden shadow-2xl flex flex-col md:flex-row border border-slate-200/50 dark:border-[#262626] mx-3 md:mx-6 lg:mx-8">
+      <div className="relative z-[51] w-full h-full md:max-w-[1560px] md:h-[94vh] md:max-h-[980px] bg-black md:bg-white md:dark:bg-[#121212] rounded-none md:rounded-2xl overflow-hidden shadow-2xl flex flex-col md:flex-row border-0 md:border md:border-slate-200/50 md:dark:border-[#262626] mx-0 md:mx-6 lg:mx-8">
 
         {/* ========================================
             LEFT COLUMN: Media Theater (64-68%)
            ======================================== */}
         <section
           ref={mediaTheaterRef}
-          className={`relative w-full md:w-[64%] lg:w-[68%] bg-[#0B0E14] dark:bg-[#000000] flex flex-col justify-between select-none overflow-hidden group ${
+          className={`relative w-full h-full md:w-[64%] lg:w-[68%] bg-[#0B0E14] dark:bg-[#000000] flex flex-col justify-between select-none overflow-hidden group ${
             isFullscreen ? 'md:w-full lg:w-full' : ''
           }`}
         >
 
           {/* Media Top Bar */}
-          <div className="absolute top-0 inset-x-0 p-4 z-20 flex items-center justify-between bg-gradient-to-b from-black/80 via-black/40 to-transparent pointer-events-none">
+          <div className="absolute top-0 inset-x-0 p-3 sm:p-4 z-30 flex items-center justify-between bg-gradient-to-b from-black/80 via-black/40 to-transparent pointer-events-none">
             {/* Back + Counter */}
-            <div className="flex items-center gap-3 text-white pointer-events-auto">
+            <div className="flex items-center gap-2.5 sm:gap-3 text-white pointer-events-auto">
               <button
                 type="button"
                 onClick={onClose}
@@ -615,14 +649,14 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
                 <ArrowLeft className="w-5 h-5" />
               </button>
               {totalMedia > 1 && (
-                <span className="px-3 py-1 rounded-full bg-[#004AC6] text-white text-xs font-semibold shadow-md backdrop-blur-xs">
-                  {t('postDetail.photoOf', { current: currentIndex + 1, total: totalMedia })}
+                <span className="px-3 py-1 rounded-full bg-black/50 md:bg-[#004AC6] text-white text-xs font-semibold shadow-md backdrop-blur-md border border-white/15 md:border-0 tabular-nums">
+                  {t('postDetail.photoOf', { current: safeCurrentIndex + 1, total: totalMedia })}
                 </span>
               )}
             </div>
 
-            {/* Utility Tools Pill */}
-            <div className="flex items-center gap-1 bg-black/40 backdrop-blur-md px-2.5 py-1.5 rounded-full border border-white/15 text-white/90 shadow-lg pointer-events-auto">
+            {/* Utility Tools Pill — hidden on mobile */}
+            <div className="hidden md:flex items-center gap-1 bg-black/40 backdrop-blur-md px-2.5 py-1.5 rounded-full border border-white/15 text-white/90 shadow-lg pointer-events-auto">
               <button
                 type="button"
                 onClick={() => setZoom((value) => Math.min(MAX_ZOOM, value + ZOOM_STEP))}
@@ -671,16 +705,32 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
                 <Maximize2 className="w-4 h-4" />
               </button>
             </div>
+
+            {/* Mobile close button */}
+            <div className="flex items-center md:hidden pointer-events-auto">
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 text-white/90 hover:text-white transition-all backdrop-blur-md border border-white/10 flex items-center justify-center shadow-lg active:scale-95 cursor-pointer"
+                title={t('postDetail.closeLightbox')}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           {/* Main Image Stage */}
-          <div className="flex-1 flex items-center justify-center relative w-full h-full overflow-hidden p-6 md:p-10 select-none">
+          <div
+            className="flex-1 flex items-center justify-center relative w-full h-full overflow-hidden p-2 sm:p-6 md:p-10 select-none"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
             {/* Left Arrow */}
-            {totalMedia > 1 && currentIndex > 0 && (
+            {totalMedia > 1 && (
               <button
                 type="button"
                 onClick={goToPrev}
-                className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-md border border-white/10 shadow-lg transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                className="absolute left-2.5 sm:left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-md border border-white/10 shadow-lg transition-all hover:scale-105 active:scale-95 cursor-pointer"
                 title={t('postDetail.previousPhoto')}
               >
                 <ChevronLeft className="w-6 h-6" />
@@ -692,34 +742,28 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
               <div className="relative max-h-full max-w-full flex items-center justify-center">
                 {isVideoMedia(currentMedia.mediaUrl, currentMedia.mediaType) ? (
                   <div
-                    onMouseDown={handleMouseDownPan}
-                    onMouseMove={handleMouseMovePan}
-                    onMouseUp={handleMouseUpPan}
-                    className={`max-h-[72vh] w-auto max-w-full rounded-2xl shadow-2xl overflow-hidden ${
+                    key={currentMedia.id || currentMedia.mediaUrl || safeCurrentIndex}
+                    className={`max-h-[85vh] md:max-h-[72vh] w-auto max-w-full rounded-xl md:rounded-2xl shadow-2xl overflow-hidden ${
                       isFullscreen ? 'max-h-[calc(100vh-8rem)]' : ''
                     }`}
-                    style={{
-                      transform: `translate3d(${pan.x}px, ${pan.y}px, 0px) scale(${zoom}) rotate(${rotation}deg)`,
-                      cursor: zoom > 1 ? (isPanning ? 'grabbing' : 'grab') : 'default',
-                      transition: isPanning ? 'none' : 'transform 200ms ease-out',
-                    }}
                   >
                     <CustomVideoPlayer
                       src={getMediaUrl(currentMedia.mediaUrl)}
                       autoPlay
                       title={authorName}
                       subtitle={currentPost.content ? currentPost.content.slice(0, 60) : undefined}
-                      className="max-h-[72vh] w-auto max-w-full aspect-video rounded-2xl"
+                      className="max-h-[85vh] md:max-h-[72vh] w-auto max-w-full aspect-video rounded-xl md:rounded-2xl"
                     />
                   </div>
                 ) : (
                   <img
+                    key={currentMedia.id || currentMedia.mediaUrl || safeCurrentIndex}
                     src={getMediaUrl(currentMedia.mediaUrl)}
-                    alt={`${authorName} - ${currentIndex + 1}`}
+                    alt={`${authorName} - ${safeCurrentIndex + 1}`}
                     onMouseDown={handleMouseDownPan}
                     onMouseMove={handleMouseMovePan}
                     onMouseUp={handleMouseUpPan}
-                    className={`max-h-[72vh] w-auto object-contain rounded-2xl shadow-2xl select-none ${
+                    className={`max-h-[85vh] md:max-h-[72vh] w-auto max-w-full object-contain rounded-xl md:rounded-2xl shadow-2xl select-none ${
                       isFullscreen ? 'max-h-[calc(100vh-8rem)]' : ''
                     }`}
                     style={{
@@ -734,11 +778,11 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
             )}
 
             {/* Right Arrow */}
-            {totalMedia > 1 && currentIndex < totalMedia - 1 && (
+            {totalMedia > 1 && (
               <button
                 type="button"
                 onClick={goToNext}
-                className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-md border border-white/10 shadow-lg transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                className="absolute right-2.5 sm:right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center backdrop-blur-md border border-white/10 shadow-lg transition-all hover:scale-105 active:scale-95 cursor-pointer"
                 title={t('postDetail.nextPhoto')}
               >
                 <ChevronRight className="w-6 h-6" />
@@ -746,11 +790,11 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
             )}
           </div>
 
-          {/* Bottom Thumbnail Strip */}
+          {/* Bottom Thumbnail Strip — hidden on mobile */}
           {totalMedia > 1 && (
-            <div className="relative z-20 bg-gradient-to-t from-black/90 via-black/60 to-transparent pt-3 pb-4 px-6">
+            <div className="hidden md:block relative z-20 bg-gradient-to-t from-black/90 via-black/60 to-transparent pt-3 pb-4 px-6">
               <div className="flex items-center justify-center gap-3 overflow-x-auto py-1">
-                {currentPost.media.map((media, idx) => {
+                {(currentPost.media || []).map((media, idx) => {
                   const isVid = isVideoMedia(media.mediaUrl, media.mediaType);
                   return (
                     <button
@@ -758,7 +802,7 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
                       type="button"
                       onClick={() => selectMedia(idx)}
                       className={`relative rounded-xl overflow-hidden transition-all flex-shrink-0 w-14 h-14 bg-black/50 ${
-                        idx === currentIndex
+                        idx === safeCurrentIndex
                           ? 'ring-2 ring-[#004AC6] ring-offset-2 ring-offset-black scale-105'
                           : 'opacity-60 hover:opacity-100 hover:scale-105'
                       }`}
@@ -799,22 +843,22 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
         </section>
 
         {/* ========================================
-            RIGHT COLUMN: Post Details (32-36%)
+            RIGHT COLUMN: Post Details (32-36%) - desktop only
            ======================================== */}
-        <section className="w-full md:w-[36%] lg:w-[32%] bg-white dark:bg-[#121212] flex flex-col h-full border-l border-[#E2E2EC]/50 dark:border-[#262626]">
+        <section className="hidden md:flex w-full md:w-[36%] lg:w-[32%] bg-white dark:bg-[#121212] flex-col h-full border-l border-[#E2E2EC]/50 dark:border-[#262626]">
 
           {/* Post Header */}
           <header className="px-5 py-4 border-b border-[#E2E2EC]/70 dark:border-[#262626] flex items-center justify-between flex-shrink-0 bg-white dark:bg-[#121212]">
             <div className="flex items-center gap-3">
               {/* Author Avatar */}
               <Link
-                to={getProfileUrl(currentPost.author)}
+                to={currentPost.author ? getProfileUrl(currentPost.author) : '#'}
                 onClick={onClose}
                 className="hover:opacity-90 transition cursor-pointer"
               >
                 <UserAvatar
-                  userId={currentPost.author.id}
-                  src={currentPost.author.avatarUrl}
+                  userId={currentPost.author?.id || ''}
+                  src={currentPost.author?.avatarUrl}
                   alt={authorName}
                   size="md"
                 />
@@ -822,7 +866,7 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
               <div className="flex flex-col">
                 <div className="flex items-center gap-1.5">
                   <Link
-                    to={getProfileUrl(currentPost.author)}
+                    to={currentPost.author ? getProfileUrl(currentPost.author) : '#'}
                     onClick={onClose}
                     className="text-[15px] font-bold text-[#1A1C1E] dark:text-[#F5F5F5] hover:underline hover:text-[#004AC6] dark:hover:text-[#0095F6] transition-colors cursor-pointer"
                   >
@@ -831,11 +875,11 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-[#535F70] dark:text-[#A8A8A8]">
                   <Link
-                    to={getProfileUrl(currentPost.author)}
+                    to={currentPost.author ? getProfileUrl(currentPost.author) : '#'}
                     onClick={onClose}
                     className="hover:underline hover:text-gray-600 dark:hover:text-[#E5E5E5] transition-colors cursor-pointer"
                   >
-                    @{currentPost.author.username}
+                    @{currentPost.author?.username}
                   </Link>
                   <span>·</span>
                   <span>{formatRelativeTime(currentPost.createdAt, language)}</span>
@@ -859,7 +903,7 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
               </button>
               <PostMoreMenu
                 postId={currentPost.id}
-                authorUsername={currentPost.author.username}
+                authorUsername={currentPost.author?.username || ''}
                 isAuthor={isAuthor}
                 currentVisibility={currentPost.visibility}
                 isOpen={isMoreMenuOpen}
@@ -955,21 +999,33 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
               <div className="flex items-center gap-5">
                 <button
                   type="button"
-                  onClick={() => toast('💬')}
+                  onClick={handleFocusCommentInput}
                   className="flex items-center gap-1.5 hover:text-[#004AC6] dark:hover:text-[#0095F6] transition-colors group p-1 cursor-pointer"
                   title={t('postDetail.commentButton')}
                 >
                   <MessageCircle className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                  <span>{commentCount}</span>
+                  <span>{formatCount(commentCount)}</span>
                 </button>
                 <button
                   type="button"
-                  onClick={handleRepost}
-                  className="flex items-center gap-1.5 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors group p-1 cursor-pointer"
-                  title={t('postDetail.repostButton')}
+                  onClick={() => setIsCreateRepostOpen(true)}
+                  className={`flex items-center gap-1.5 transition-colors group p-1 cursor-pointer ${
+                    isReposted
+                      ? 'text-emerald-600 dark:text-emerald-400 font-semibold'
+                      : 'hover:text-emerald-600 dark:hover:text-emerald-400'
+                  }`}
+                  title={
+                    isReposted
+                      ? language === 'vi' ? 'Xem / Chỉnh sửa repost' : 'View / Edit repost'
+                      : t('postDetail.repostButton')
+                  }
                 >
-                  <Repeat2 className="w-4 h-4 group-hover:rotate-180 transition-transform" />
-                  <span>12</span>
+                  <Repeat2
+                    className={`w-4 h-4 transition-transform duration-200 ${
+                      isReposted ? 'scale-105 text-emerald-500' : 'group-hover:rotate-180'
+                    }`}
+                  />
+                  <span>{formatCount(repostCount)}</span>
                 </button>
                 <div className="flex items-center gap-1 group">
                   <button
@@ -1001,7 +1057,7 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
                 </div>
                 <div className="flex items-center gap-1.5 text-[#535F70] dark:text-[#A8A8A8]" title={t('postDetail.views')}>
                   <Eye className="w-4 h-4" />
-                  <span>12.5K</span>
+                  <span>{formatCount(currentPost.viewCount ?? 0)}</span>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -1093,7 +1149,7 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
                     key={comment.id}
                     comment={comment}
                     currentUserId={currentUser?.id}
-                    postAuthorId={currentPost.author.id}
+                    postAuthorId={currentPost.author?.id || ''}
                     onReply={(targetComment, replyToUser) => {
                       setReplyingTo({
                         commentId: replyToUser?.replyId || targetComment.id,
@@ -1120,7 +1176,7 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
 
           {/* Sticky Comment Input */}
           <CommentInput
-            authorName={currentPost.author.firstName || currentPost.author.username}
+            authorName={currentPost.author?.firstName || currentPost.author?.username || ''}
             onSubmit={handleSubmitComment}
             isSubmitting={isSubmittingComment}
             replyingTo={
@@ -1166,6 +1222,16 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
         onConfirm={handleConfirmDeletePost}
         isLoading={isDeleting}
         post={currentPost}
+      />
+
+      {/* Create Repost Modal */}
+      <CreateRepostModal
+        isOpen={isCreateRepostOpen}
+        onClose={() => setIsCreateRepostOpen(false)}
+        post={currentPost}
+        isAlreadyReposted={isReposted}
+        initialCaption={currentPost.myRepostCaption || ''}
+        onRepostSuccess={handleRepostSuccess}
       />
     </div>
   );

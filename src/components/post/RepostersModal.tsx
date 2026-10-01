@@ -99,16 +99,16 @@ export const RepostersModal: React.FC<RepostersModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs animate-fadeIn"
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-[#121212] w-full max-w-md rounded-3xl shadow-2xl border border-gray-100 dark:border-[#262626] overflow-hidden flex flex-col max-h-[85vh] transition-all"
+        className="bg-white dark:bg-[#121212] w-full max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl border-t sm:border border-gray-100 dark:border-[#262626] overflow-hidden flex flex-col max-h-[85dvh] sm:max-h-[85vh] transition-all pb-safe sm:pb-0"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-[#262626]">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 sm:py-4 border-b border-gray-100 dark:border-[#262626]">
+          <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
               <Repeat2 className="w-4 h-4" />
             </div>
@@ -125,7 +125,7 @@ export const RepostersModal: React.FC<RepostersModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-[#F5F5F5] rounded-full hover:bg-gray-100 dark:hover:bg-[#262626] transition-colors cursor-pointer"
+            className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-[#F5F5F5] rounded-full hover:bg-gray-100 dark:hover:bg-[#262626] transition-colors cursor-pointer"
             title={language === 'vi' ? 'Đóng' : 'Close'}
             type="button"
           >

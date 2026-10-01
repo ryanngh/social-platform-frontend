@@ -88,13 +88,14 @@ const TopNavBar: React.FC = () => {
 
 
   return (
-    <header className="fixed top-0 left-0 right-0 h-16 bg-white dark:bg-[#121212] border-b border-gray-200/80 dark:border-[#262626] z-50 shadow-sm flex items-center justify-between px-4 sm:px-6 transition-colors duration-200">
-      {/* Brand Logo & Search */}
-      <div className="flex items-center gap-4 sm:gap-8">
-        <Link to="/feed" className="text-2xl font-black text-[#004AC6] dark:text-[#0095F6] tracking-tight hover:opacity-95 transition">
-          RySocial
-        </Link>
-        <div className="relative w-48 sm:w-64 md:w-[380px]" ref={searchContainerRef}>
+    <header className="fixed top-0 left-0 right-0 h-[calc(3.5rem+env(safe-area-inset-top,0px))] sm:h-16 pt-[env(safe-area-inset-top,0px)] bg-white/95 dark:bg-[#121212]/95 backdrop-blur-md border-b border-gray-200/80 dark:border-[#262626] z-50 shadow-2xs transition-colors duration-200">
+      <div className="h-14 sm:h-16 flex items-center justify-between px-3 sm:px-6">
+        {/* Brand Logo & Search */}
+        <div className="flex items-center gap-3 sm:gap-8">
+          <Link to="/feed" className="text-xl sm:text-2xl font-black text-[#004AC6] dark:text-[#0095F6] tracking-tight hover:opacity-95 transition">
+            RySocial
+          </Link>
+          <div className="hidden md:block relative md:w-[320px] lg:w-[380px]" ref={searchContainerRef}>
           <form onSubmit={handleSearchSubmit} className="relative w-full">
             <button
               type="submit"
@@ -142,7 +143,17 @@ const TopNavBar: React.FC = () => {
       </div>
 
       {/* Top Right Nav Items & User Switcher */}
-      <div className="flex items-center gap-2 sm:gap-3">
+      <div className="flex items-center gap-1.5 sm:gap-3">
+        {/* Mobile Search Button */}
+        <Link
+          to="/search"
+          className="p-2 text-gray-600 dark:text-[#D4D4D4] hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#262626] rounded-full transition cursor-pointer md:hidden"
+          title={t('topNav.searchPlaceholder')}
+          aria-label={t('topNav.searchPlaceholder')}
+        >
+          <Search className="w-5 h-5" />
+        </Link>
+
         {/* Quick Theme Toggle */}
         <button
           onClick={toggleTheme}
@@ -157,8 +168,8 @@ const TopNavBar: React.FC = () => {
           )}
         </button>
 
-        {/* Notification Icon & Dropdown Popup */}
-        <div className="relative" ref={notifButtonRef}>
+        {/* Notification Icon & Dropdown Popup - Desktop only, on mobile it's in bottom bar */}
+        <div className="relative hidden md:block" ref={notifButtonRef}>
           <button
             onClick={() => {
               setShowNotificationPopup(!showNotificationPopup);
@@ -192,9 +203,13 @@ const TopNavBar: React.FC = () => {
         <div className="relative" ref={messagesButtonRef}>
           <button
             onClick={() => {
-              setShowMessagesPopup(!showMessagesPopup);
-              setShowNotificationPopup(false);
-              setShowUserMenu(false);
+              if (window.innerWidth < 768) {
+                navigate('/messages');
+              } else {
+                setShowMessagesPopup(!showMessagesPopup);
+                setShowNotificationPopup(false);
+                setShowUserMenu(false);
+              }
             }}
             className={clsx(
               'p-2 text-gray-600 dark:text-[#D4D4D4] hover:text-gray-900 dark:hover:text-white rounded-full transition cursor-pointer relative',
@@ -219,8 +234,8 @@ const TopNavBar: React.FC = () => {
           />
         </div>
 
-        {/* Separator */}
-        <div className="h-6 w-px bg-gray-200 dark:bg-[#1A1A1A] mx-1"></div>
+        {/* Separator - Desktop only */}
+        <div className="hidden md:block h-6 w-px bg-gray-200 dark:bg-[#1A1A1A] mx-1"></div>
 
         {/* User Info & Switch */}
         <div className="relative" ref={menuRef}>
@@ -400,7 +415,8 @@ const TopNavBar: React.FC = () => {
           )}
         </div>
       </div>
-    </header>
+    </div>
+  </header>
   );
 };
 

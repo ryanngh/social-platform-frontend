@@ -69,12 +69,31 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
   const [showScrollBottomBtn, setShowScrollBottomBtn] = useState(false);
   const [prevScrollHeight, setPrevScrollHeight] = useState<number | null>(null);
 
-  // Scroll to bottom when opening a conversation or sending a new message
+  const lastConvIdRef = useRef<string | undefined>(undefined);
+  const lastMessagesLenRef = useRef(0);
+
+  // Instant scroll to bottom when switching conversations (after loading)
   useEffect(() => {
-    if (!isLoadingMessages) {
+    if (isLoadingMessages) return;
+    const convId = activeConversation?.id;
+    if (convId !== lastConvIdRef.current) {
+      lastConvIdRef.current = convId;
+      lastMessagesLenRef.current = messages.length;
+      // Instant — DOM is freshly painted, smooth looks broken
+      if (containerRef.current) {
+        containerRef.current.scrollTop = containerRef.current.scrollHeight;
+      }
+    }
+  }, [activeConversation?.id, isLoadingMessages, messages.length]);
+
+  // Smooth scroll only when a new message arrives in the current conversation
+  useEffect(() => {
+    if (isLoadingMessages) return;
+    if (messages.length > lastMessagesLenRef.current) {
+      lastMessagesLenRef.current = messages.length;
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [activeConversation?.id, messages.length, isLoadingMessages]);
+  }, [messages.length, isLoadingMessages]);
 
   // Preserve scroll position when older messages are loaded at top
   useLayoutEffect(() => {

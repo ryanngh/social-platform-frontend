@@ -120,17 +120,17 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn"
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fadeIn"
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-[#121212] rounded-3xl shadow-2xl border border-gray-100 dark:border-[#262626] w-full max-w-md max-h-[85vh] overflow-hidden flex flex-col transition-all relative"
+        className="bg-white dark:bg-[#121212] rounded-t-3xl sm:rounded-3xl shadow-2xl border-t sm:border border-gray-100 dark:border-[#262626] w-full max-w-md max-h-[85dvh] sm:max-h-[85vh] overflow-hidden flex flex-col transition-all relative pb-safe sm:pb-0"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header with Title and Tabs */}
         <div className="border-b border-gray-100 dark:border-[#262626] flex-shrink-0">
-          <div className="flex items-center justify-between px-5 pt-4 pb-2">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between px-4 sm:px-5 pt-3.5 sm:pt-4 pb-2">
+            <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-[#0095F6]/15 flex items-center justify-center text-[#004AC6] dark:text-[#0095F6]">
                 <Users className="w-4 h-4" />
               </div>
@@ -147,7 +147,7 @@ export const FollowListModal: React.FC<FollowListModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 dark:text-[#A8A8A8] hover:text-gray-700 dark:hover:text-[#F5F5F5] hover:bg-gray-100 dark:hover:bg-[#262626] transition cursor-pointer"
+              className="w-9 h-9 flex items-center justify-center rounded-full text-gray-400 dark:text-[#A8A8A8] hover:text-gray-700 dark:hover:text-[#F5F5F5] hover:bg-gray-100 dark:hover:bg-[#262626] transition cursor-pointer"
               title={t('common.close', { defaultValue: 'Đóng' })}
             >
               <X className="w-5 h-5" />

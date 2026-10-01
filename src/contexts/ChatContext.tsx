@@ -16,6 +16,7 @@ import { userService } from '../services/userService';
 import { presenceService } from '../services/presenceService';
 import { playMessageSound } from '../utils/sound';
 import { getMediaUrl } from '../utils/media';
+import { generateUUID } from '../utils/uuid';
 import type {
   ChatMessage,
   ChatConversationItem,
@@ -377,12 +378,17 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   );
 
   // Load conversation list from REST API
+  const transformConversationRef = useRef(transformConversation);
+  useEffect(() => {
+    transformConversationRef.current = transformConversation;
+  }, [transformConversation]);
+
   const fetchConversations = useCallback(async () => {
     setIsLoadingConversations(true);
     try {
       const rawList = await chatService.getConversations({ limit: 50 });
       if (rawList && rawList.length > 0) {
-        const enriched = await Promise.all(rawList.map(transformConversation));
+        const enriched = await Promise.all(rawList.map((r) => transformConversationRef.current(r)));
         setConversations(enriched);
       } else {
         setConversations([]);
@@ -393,7 +399,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } finally {
       setIsLoadingConversations(false);
     }
-  }, [transformConversation]);
+  }, []); // stable — uses ref internally
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -439,12 +445,36 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     [currentUserId]
   );
 
+  // Stable ref to check if conversation exists without adding it to dep array
+  const conversationsRef = useRef(conversations);
+  useEffect(() => {
+    conversationsRef.current = conversations;
+  }, [conversations]);
+
   useEffect(() => {
     if (activeConversationId) {
       void fetchMessagesForActiveConversation(activeConversationId);
+
+      // If active conversation is not in local conversations list, fetch it (fire-and-forget)
+      if (!conversationsRef.current.some((c) => c.id === activeConversationId)) {
+        chatService
+          .getConversation(activeConversationId)
+          .then(async (details) => {
+            if (details) {
+              const enriched = await transformConversation(details);
+              setConversations((prev) =>
+                prev.some((c) => c.id === enriched.id) ? prev : [enriched, ...prev]
+              );
+            }
+          })
+          .catch((err) => {
+            console.warn('[ChatContext] Failed to fetch missing conversation details:', err);
+          });
+      }
     } else {
       setMessages([]);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeConversationId, fetchMessagesForActiveConversation]);
 
   // Load older messages (Pagination / Infinite Scroll Up)
@@ -549,7 +579,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return null;
       }
 
-      const clientMsgId = crypto.randomUUID();
+      const clientMsgId = generateUUID();
       const optimisticMessage: ChatMessage = {
         conversationId: activeConversationId,
         senderId: currentUserId,

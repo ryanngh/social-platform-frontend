@@ -11,7 +11,7 @@ export const AuthHeroPanel: React.FC<AuthHeroPanelProps> = ({ mode }) => {
   const isVi = language === 'vi';
 
   return (
-    <div className="w-full lg:w-5/12 bg-[#F8FAFC] dark:bg-[#0A0E17] p-8 lg:p-12 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-gray-100 dark:border-[#1F2937]/80 transition-colors">
+    <div className="hidden lg:flex lg:w-5/12 bg-[#F8FAFC] dark:bg-[#0A0E17] p-8 lg:p-12 flex-col justify-between border-b lg:border-b-0 lg:border-r border-gray-100 dark:border-[#1F2937]/80 transition-colors">
       <div>
         {/* Brand Headline */}
         <div className="space-y-3 mb-6">

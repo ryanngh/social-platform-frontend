@@ -61,18 +61,18 @@ export const ExploreHeader: React.FC<ExploreHeaderProps> = ({
   return (
     <div className="space-y-4">
       {/* 1. Main Discovery Card */}
-      <div className="bg-white dark:bg-[#121212] rounded-3xl p-4 sm:p-5 border border-gray-100 dark:border-[#262626] shadow-sm transition-colors duration-200">
+      <div className="bg-white dark:bg-[#121212] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-gray-100 dark:border-[#262626] shadow-2xs transition-colors duration-200">
         {/* Title */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#004AC6] to-[#0095F6] flex items-center justify-center text-white shadow-md shadow-blue-500/20 shrink-0">
+        <div className="flex items-center justify-between mb-3.5">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-[#004AC6] to-[#0095F6] flex items-center justify-center text-white shadow-xs shrink-0">
               <Compass className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-[#F5F5F5] leading-tight">
+              <h1 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-[#F5F5F5] leading-tight">
                 {t('explore.title') || 'Khám phá'}
               </h1>
-              <p className="text-xs text-gray-500 dark:text-[#A8A8A8]">
+              <p className="text-xs text-gray-500 dark:text-[#A8A8A8] hidden sm:block">
                 Khám phá xu hướng, hình ảnh, video và cộng đồng sáng tạo trên RySocial
               </p>
             </div>
@@ -80,14 +80,14 @@ export const ExploreHeader: React.FC<ExploreHeaderProps> = ({
         </div>
 
         {/* Search Input Box */}
-        <div className="relative mb-3.5">
+        <div className="relative mb-3">
           <Search className="w-4 h-4 text-gray-400 dark:text-[#737373] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder={t('explore.searchPlaceholder') || 'Tìm kiếm người, thẻ hoặc chủ đề...'}
-            className="w-full pl-10 pr-10 py-2.5 bg-gray-100/80 dark:bg-[#1A1A1A] border border-transparent dark:border-[#363636] rounded-2xl text-sm text-gray-900 dark:text-[#F5F5F5] placeholder-gray-400 dark:placeholder-[#737373] focus:bg-white dark:focus:bg-[#000000] focus:border-[#004AC6] dark:focus:border-[#0095F6] outline-none transition"
+            className="w-full pl-10 pr-10 py-2 sm:py-2.5 bg-gray-100/80 dark:bg-[#1A1A1A] border border-transparent dark:border-[#363636] rounded-xl sm:rounded-2xl text-sm text-gray-900 dark:text-[#F5F5F5] placeholder-gray-400 dark:placeholder-[#737373] focus:bg-white dark:focus:bg-[#000000] focus:border-[#004AC6] dark:focus:border-[#0095F6] outline-none transition"
           />
           {searchQuery && (
             <button
@@ -142,22 +142,22 @@ export const ExploreHeader: React.FC<ExploreHeaderProps> = ({
         )}
       </div>
 
-      {/* 2. Featured Creators Section (Matching Mock Design Exactly) */}
+      {/* 2. Featured Creators Section */}
       {suggestedUsers.length > 0 && (
-        <section className="bg-white dark:bg-[#121212] rounded-3xl p-4 sm:p-5 border border-gray-100 dark:border-[#262626] shadow-sm transition-colors duration-200">
-          <div className="flex items-center justify-between mb-3.5">
-            <div className="flex items-center gap-2">
+        <section className="bg-white dark:bg-[#121212] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-gray-100 dark:border-[#262626] shadow-2xs transition-colors duration-200">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <Sparkles className="w-4 h-4 text-amber-500" />
               <h2 className="text-sm font-bold text-gray-900 dark:text-[#F5F5F5]">
                 {t('explore.featuredCreators') || 'Nhà sáng tạo nổi bật'}
               </h2>
             </div>
-            <span className="text-xs text-gray-400 dark:text-[#737373]">
-              Được gợi ý theo sở thích
+            <span className="text-[11px] sm:text-xs text-gray-400 dark:text-[#737373]">
+              Gợi ý cho bạn
             </span>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="flex sm:grid sm:grid-cols-4 gap-2.5 sm:gap-3 overflow-x-auto no-scrollbar pb-1">
             {suggestedUsers.slice(0, 4).map((creator) => {
               const displayName = `${creator.firstName || ''} ${creator.lastName || ''}`.trim() || creator.username;
               const isFollowing = followedIds.has(creator.id);
@@ -165,7 +165,7 @@ export const ExploreHeader: React.FC<ExploreHeaderProps> = ({
               return (
                 <div
                   key={creator.id}
-                  className="group relative bg-gray-50 dark:bg-[#1A1A1A] border border-gray-100 dark:border-[#262626] rounded-2xl p-3 flex flex-col items-center text-center transition hover:shadow-md hover:border-gray-200 dark:hover:border-[#363636]"
+                  className="w-32 sm:w-auto shrink-0 group relative bg-gray-50 dark:bg-[#1A1A1A] border border-gray-100 dark:border-[#262626] rounded-xl sm:rounded-2xl p-2.5 sm:p-3 flex flex-col items-center text-center transition hover:shadow-md hover:border-gray-200 dark:hover:border-[#363636]"
                 >
                   <Link
                     to={getProfileUrl(creator.username || creator.id)}

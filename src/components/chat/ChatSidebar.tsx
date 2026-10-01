@@ -14,11 +14,13 @@ type ConversationTab = 'all' | 'unread' | 'groups';
 interface ChatSidebarProps {
   onOpenNewChatModal: () => void;
   isMobileChatOpen: boolean;
+  onSelectConversation?: (convId: string) => void;
 }
 
 export const ChatSidebar: React.FC<ChatSidebarProps> = ({
   onOpenNewChatModal,
   isMobileChatOpen,
+  onSelectConversation,
 }) => {
   const { t, language } = useLanguage();
   const { user } = useAuth();
@@ -80,10 +82,13 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
     });
   }, [conversations, searchQuery, activeTab]);
 
-  const handleSelectFriendStory = (friend: UserSummary) => {
+  const handleSelectFriendStory = async (friend: UserSummary) => {
     const targetId = friend.id || (friend as any).userId;
     if (targetId) {
-      void startOrOpenDM(targetId, friend);
+      const convId = await startOrOpenDM(targetId, friend);
+      if (convId && onSelectConversation) {
+        onSelectConversation(convId);
+      }
     }
   };
 
@@ -260,7 +265,13 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
             return (
               <div
                 key={conv.id}
-                onClick={() => selectConversation(conv.id)}
+                onClick={() => {
+                  if (onSelectConversation) {
+                    onSelectConversation(conv.id);
+                  } else {
+                    selectConversation(conv.id);
+                  }
+                }}
                 className={clsx(
                   'flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition relative group',
                   isSelected

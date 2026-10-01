@@ -12,7 +12,7 @@ export const DockedChatContainer: React.FC = () => {
 
   return (
     <div
-      className="fixed bottom-0 right-3 sm:right-6 z-40 flex items-end gap-3 pointer-events-none select-none max-w-[calc(100vw-1.5rem)] overflow-visible"
+      className="hidden md:flex fixed bottom-0 right-3 sm:right-6 z-40 items-end gap-3 pointer-events-none select-none max-w-[calc(100vw-1.5rem)] overflow-visible"
       data-purpose="docked-chat-container"
     >
       {dockedChatIds.map((convId) => {

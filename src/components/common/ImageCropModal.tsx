@@ -129,16 +129,16 @@ export const ImageCropModal = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="crop-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md animate-fadeIn"
     >
       <div 
-        className="w-full max-w-xl bg-white dark:bg-[#181818] border border-gray-100 dark:border-[#2C2C2C] rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]"
+        className="w-full max-w-xl bg-white dark:bg-[#181818] border-t sm:border border-gray-100 dark:border-[#2C2C2C] rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col h-[100dvh] sm:h-auto sm:max-h-[95vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-gray-100 dark:border-[#262626]">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 pt-[calc(0.875rem+env(safe-area-inset-top,0px))] sm:pt-4 border-b border-gray-100 dark:border-[#262626]">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-[#004AC6] dark:text-[#0095F6] flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-[#004AC6] dark:text-[#0095F6] flex items-center justify-center shrink-0">
               {isAvatar ? <User className="w-5 h-5" /> : <ImageIcon className="w-5 h-5" />}
             </div>
             <div>
@@ -154,7 +154,7 @@ export const ImageCropModal = ({
             onClick={onClose}
             disabled={isProcessing}
             aria-label={isVi ? 'Đóng' : 'Close'}
-            className="p-2 text-gray-400 dark:text-[#A8A8A8] hover:text-gray-900 dark:hover:text-[#F5F5F5] hover:bg-gray-100 dark:hover:bg-[#262626] rounded-full transition cursor-pointer disabled:opacity-50"
+            className="w-9 h-9 flex items-center justify-center text-gray-400 dark:text-[#A8A8A8] hover:text-gray-900 dark:hover:text-[#F5F5F5] hover:bg-gray-100 dark:hover:bg-[#262626] rounded-full transition cursor-pointer disabled:opacity-50"
             type="button"
           >
             <X className="w-5 h-5" />
@@ -162,7 +162,7 @@ export const ImageCropModal = ({
         </div>
 
         {/* Cropper Body */}
-        <div className="relative w-full h-72 sm:h-96 bg-black overflow-hidden select-none">
+        <div className="relative w-full h-64 sm:h-96 flex-1 bg-black overflow-hidden select-none">
           <Cropper
             image={imageSrc}
             crop={crop}
@@ -244,12 +244,12 @@ export const ImageCropModal = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2.5 px-5 sm:px-6 py-4 border-t border-gray-100 dark:border-[#262626] bg-white dark:bg-[#181818]">
+        <div className="flex items-center justify-end gap-2.5 px-4 sm:px-6 py-3.5 sm:py-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] sm:pb-4 border-t border-gray-100 dark:border-[#262626] bg-white dark:bg-[#181818]">
           <button
             type="button"
             onClick={onClose}
             disabled={isProcessing}
-            className="h-9 px-4 border border-gray-200 dark:border-[#363636] rounded-xl text-xs sm:text-sm font-semibold text-gray-700 dark:text-[#E5E5E5] hover:bg-gray-50 dark:hover:bg-[#262626] transition cursor-pointer disabled:opacity-50"
+            className="h-10 sm:h-9 px-4 min-h-[44px] sm:min-h-0 border border-gray-200 dark:border-[#363636] rounded-xl text-xs sm:text-sm font-semibold text-gray-700 dark:text-[#E5E5E5] hover:bg-gray-50 dark:hover:bg-[#262626] transition cursor-pointer disabled:opacity-50"
           >
             {isVi ? 'Hủy' : 'Cancel'}
           </button>
@@ -258,7 +258,7 @@ export const ImageCropModal = ({
             type="button"
             onClick={handleApplyCrop}
             disabled={isProcessing}
-            className="h-9 px-5 bg-[#004AC6] hover:bg-[#002970] dark:bg-[#0095F6] dark:hover:bg-[#1877F2] text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
+            className="h-10 sm:h-9 px-5 min-h-[44px] sm:min-h-0 bg-[#004AC6] hover:bg-[#002970] dark:bg-[#0095F6] dark:hover:bg-[#1877F2] text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
           >
             {isProcessing ? (
               <>

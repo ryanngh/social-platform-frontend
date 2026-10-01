@@ -177,21 +177,21 @@ export const NotificationsPage: React.FC = () => {
   const EmptyIcon = emptyInfo.icon;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3.5 sm:space-y-4">
       {/* 1. Page Header Card */}
-      <div className="bg-white dark:bg-[#121212] rounded-3xl p-5 sm:p-6 shadow-sm border border-gray-100 dark:border-[#262626] transition-colors duration-200">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-[#004AC6] text-white flex items-center justify-center shadow-md shadow-blue-500/20">
-              <Bell className="w-6 h-6" />
+      <div className="bg-white dark:bg-[#121212] rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-2xs border border-gray-100 dark:border-[#262626] transition-colors duration-200">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-500 to-[#004AC6] text-white flex items-center justify-center shadow-xs shrink-0">
+              <Bell className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
-            <div>
-              <div className="flex items-center gap-2.5">
-                <h1 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-[#F5F5F5] tracking-tight">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-lg sm:text-2xl font-black text-gray-900 dark:text-[#F5F5F5] tracking-tight">
                   {t('notifications.title')}
                 </h1>
                 {unreadCount > 0 && (
-                  <span className="bg-rose-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-full shadow-xs">
+                  <span className="bg-rose-500 text-white text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full shadow-xs">
                     {unreadCount} {t('notifications.tabs.unread').toLowerCase()}
                   </span>
                 )}
@@ -200,13 +200,13 @@ export const NotificationsPage: React.FC = () => {
           </div>
 
           {/* Action buttons */}
-          <div className="flex items-center gap-2 self-end sm:self-auto">
+          <div className="flex items-center gap-1.5 shrink-0">
             <button
               type="button"
               onClick={handleRefresh}
               disabled={isRefreshing}
               title="Làm mới"
-              className="p-2.5 text-gray-600 dark:text-[#D4D4D4] hover:text-gray-900 dark:hover:text-white bg-gray-50 dark:bg-[#1A1A1A] hover:bg-gray-100 dark:hover:bg-[#262626] rounded-2xl border border-gray-100 dark:border-[#2A2A2A] transition cursor-pointer"
+              className="p-2 sm:p-2.5 text-gray-600 dark:text-[#D4D4D4] hover:text-gray-900 dark:hover:text-white bg-gray-50 dark:bg-[#1A1A1A] hover:bg-gray-100 dark:hover:bg-[#262626] rounded-xl sm:rounded-2xl border border-gray-100 dark:border-[#2A2A2A] transition cursor-pointer active:scale-95"
             >
               <RefreshCw
                 className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-blue-500' : ''}`}
@@ -217,17 +217,17 @@ export const NotificationsPage: React.FC = () => {
               <button
                 type="button"
                 onClick={markAllAsRead}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-blue-50 dark:bg-blue-950/50 text-[#004AC6] dark:text-[#0095F6] hover:bg-blue-100 dark:hover:bg-blue-900/50 text-xs font-bold transition cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl sm:rounded-2xl bg-blue-50 dark:bg-blue-950/50 text-[#004AC6] dark:text-[#0095F6] hover:bg-blue-100 dark:hover:bg-blue-900/50 text-xs font-bold transition cursor-pointer active:scale-95"
               >
-                <CheckCheck className="w-4 h-4" />
-                <span>{t('notifications.markAllRead')}</span>
+                <CheckCheck className="w-4 h-4 shrink-0" />
+                <span className="hidden sm:inline">{t('notifications.markAllRead')}</span>
               </button>
             )}
 
             <button
               type="button"
               onClick={() => setShowSettingsModal(true)}
-              className="p-2.5 text-gray-600 dark:text-[#D4D4D4] hover:text-gray-900 dark:hover:text-white bg-gray-50 dark:bg-[#1A1A1A] hover:bg-gray-100 dark:hover:bg-[#262626] rounded-2xl border border-gray-100 dark:border-[#2A2A2A] transition cursor-pointer"
+              className="p-2 sm:p-2.5 text-gray-600 dark:text-[#D4D4D4] hover:text-gray-900 dark:hover:text-white bg-gray-50 dark:bg-[#1A1A1A] hover:bg-gray-100 dark:hover:bg-[#262626] rounded-xl sm:rounded-2xl border border-gray-100 dark:border-[#2A2A2A] transition cursor-pointer active:scale-95"
               title={t('notifications.settings')}
             >
               <Settings className="w-4 h-4" />
@@ -235,27 +235,25 @@ export const NotificationsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* 2. Filter Tabs (Scrollable on small screens) */}
-        <div className="flex items-center gap-2 mt-6 overflow-x-auto pb-1 custom-scrollbar">
+        {/* 2. Filter Tabs - Clean Text Pills, No Icon Slop */}
+        <div className="flex items-center gap-1.5 sm:gap-2 mt-4 sm:mt-5 overflow-x-auto pb-1 no-scrollbar">
           {filterTabsConfig.map((tab) => {
-            const Icon = tab.icon;
             const isActive = activeTab === tab.key;
             return (
               <button
                 key={tab.key}
                 type="button"
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold shrink-0 transition-all cursor-pointer ${
+                className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-full text-xs font-semibold shrink-0 transition-all cursor-pointer whitespace-nowrap active:scale-95 ${
                   isActive
-                    ? 'bg-[#004AC6] dark:bg-[#0095F6] text-white shadow-md shadow-blue-500/25'
-                    : 'bg-gray-50 dark:bg-[#1A1A1A] text-gray-600 dark:text-[#A0A0A0] hover:bg-gray-100 dark:hover:bg-[#262626] border border-gray-100 dark:border-[#2A2A2A]'
+                    ? 'bg-[#004AC6] dark:bg-[#0095F6] text-white shadow-xs font-bold'
+                    : 'bg-gray-100 dark:bg-[#1A1A1A] text-gray-600 dark:text-[#A0A0A0] hover:bg-gray-200 dark:hover:bg-[#262626]'
                 }`}
               >
-                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : ''}`} />
                 <span>{tab.label}</span>
                 {typeof tab.count === 'number' && tab.count > 0 && (
                   <span
-                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${
+                    className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
                       isActive
                         ? 'bg-white text-[#004AC6]'
                         : 'bg-rose-500 text-white'
@@ -271,7 +269,7 @@ export const NotificationsPage: React.FC = () => {
       </div>
 
       {/* 3. Notifications Feed Card */}
-      <div className="bg-white dark:bg-[#121212] rounded-3xl p-3 sm:p-5 shadow-sm border border-gray-100 dark:border-[#262626] transition-colors duration-200">
+      <div className="bg-white dark:bg-[#121212] rounded-2xl sm:rounded-3xl p-2 sm:p-5 shadow-2xs border border-gray-100 dark:border-[#262626] transition-colors duration-200">
         {isLoading ? (
           <div className="py-20 flex flex-col items-center justify-center text-gray-400 gap-3">
             <Loader2 className="w-8 h-8 animate-spin text-[#004AC6] dark:text-[#0095F6]" />

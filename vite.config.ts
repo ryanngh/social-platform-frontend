@@ -14,6 +14,8 @@ export default defineConfig(({ mode }) => {
     server: {
       host: true, // Cho phép truy cập từ 0.0.0.0 (bên ngoài container)
       port: 5173,
+      cors: true,
+      allowedHosts: true,
       watch: {
         usePolling: true, // Cần thiết trên Windows / Docker để hot-reload nhận file thay đổi
       },
@@ -37,6 +39,7 @@ export default defineConfig(({ mode }) => {
             '/comments',
             '/feed',
             '/explore',
+            '/api/explore',
             '/reposts',
             '/reactions',
             '/media',
@@ -47,6 +50,7 @@ export default defineConfig(({ mode }) => {
             '/notifications',
             '/search',
             '/presence',
+            '/hashtags',
           ].map((path) => [
             path,
             {

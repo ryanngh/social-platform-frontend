@@ -86,13 +86,15 @@ export const ExplorePage: React.FC = () => {
 
   // Flattened posts from all infinite pages
   const allPosts = useMemo(() => {
-    return data?.pages.flatMap((page) => page.items) || [];
+    return (
+      data?.pages?.flatMap((page) => (page && Array.isArray(page.items) ? page.items : [])) || []
+    ).filter((post): post is ExplorePost => Boolean(post && post.id));
   }, [data]);
 
   // Trending hashtags from Explore response or fallback hook
   const trendingHashtags = useMemo(() => {
-    const fromExplore = data?.pages[0]?.trendingHashtags;
-    if (fromExplore && fromExplore.length > 0) return fromExplore;
+    const fromExplore = data?.pages?.[0]?.trendingHashtags;
+    if (fromExplore && Array.isArray(fromExplore) && fromExplore.length > 0) return fromExplore;
     if (fallbackTrending && fallbackTrending.length > 0) {
       return fallbackTrending.map((t) => ({ tag: t.tag, postCount: t.postCount || 0 }));
     }
@@ -105,9 +107,10 @@ export const ExplorePage: React.FC = () => {
     const q = searchQuery.toLowerCase().trim();
 
     return allPosts.filter((post) => {
+      if (!post) return false;
       const matchCaption = post.caption?.toLowerCase().includes(q);
-      const matchAuthorName = post.author.fullName?.toLowerCase().includes(q);
-      const matchAuthorUser = post.author.username.toLowerCase().includes(q);
+      const matchAuthorName = post.author?.fullName?.toLowerCase().includes(q);
+      const matchAuthorUser = post.author?.username?.toLowerCase().includes(q);
       return Boolean(matchCaption || matchAuthorName || matchAuthorUser);
     });
   }, [allPosts, searchQuery]);
@@ -155,7 +158,7 @@ export const ExplorePage: React.FC = () => {
           ...oldData,
           pages: oldData.pages.map((page) => ({
             ...page,
-            items: page.items.map((item) =>
+            items: (page.items || []).map((item) =>
               item.id === postId
                 ? {
                     ...item,
@@ -195,7 +198,7 @@ export const ExplorePage: React.FC = () => {
           ...oldData,
           pages: oldData.pages.map((page) => ({
             ...page,
-            items: page.items.map((item) =>
+            items: (page.items || []).map((item) =>
               item.id === postId ? { ...item, isSaved } : item
             ),
           })),

@@ -553,11 +553,11 @@ export const StoragePage: React.FC = () => {
       {/* 6. Create Folder Modal */}
       {showCreateFolderModal && (
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-fadeIn"
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fadeIn"
           onClick={() => setShowCreateFolderModal(false)}
         >
           <div
-            className="bg-white dark:bg-[#121212] rounded-3xl max-w-sm w-full p-5 border border-gray-100 dark:border-[#262626] shadow-2xl"
+            className="bg-white dark:bg-[#121212] rounded-t-3xl sm:rounded-3xl max-w-sm w-full p-4 sm:p-5 border-t sm:border border-gray-100 dark:border-[#262626] shadow-2xl pb-safe sm:pb-5"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-[#262626] mb-4">
@@ -566,9 +566,9 @@ export const StoragePage: React.FC = () => {
               </h3>
               <button
                 onClick={() => setShowCreateFolderModal(false)}
-                className="p-1 text-gray-400 hover:text-gray-600 rounded-full"
+                className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-600 rounded-full"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
@@ -614,14 +614,14 @@ export const StoragePage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowCreateFolderModal(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#1E1E1E]"
+                  className="px-4 py-2.5 min-h-[44px] sm:min-h-0 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#1E1E1E]"
                 >
                   {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={!newFolderName.trim()}
-                  className="px-4 py-2 bg-[#004AC6] dark:bg-[#0095F6] text-white rounded-xl text-xs font-bold hover:opacity-90 disabled:opacity-50"
+                  className="px-4 py-2.5 min-h-[44px] sm:min-h-0 bg-[#004AC6] dark:bg-[#0095F6] text-white rounded-xl text-xs font-bold hover:opacity-90 disabled:opacity-50"
                 >
                   {t('common.confirm')}
                 </button>
@@ -634,11 +634,11 @@ export const StoragePage: React.FC = () => {
       {/* 7. File Preview Modal */}
       {activePreviewFile && (
         <div
-          className="fixed inset-0 bg-black/75 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-fadeIn"
+          className="fixed inset-0 bg-black/75 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fadeIn"
           onClick={() => setActivePreviewFile(null)}
         >
           <div
-            className="bg-white dark:bg-[#121212] rounded-3xl max-w-md w-full p-5 border border-gray-100 dark:border-[#262626] shadow-2xl space-y-4"
+            className="bg-white dark:bg-[#121212] rounded-t-3xl sm:rounded-3xl max-w-md w-full p-4 sm:p-5 border-t sm:border border-gray-100 dark:border-[#262626] shadow-2xl space-y-4 pb-safe sm:pb-5"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-[#262626]">
@@ -650,7 +650,7 @@ export const StoragePage: React.FC = () => {
               </div>
               <button
                 onClick={() => setActivePreviewFile(null)}
-                className="p-1 text-gray-400 hover:text-gray-600 rounded-full"
+                className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-600 rounded-full"
               >
                 <X className="w-5 h-5" />
               </button>

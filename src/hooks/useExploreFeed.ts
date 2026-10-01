@@ -20,7 +20,7 @@ export function useExploreFeed(
         size: pageSize,
       }),
     initialPageParam: 0,
-    getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
+    getNextPageParam: (lastPage) => (lastPage?.hasMore ? (lastPage.page ?? 0) + 1 : undefined),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });

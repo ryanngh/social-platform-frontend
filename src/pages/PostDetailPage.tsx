@@ -89,7 +89,7 @@ const PostDetailPage: React.FC = () => {
         <button
           type="button"
           onClick={handleBack}
-          className="flex items-center gap-2 px-3.5 py-2 text-sm font-semibold text-gray-700 dark:text-[#E5E5E5] bg-white dark:bg-[#121212] hover:bg-gray-100 dark:hover:bg-[#262626] rounded-2xl shadow-xs border border-gray-200/80 dark:border-[#262626] transition-colors cursor-pointer"
+          className="flex items-center gap-2 px-3.5 py-2 min-h-[44px] text-sm font-semibold text-gray-700 dark:text-[#E5E5E5] bg-white dark:bg-[#121212] hover:bg-gray-100 dark:hover:bg-[#262626] rounded-2xl shadow-xs border border-gray-200/80 dark:border-[#262626] transition-colors cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4 text-gray-600 dark:text-[#A8A8A8]" />
           <span>{language === 'vi' ? 'Quay lại' : 'Back'}</span>

@@ -129,17 +129,17 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
     <div
       aria-labelledby="modal-profile-title"
       aria-modal="true"
-      className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto animate-fadeIn"
+      className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto animate-fadeIn"
       role="dialog"
     >
-      <div className="bg-white dark:bg-[#121212] rounded-3xl shadow-2xl max-w-xl w-full max-h-[90vh] flex flex-col border border-gray-100 dark:border-[#262626] overflow-hidden">
+      <div className="bg-white dark:bg-[#121212] rounded-t-3xl sm:rounded-3xl shadow-2xl max-w-xl w-full h-[100dvh] sm:h-auto sm:max-h-[90vh] flex flex-col border-t sm:border border-gray-100 dark:border-[#262626] overflow-hidden pb-safe sm:pb-0">
         {/* Sticky Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-[#262626] bg-white dark:bg-[#121212] sticky top-0 z-20">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 pt-[calc(1rem+env(safe-area-inset-top,0px))] sm:pt-4 border-b border-gray-100 dark:border-[#262626] bg-white dark:bg-[#121212] sticky top-0 z-20">
+          <div className="flex items-center gap-2.5">
             <button
               onClick={onClose}
               aria-label={t('common.close')}
-              className="p-1.5 text-gray-400 dark:text-[#A8A8A8] hover:text-gray-900 dark:hover:text-[#F5F5F5] hover:bg-gray-100 dark:hover:bg-[#262626] rounded-full transition-colors cursor-pointer"
+              className="w-9 h-9 flex items-center justify-center text-gray-400 dark:text-[#A8A8A8] hover:text-gray-900 dark:hover:text-[#F5F5F5] hover:bg-gray-100 dark:hover:bg-[#262626] rounded-full transition-colors cursor-pointer"
               type="button"
             >
               <X className="w-5 h-5" />
@@ -151,7 +151,7 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
           <button
             onClick={() => handleSubmit()}
             disabled={isLoading}
-            className="h-9 px-4 bg-[#004AC6] hover:bg-[#002970] dark:bg-[#0095F6] dark:hover:bg-[#1877F2] text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+            className="h-10 sm:h-9 px-4 min-h-[40px] bg-[#004AC6] hover:bg-[#002970] dark:bg-[#0095F6] dark:hover:bg-[#1877F2] text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-50"
             type="button"
           >
             {isLoading ? t('profile.saving') : t('profile.saveChanges')}
@@ -159,7 +159,7 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
         </div>
 
         {/* Scrollable Content */}
-        <div className="overflow-y-auto flex-1 p-6 space-y-5 custom-scrollbar">
+        <div className="overflow-y-auto flex-1 p-4 sm:p-6 space-y-5 custom-scrollbar pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] sm:pb-6">
           {/* Cover / Banner Upload Area */}
           <div className="relative">
             <div className="h-32 w-full bg-gradient-to-r from-[#DFE6F5] via-[#E8EDFB] to-[#F1F3FB] dark:from-[#1A1A1A] dark:via-[#222222]/80 dark:to-[#121212] rounded-2xl relative overflow-hidden flex items-center justify-center border border-gray-100 dark:border-[#262626]">

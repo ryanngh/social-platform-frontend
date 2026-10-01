@@ -4,7 +4,6 @@ import {
   Search,
   Users,
   FileText,
-  Sparkles,
   ArrowRight,
   Loader2,
   X,
@@ -313,19 +312,18 @@ const SearchPageContent: React.FC = () => {
           </div>
         </div>
 
-        {/* Tab Navigation Pill Bar */}
-        <div className="flex items-center gap-1.5 mt-4 pt-3 border-t border-gray-100 dark:border-[#262626]">
+        {/* Tab Navigation Pill Bar - Clean, Content-First, No Icon Slop */}
+        <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-gray-100 dark:border-[#262626] overflow-x-auto no-scrollbar">
           <button
             type="button"
             onClick={() => handleTabChange('all')}
             className={clsx(
-              'flex items-center gap-1.5 px-4 py-2 rounded-2xl text-xs font-bold transition-all duration-150 cursor-pointer',
+              'px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 cursor-pointer whitespace-nowrap active:scale-95',
               activeTab === 'all'
-                ? 'bg-[#004AC6] dark:bg-[#0095F6] text-white shadow-xs'
-                : 'bg-gray-100/80 dark:bg-[#1A1A1A] text-gray-600 dark:text-[#A8A8A8] hover:bg-gray-200/70 dark:hover:bg-[#262626] hover:text-gray-900 dark:hover:text-[#F5F5F5]'
+                ? 'bg-[#004AC6] dark:bg-[#0095F6] text-white shadow-xs font-bold'
+                : 'bg-gray-100 dark:bg-[#1A1A1A] text-gray-600 dark:text-[#A8A8A8] hover:bg-gray-200 dark:hover:bg-[#262626]'
             )}
           >
-            <Sparkles className="w-3.5 h-3.5" />
             <span>{t('search.tabs.all')}</span>
           </button>
 
@@ -333,16 +331,15 @@ const SearchPageContent: React.FC = () => {
             type="button"
             onClick={() => handleTabChange('users')}
             className={clsx(
-              'flex items-center gap-1.5 px-4 py-2 rounded-2xl text-xs font-bold transition-all duration-150 cursor-pointer',
+              'flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 cursor-pointer whitespace-nowrap active:scale-95',
               activeTab === 'users'
-                ? 'bg-[#004AC6] dark:bg-[#0095F6] text-white shadow-xs'
-                : 'bg-gray-100/80 dark:bg-[#1A1A1A] text-gray-600 dark:text-[#A8A8A8] hover:bg-gray-200/70 dark:hover:bg-[#262626] hover:text-gray-900 dark:hover:text-[#F5F5F5]'
+                ? 'bg-[#004AC6] dark:bg-[#0095F6] text-white shadow-xs font-bold'
+                : 'bg-gray-100 dark:bg-[#1A1A1A] text-gray-600 dark:text-[#A8A8A8] hover:bg-gray-200 dark:hover:bg-[#262626]'
             )}
           >
-            <Users className="w-3.5 h-3.5" />
             <span>{t('search.tabs.people')}</span>
             {allUsersList.length > 0 && activeTab === 'users' && (
-              <span className="ml-1 px-1.5 py-0.2 bg-white/20 dark:bg-white/20 rounded-full text-[10px]">
+              <span className="px-1.5 py-0.2 bg-white/20 dark:bg-white/20 rounded-full text-[10px] font-bold">
                 {allUsersList.length}
               </span>
             )}
@@ -352,16 +349,15 @@ const SearchPageContent: React.FC = () => {
             type="button"
             onClick={() => handleTabChange('posts')}
             className={clsx(
-              'flex items-center gap-1.5 px-4 py-2 rounded-2xl text-xs font-bold transition-all duration-150 cursor-pointer',
+              'flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 cursor-pointer whitespace-nowrap active:scale-95',
               activeTab === 'posts'
-                ? 'bg-[#004AC6] dark:bg-[#0095F6] text-white shadow-xs'
-                : 'bg-gray-100/80 dark:bg-[#1A1A1A] text-gray-600 dark:text-[#A8A8A8] hover:bg-gray-200/70 dark:hover:bg-[#262626] hover:text-gray-900 dark:hover:text-[#F5F5F5]'
+                ? 'bg-[#004AC6] dark:bg-[#0095F6] text-white shadow-xs font-bold'
+                : 'bg-gray-100 dark:bg-[#1A1A1A] text-gray-600 dark:text-[#A8A8A8] hover:bg-gray-200 dark:hover:bg-[#262626]'
             )}
           >
-            <FileText className="w-3.5 h-3.5" />
             <span>{t('search.tabs.posts')}</span>
             {allPostsList.length > 0 && activeTab === 'posts' && (
-              <span className="ml-1 px-1.5 py-0.2 bg-white/20 dark:bg-white/20 rounded-full text-[10px]">
+              <span className="px-1.5 py-0.2 bg-white/20 dark:bg-white/20 rounded-full text-[10px] font-bold">
                 {allPostsList.length}
               </span>
             )}

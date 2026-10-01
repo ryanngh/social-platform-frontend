@@ -17,15 +17,17 @@ export const ExploreGrid: React.FC<ExploreGridProps> = ({
 }) => {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-2 gap-3.5">
-      {posts.map((post) => (
-        <ExploreCard
-          key={post.id}
-          post={post}
-          onSelect={onSelect}
-          onToggleLike={onToggleLike}
-          onToggleSave={onToggleSave}
-        />
-      ))}
+      {posts.map((post) =>
+        post?.id ? (
+          <ExploreCard
+            key={post.id}
+            post={post}
+            onSelect={onSelect}
+            onToggleLike={onToggleLike}
+            onToggleSave={onToggleSave}
+          />
+        ) : null
+      )}
     </div>
   );
 };

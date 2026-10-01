@@ -29,6 +29,13 @@ const FeedPage: React.FC<FeedPageProps> = ({ defaultTab = 'for-you' }) => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
 
+  // Listen to open-create-post from mobile bottom bar
+  useEffect(() => {
+    const handleOpenModal = () => setIsCreateModalOpen(true);
+    window.addEventListener('open-create-post', handleOpenModal);
+    return () => window.removeEventListener('open-create-post', handleOpenModal);
+  }, []);
+
   // Lightbox Modal State
   const [lightboxState, setLightboxState] = useState<{
     isOpen: boolean;

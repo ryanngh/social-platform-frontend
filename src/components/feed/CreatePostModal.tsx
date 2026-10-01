@@ -295,14 +295,14 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn"
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fadeIn"
       onDragEnter={handleDragEnter}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
       <div 
-        className="bg-white dark:bg-[#121212] rounded-3xl shadow-2xl border border-gray-100 dark:border-[#262626] w-full max-w-xl max-h-[90vh] overflow-hidden flex flex-col transition-all relative"
+        className="bg-white dark:bg-[#121212] rounded-t-3xl sm:rounded-3xl shadow-2xl border-t sm:border border-gray-100 dark:border-[#262626] w-full max-w-xl h-[100dvh] sm:h-auto sm:max-h-[90vh] overflow-hidden flex flex-col transition-all relative pb-safe sm:pb-0"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Drag & Drop Visual Overlay */}
@@ -321,25 +321,25 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
         )}
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-[#262626] flex-shrink-0">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 pt-[calc(0.875rem+env(safe-area-inset-top,0px))] sm:pt-4 border-b border-gray-100 dark:border-[#262626] flex-shrink-0">
           {isGifPickerOpen ? (
             <button
               type="button"
               onClick={() => setIsGifPickerOpen(false)}
-              className="flex items-center gap-1.5 text-xs font-bold text-gray-700 dark:text-[#E5E5E5] hover:text-[#004AC6] dark:hover:text-[#0095F6] transition cursor-pointer"
+              className="flex items-center gap-1.5 text-xs font-bold text-gray-700 dark:text-[#E5E5E5] hover:text-[#004AC6] dark:hover:text-[#0095F6] transition cursor-pointer min-h-[36px]"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>{t('common.cancel', { defaultValue: 'Quay lại' })}</span>
             </button>
           ) : (
-            <div className="w-8"></div>
+            <div className="w-9"></div>
           )}
           <h3 className="text-base font-bold text-gray-900 dark:text-[#F5F5F5] text-center flex-1">
             {isGifPickerOpen ? 'Chọn ảnh GIF' : t('feed.createPost')}
           </h3>
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 dark:text-[#A8A8A8] hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#262626] transition cursor-pointer"
+            className="w-9 h-9 flex items-center justify-center rounded-full text-gray-400 dark:text-[#A8A8A8] hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#262626] transition cursor-pointer"
             title={t('common.close')}
           >
             <X className="w-5 h-5" />
@@ -734,7 +734,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
               <button
                 onClick={handlePublish}
                 disabled={isSubmitting || !canPublish}
-                className="w-full bg-[#004AC6] hover:bg-blue-700 dark:bg-[#0095F6] dark:hover:bg-[#1877F2] disabled:opacity-50 text-white font-semibold text-sm py-2.5 rounded-2xl shadow transition flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full bg-[#004AC6] hover:bg-blue-700 dark:bg-[#0095F6] dark:hover:bg-[#1877F2] disabled:opacity-50 text-white font-semibold text-sm py-3 sm:py-2.5 min-h-[44px] rounded-2xl shadow transition flex items-center justify-center gap-2 cursor-pointer"
               >
                 {isSubmitting ? (
                   <>
@@ -745,7 +745,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
                   <span>{t('feed.publish')}</span>
                 )}
               </button>
-              <div className="flex items-center justify-center gap-1.5 text-[11px] text-gray-400 dark:text-[#A8A8A8]">
+              <div className="hidden sm:flex items-center justify-center gap-1.5 text-[11px] text-gray-400 dark:text-[#A8A8A8]">
                 <span>{t('feed.tipLabel')}</span>
                 <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#363636] rounded text-[10px] font-semibold text-gray-600 dark:text-[#D4D4D4]">
                   Ctrl

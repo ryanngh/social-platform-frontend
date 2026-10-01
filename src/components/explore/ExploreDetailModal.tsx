@@ -45,15 +45,15 @@ export const ExploreDetailModal: React.FC<ExploreDetailModalProps> = ({
   const { user: currentUser } = useAuth();
   const { t } = useLanguage();
 
-  const [isLiked, setIsLiked] = useState(Boolean(post.isLiked));
-  const [likesCount, setLikesCount] = useState(post.metrics.likesCount);
-  const [isSaved, setIsSaved] = useState(Boolean(post.isSaved));
+  const [isLiked, setIsLiked] = useState(Boolean(post?.isLiked));
+  const [likesCount, setLikesCount] = useState(post?.metrics?.likesCount ?? 0);
+  const [isSaved, setIsSaved] = useState(Boolean(post?.isSaved));
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
 
   // Comments state
   const [comments, setComments] = useState<CommentResponse[]>([]);
-  const [commentsCount, setCommentsCount] = useState(post.metrics.commentsCount);
+  const [commentsCount, setCommentsCount] = useState(post?.metrics?.commentsCount ?? 0);
   const [isLoadingComments, setIsLoadingComments] = useState(true);
   const [newCommentText, setNewCommentText] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
@@ -73,9 +73,9 @@ export const ExploreDetailModal: React.FC<ExploreDetailModalProps> = ({
   });
 
   const commentsEndRef = useRef<HTMLDivElement>(null);
-  const isVideo = isVideoMedia(post.media?.url, post.media?.mediaType);
-  const mediaUrl = getMediaUrl(post.media?.url);
-  const isOwnPost = currentUser?.id === post.author.id;
+  const isVideo = isVideoMedia(post?.media?.url, post?.media?.mediaType);
+  const mediaUrl = getMediaUrl(post?.media?.url);
+  const isOwnPost = Boolean(currentUser?.id && post?.author?.id && currentUser.id === post.author.id);
 
   // Sync volume and muted state to video element
   useEffect(() => {
@@ -103,6 +103,7 @@ export const ExploreDetailModal: React.FC<ExploreDetailModalProps> = ({
 
   // Fetch comments for this post
   useEffect(() => {
+    if (!post?.id) return;
     let isMounted = true;
     setIsLoadingComments(true);
 
@@ -123,7 +124,7 @@ export const ExploreDetailModal: React.FC<ExploreDetailModalProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [post.id]);
+  }, [post?.id]);
 
   // Handle volume slider change
   const handleVolumeChange = (newVal: number) => {
@@ -250,7 +251,7 @@ export const ExploreDetailModal: React.FC<ExploreDetailModalProps> = ({
 
   // Toggle Follow
   const handleToggleFollow = async () => {
-    if (isOwnPost || isFollowLoading) return;
+    if (isOwnPost || isFollowLoading || !post?.author?.id) return;
     setIsFollowLoading(true);
     const next = !isFollowing;
 
@@ -258,11 +259,11 @@ export const ExploreDetailModal: React.FC<ExploreDetailModalProps> = ({
       if (next) {
         await userService.followUser(post.author.id);
         setIsFollowing(true);
-        toast.success(`Đã theo dõi @${post.author.username}`);
+        toast.success(`Đã theo dõi @${post.author?.username || ''}`);
       } else {
         await userService.unfollowUser(post.author.id);
         setIsFollowing(false);
-        toast.success(`Đã hủy theo dõi @${post.author.username}`);
+        toast.success(`Đã hủy theo dõi @${post.author?.username || ''}`);
       }
     } catch (err) {
       toast.error('Không thể cập nhật theo dõi');
@@ -276,7 +277,7 @@ export const ExploreDetailModal: React.FC<ExploreDetailModalProps> = ({
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
     const content = newCommentText.trim();
-    if (!content || isSubmittingComment) return;
+    if (!content || isSubmittingComment || !post?.id) return;
 
     setIsSubmittingComment(true);
     try {
@@ -287,7 +288,7 @@ export const ExploreDetailModal: React.FC<ExploreDetailModalProps> = ({
       setNewCommentText('');
       toast.success('Đã gửi bình luận');
       onPostUpdate?.({
-        metrics: { ...post.metrics, commentsCount: updatedCount },
+        metrics: { ...post?.metrics, commentsCount: updatedCount },
       });
     } catch (err) {
       toast.error('Gửi bình luận thất bại. Vui lòng thử lại.');
@@ -298,23 +299,37 @@ export const ExploreDetailModal: React.FC<ExploreDetailModalProps> = ({
   };
 
   // Format date helper
-  const formattedDate = new Date(post.createdAt).toLocaleDateString('vi-VN', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  const formattedDate = post?.createdAt
+    ? new Date(post.createdAt).toLocaleDateString('vi-VN', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    : '';
+
+  if (!post) return null;
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6 animate-fadeIn"
+      className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-0 sm:p-4 md:p-6 animate-fadeIn"
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-[#121212] rounded-3xl max-w-5xl w-full max-h-[92vh] sm:max-h-[88vh] overflow-hidden shadow-2xl flex flex-col md:flex-row border border-gray-200 dark:border-[#262626]"
+        className="relative bg-white dark:bg-[#121212] rounded-none sm:rounded-3xl max-w-5xl w-full h-full sm:h-auto sm:max-h-[88vh] overflow-y-auto sm:overflow-hidden shadow-2xl flex flex-col md:flex-row border-0 sm:border border-gray-200 dark:border-[#262626]"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Mobile Floating Close Button with Safe Area clearance */}
+        <button
+          type="button"
+          onClick={onClose}
+          className="md:hidden absolute top-3 right-3 z-30 p-2 rounded-full bg-black/60 text-white backdrop-blur-md active:scale-95 transition cursor-pointer"
+          aria-label="Đóng"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
         {/* ================= LEFT: MEDIA VIEW & REEL CONTROLS ================= */}
-        <div className="md:w-3/5 bg-black flex items-center justify-center relative min-h-[280px] sm:min-h-[380px] md:min-h-[560px] overflow-hidden select-none">
+        <div className="md:w-3/5 bg-black flex items-center justify-center relative min-h-[260px] sm:min-h-[380px] md:min-h-[560px] overflow-hidden select-none">
           {isVideo ? (
             <div
               className="relative w-full h-full flex items-center justify-center cursor-pointer group"
@@ -414,21 +429,21 @@ export const ExploreDetailModal: React.FC<ExploreDetailModalProps> = ({
         </div>
 
         {/* ================= RIGHT: INFO & COMMENTS ================= */}
-        <div className="md:w-2/5 flex flex-col justify-between p-4 sm:p-5 max-h-[560px] bg-white dark:bg-[#121212] border-t md:border-t-0 md:border-l border-gray-100 dark:border-[#262626]">
+        <div className="md:w-2/5 flex flex-col justify-between p-4 sm:p-5 md:max-h-[560px] bg-white dark:bg-[#121212] border-t md:border-t-0 md:border-l border-gray-100 dark:border-[#262626]">
           {/* Top Section */}
           <div className="flex flex-col flex-1 min-h-0">
             {/* Header: Author Info & Close */}
             <div className="flex items-center justify-between pb-3.5 border-b border-gray-100 dark:border-[#262626]">
               <div className="flex items-center gap-3 min-w-0">
                 <Link
-                  to={getProfileUrl(post.author.username || post.author.id)}
+                  to={getProfileUrl(post.author?.username || post.author?.id || '')}
                   onClick={onClose}
                   className="shrink-0"
                 >
                   <UserAvatar
-                    src={post.author.avatarUrl}
-                    alt={post.author.fullName || post.author.username}
-                    userId={post.author.id}
+                    src={post.author?.avatarUrl}
+                    alt={post.author?.fullName || post.author?.username || 'Tác giả'}
+                    userId={post.author?.id}
                     size="sm"
                   />
                 </Link>
@@ -436,18 +451,18 @@ export const ExploreDetailModal: React.FC<ExploreDetailModalProps> = ({
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
                     <Link
-                      to={getProfileUrl(post.author.username || post.author.id)}
+                      to={getProfileUrl(post.author?.username || post.author?.id || '')}
                       onClick={onClose}
                       className="font-bold text-sm text-gray-900 dark:text-[#F5F5F5] hover:underline truncate"
                     >
-                      {post.author.fullName || post.author.username}
+                      {post.author?.fullName || post.author?.username || 'Người dùng'}
                     </Link>
-                    {post.author.isVerified && (
+                    {post.author?.isVerified && (
                       <CheckCircle className="w-3.5 h-3.5 text-sky-500 fill-sky-500 shrink-0" />
                     )}
                   </div>
                   <p className="text-xs text-gray-500 dark:text-[#8E8E8E] truncate">
-                    @{post.author.username} · {formattedDate}
+                    @{post.author?.username || ''} · {formattedDate}
                   </p>
                 </div>
               </div>

@@ -128,17 +128,17 @@ export const SavedPage: React.FC = () => {
   return (
     <div className="space-y-5 pb-8">
       {/* 1. Header Card */}
-      <div className="bg-white dark:bg-[#121212] rounded-3xl p-4 sm:p-5 border border-gray-100 dark:border-[#262626] shadow-sm transition-colors duration-200">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#004AC6] to-[#0095F6] text-white flex items-center justify-center shadow-sm shadow-blue-500/20 shrink-0">
-              <Bookmark className="w-5 h-5 fill-white" />
+      <div className="bg-white dark:bg-[#121212] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-gray-100 dark:border-[#262626] shadow-2xs transition-colors duration-200">
+        <div className="flex items-center justify-between gap-3 mb-3.5">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-[#004AC6] to-[#0095F6] text-white flex items-center justify-center shadow-xs shrink-0">
+              <Bookmark className="w-4 h-4 sm:w-5 sm:h-5 fill-white" />
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-[#F5F5F5] leading-tight">
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-[#F5F5F5] leading-tight">
                 {t('saved.title')}
               </h1>
-              <p className="text-xs text-gray-500 dark:text-[#A8A8A8]">
+              <p className="text-xs text-gray-500 dark:text-[#A8A8A8] hidden sm:block">
                 {t('saved.subtitle')}
               </p>
             </div>
@@ -146,7 +146,7 @@ export const SavedPage: React.FC = () => {
 
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#EFF6FF] dark:bg-blue-950/60 text-[#004AC6] dark:text-[#0095F6] hover:bg-blue-100 dark:hover:bg-blue-900/60 rounded-2xl text-xs font-bold transition cursor-pointer self-start sm:self-auto"
+            className="flex items-center justify-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2.5 bg-[#EFF6FF] dark:bg-blue-950/60 text-[#004AC6] dark:text-[#0095F6] hover:bg-blue-100 dark:hover:bg-blue-900/60 rounded-xl sm:rounded-2xl text-xs font-bold transition cursor-pointer active:scale-95 shrink-0"
           >
             <FolderPlus className="w-4 h-4" />
             <span>{t('saved.newCollection')}</span>
@@ -161,13 +161,13 @@ export const SavedPage: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Tìm kiếm trong mục đã lưu..."
-            className="w-full pl-10 pr-4 py-2.5 bg-gray-100/80 dark:bg-[#1A1A1A] border border-transparent dark:border-[#363636] rounded-2xl text-xs text-gray-900 dark:text-[#F5F5F5] placeholder-gray-400 outline-none focus:bg-white dark:focus:bg-[#000000] focus:ring-1 focus:ring-[#004AC6] transition"
+            className="w-full pl-10 pr-4 py-2 sm:py-2.5 bg-gray-100/80 dark:bg-[#1A1A1A] border border-transparent dark:border-[#363636] rounded-xl sm:rounded-2xl text-xs sm:text-sm text-gray-900 dark:text-[#F5F5F5] placeholder-gray-400 outline-none focus:bg-white dark:focus:bg-[#000000] focus:ring-1 focus:ring-[#004AC6] transition"
           />
         </div>
       </div>
 
       {/* 2. Collections Horizontal Pills */}
-      <section className="bg-white dark:bg-[#121212] rounded-3xl p-4 sm:p-5 border border-gray-100 dark:border-[#262626] shadow-sm">
+      <section className="bg-white dark:bg-[#121212] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-gray-100 dark:border-[#262626] shadow-2xs">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-xs font-bold text-gray-900 dark:text-[#F5F5F5] uppercase tracking-wider">
             {t('saved.collections')} ({collections.length})

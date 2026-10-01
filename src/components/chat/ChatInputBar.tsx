@@ -12,6 +12,7 @@ import {
   Film,
   Music,
   Loader2,
+  Send,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -53,6 +54,7 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
     sendTyping,
     rateLimitCooldown,
     activeConversation,
+    activeConversationId,
   } = useChat();
 
   const [messageText, setMessageText] = useState('');
@@ -74,6 +76,7 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const mediaStreamRef = useRef<MediaStream | null>(null);
+  const isSendingRef = useRef(false);
 
   const isRateLimited = rateLimitCooldown > 0;
 
@@ -126,53 +129,51 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
   };
 
   const handleSend = async (customText?: string) => {
-    if (isRateLimited || isUploading) return;
+    if (isRateLimited || isUploading || isSendingRef.current) return;
+    isSendingRef.current = true;
 
-    const replyId = replyingMessage?.id || (replyingMessage?.seq as number | undefined) || null;
+    try {
+      const replyId = replyingMessage?.id || (replyingMessage?.seq as number | undefined) || null;
 
-    // 1. If we have a staged attachment, upload and send it
-    if (stagedAttachment) {
-      setIsUploading(true);
-      setUploadPercent(0);
-      try {
-        const caption = (customText !== undefined ? customText : messageText).trim();
-        await uploadAndSendAttachment(
-          stagedAttachment.file,
-          stagedAttachment.name,
-          caption,
-          replyId,
-          (percent) => setUploadPercent(percent)
-        );
-        handleCancelStaged();
-        setMessageText('');
-        onCancelReply();
-        toast.success(
-          stagedAttachment.type === 'IMAGE'
-            ? t('messages.sentPhoto')
-            : stagedAttachment.type === 'VIDEO'
-            ? t('messages.sentVideo')
-            : stagedAttachment.type === 'AUDIO'
-            ? t('messages.sentAudio')
-            : t('messages.sentFile')
-        );
-      } catch (err) {
-        console.error('Failed to upload and send attachment:', err);
-      } finally {
-        setIsUploading(false);
+      // 1. If we have a staged attachment, upload and send it
+      if (stagedAttachment) {
+        setIsUploading(true);
         setUploadPercent(0);
+        try {
+          const caption = (customText !== undefined ? customText : messageText).trim();
+          await uploadAndSendAttachment(
+            stagedAttachment.file,
+            stagedAttachment.name,
+            caption,
+            replyId,
+            (percent) => setUploadPercent(percent)
+          );
+          handleCancelStaged();
+          setMessageText('');
+          onCancelReply();
+        } catch (err) {
+          console.error('Failed to upload and send attachment:', err);
+        } finally {
+          setIsUploading(false);
+          setUploadPercent(0);
+        }
+        return;
       }
-      return;
+
+      // 2. Normal text message — read from DOM as fallback for iOS Safari stale state
+      const text = customText !== undefined
+        ? customText
+        : (messageText || inputRef.current?.value || '');
+      if (!text.trim()) return;
+
+      await sendMessage(text.trim(), replyId, 'TEXT');
+
+      setMessageText('');
+      if (inputRef.current) inputRef.current.value = '';
+      onCancelReply();
+    } finally {
+      isSendingRef.current = false;
     }
-
-    // 2. Normal text message
-    const text = customText !== undefined ? customText : messageText;
-    if (!text.trim()) return;
-
-    await sendMessage(text.trim(), replyId, 'TEXT');
-
-    setMessageText('');
-    onCancelReply();
-    inputRef.current?.focus();
   };
 
   const handleSelectEmoji = (emoji: string) => {
@@ -329,7 +330,7 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
     setRecordingSeconds(0);
   };
 
-  if (!activeConversation) return null;
+  if (!activeConversation && !activeConversationId) return null;
 
   return (
     <div
@@ -478,7 +479,7 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
         </div>
       ) : (
         /* 5. Main Input Bar (Instagram DM style pill) */
-        <div className="px-4 py-3">
+        <div className="px-3 sm:px-4 pt-2.5 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] bg-white dark:bg-[#121212] border-t border-gray-100 dark:border-[#262626]">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -536,6 +537,12 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
               type="text"
               value={messageText}
               onChange={handleTextChange}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  void handleSend();
+                }
+              }}
               onPaste={handlePaste}
               disabled={isRateLimited || isUploading}
               placeholder={
@@ -551,16 +558,21 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
             {/* Right-Side Controls: Actions or Blue Send button */}
             {messageText.trim() || stagedAttachment ? (
               <button
-                type="submit"
+                type="button"
+                onTouchEnd={(e) => { e.preventDefault(); void handleSend(); }}
+                onClick={() => void handleSend()}
                 disabled={isRateLimited || isUploading}
-                className="text-[14px] font-semibold text-[#0095F6] hover:text-[#00376B] dark:hover:text-[#3897F0] px-2 py-1 transition cursor-pointer shrink-0 disabled:opacity-50 flex items-center gap-1 hover:scale-105 active:scale-95"
+                className="text-[14px] font-semibold text-[#0095F6] hover:text-[#00376B] dark:hover:text-[#3897F0] px-3 py-1.5 min-h-[44px] min-w-[44px] transition cursor-pointer shrink-0 disabled:opacity-50 flex items-center justify-center gap-1.5 hover:scale-105 active:scale-95 rounded-full select-none"
                 title={t('messages.send')}
                 aria-label={t('messages.send')}
               >
                 {isUploading ? (
                   <Loader2 className="w-4 h-4 animate-spin text-[#0095F6]" />
                 ) : (
-                  <span>{t('messages.send')}</span>
+                  <>
+                    <span>{t('messages.send')}</span>
+                    <Send className="w-3.5 h-3.5" />
+                  </>
                 )}
               </button>
             ) : (
