@@ -53,9 +53,11 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
     cropType: 'avatar',
   });
 
-  // Sync state whenever modal opens or user prop changes
+  const prevIsOpenRef = useRef(false);
+
+  // Sync state ONLY when modal transitions from closed to open
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !prevIsOpenRef.current) {
       setFirstName(user.firstName || '');
       setLastName(user.lastName || '');
       setUsername(user.username || '');
@@ -69,6 +71,7 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
       setIsAddingInterest(false);
       setNewInterestInput('');
     }
+    prevIsOpenRef.current = isOpen;
   }, [isOpen, user]);
 
   const isFormChanged =
@@ -128,11 +131,14 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
     setIsLoading(true);
 
     try {
+      let uploadedAvatarUser: User | null = null;
+      let uploadedBannerUser: User | null = null;
+
       if (avatarFile) {
-        await userService.uploadAvatar(avatarFile);
+        uploadedAvatarUser = await userService.uploadAvatar(avatarFile);
       }
       if (bannerFile) {
-        await userService.uploadBanner(bannerFile);
+        uploadedBannerUser = await userService.uploadBanner(bannerFile);
       }
 
       const updateData: ProfileUpdateRequest = {
@@ -142,6 +148,8 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
         bio,
         location,
         websiteUrl,
+        avatarUrl: uploadedAvatarUser?.avatarUrl || user.avatarUrl,
+        bannerUrl: uploadedBannerUser?.bannerUrl || user.bannerUrl,
       };
 
       const finalUser = await userService.updateProfile(updateData);
