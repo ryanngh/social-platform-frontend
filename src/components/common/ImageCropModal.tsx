@@ -77,6 +77,33 @@ export const ImageCropModal = ({
     setCroppedAreaPixels(currentCroppedAreaPixels);
   }, []);
 
+  const onMediaLoaded = (mediaSize: { width: number; height: number; naturalWidth: number; naturalHeight: number }) => {
+    const w = mediaSize.naturalWidth || mediaSize.width || 100;
+    const h = mediaSize.naturalHeight || mediaSize.height || 100;
+    if (isAvatar) {
+      const size = Math.min(w, h);
+      setCroppedAreaPixels({
+        x: Math.round((w - size) / 2),
+        y: Math.round((h - size) / 2),
+        width: Math.round(size),
+        height: Math.round(size),
+      });
+    } else {
+      let cropW = w;
+      let cropH = Math.round(w / 3);
+      if (cropH > h) {
+        cropH = h;
+        cropW = Math.round(h * 3);
+      }
+      setCroppedAreaPixels({
+        x: Math.round((w - cropW) / 2),
+        y: Math.round((h - cropH) / 2),
+        width: Math.round(cropW),
+        height: Math.round(cropH),
+      });
+    }
+  };
+
   const handleRotate = () => {
     setRotation((prev) => (prev + 90) % 360);
   };
@@ -88,17 +115,25 @@ export const ImageCropModal = ({
   };
 
   const handleApplyCrop = async () => {
-    if (!imageSrc || !croppedAreaPixels) {
-      toast.error(isVi ? 'Không tìm thấy vùng crop hợp lệ!' : 'No valid crop area found!');
+    if (!imageSrc) {
+      toast.error(isVi ? 'Không tìm thấy hình ảnh hợp lệ!' : 'No valid image found!');
       return;
     }
 
     try {
       setIsProcessing(true);
       const fileName = isAvatar ? 'avatar-cropped.jpg' : 'banner-cropped.jpg';
+      // If croppedAreaPixels is not yet set by drag event, fallback to default 100% bounds
+      const cropArea = croppedAreaPixels || {
+        x: 0,
+        y: 0,
+        width: isAvatar ? 500 : 1500,
+        height: 500,
+      };
+
       const croppedFile = await getCroppedImg(
         imageSrc,
-        croppedAreaPixels,
+        cropArea,
         rotation,
         fileName
       );
@@ -174,6 +209,7 @@ export const ImageCropModal = ({
             onCropChange={onCropChange}
             onZoomChange={onZoomChange}
             onCropComplete={onCropCompleteCallback}
+            onMediaLoaded={onMediaLoaded}
           />
         </div>
 
