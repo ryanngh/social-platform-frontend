@@ -164,14 +164,15 @@ export const ImageCropModal = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="crop-modal-title"
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-fadeIn"
+      onClick={onClose}
     >
       <div 
-        className="w-full max-w-xl bg-white dark:bg-[#181818] border-t sm:border border-gray-100 dark:border-[#2C2C2C] rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col h-[100dvh] sm:h-auto sm:max-h-[95vh]"
+        className="w-full max-w-xl bg-white dark:bg-[#181818] border border-gray-200 dark:border-[#2C2C2C] rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 pt-[calc(0.875rem+env(safe-area-inset-top,0px))] sm:pt-4 border-b border-gray-100 dark:border-[#262626]">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-gray-100 dark:border-[#262626]">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-[#004AC6] dark:text-[#0095F6] flex items-center justify-center shrink-0">
               {isAvatar ? <User className="w-5 h-5" /> : <ImageIcon className="w-5 h-5" />}
@@ -197,7 +198,7 @@ export const ImageCropModal = ({
         </div>
 
         {/* Cropper Body */}
-        <div className="relative w-full h-64 sm:h-96 flex-1 bg-black overflow-hidden select-none">
+        <div className="relative w-full h-[320px] sm:h-[380px] bg-neutral-950 dark:bg-black overflow-hidden select-none">
           <Cropper
             image={imageSrc}
             crop={crop}
@@ -206,10 +207,19 @@ export const ImageCropModal = ({
             aspect={aspect}
             cropShape={cropShape}
             showGrid={true}
+            zoomWithScroll={true}
             onCropChange={onCropChange}
             onZoomChange={onZoomChange}
             onCropComplete={onCropCompleteCallback}
             onMediaLoaded={onMediaLoaded}
+            style={{
+              containerStyle: {
+                position: 'relative',
+                width: '100%',
+                height: '100%',
+                backgroundColor: '#09090b',
+              },
+            }}
           />
         </div>
 

@@ -62,12 +62,16 @@ export const refreshAccessToken = async (): Promise<string> => {
   return refreshPromise;
 };
 
-// Request interceptor: attach auth token
+// Request interceptor: attach auth token & handle multipart form data
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('accessToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    // Delete Content-Type for FormData so Axios and browser automatically set multipart/form-data with boundary
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
     }
     return config;
   },
