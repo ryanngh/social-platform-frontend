@@ -62,12 +62,12 @@ export function getLinkPreviewMetadata(rawUrl: string, language: string = 'vi'):
       domain: 'www.rysocial.app',
       siteName: 'RySocial',
       title: isVi
-        ? 'RySocial · Đổi mới không ngừng. RySocial luôn dẫn đầu.'
-        : 'RySocial · Change is constant. RySocial keeps you ahead.',
+        ? 'RySocial · Connect · Share · Be You'
+        : 'RySocial · Connect · Share · Be You',
       description: isVi
-        ? 'Tham gia nền tảng mạng xã hội AI thế hệ mới được hàng triệu người dùng, doanh nghiệp và cộng đồng tin cậy để kết nối, chia sẻ và sáng tạo.'
-        : 'Join the world\'s most widely adopted, AI-powered social platform where millions connect, share stories, and build vibrant communities.',
-      imageUrl: '/rysocial-og-banner.svg',
+        ? 'Nơi những khoảnh khắc đẹp được kết nối, lan tỏa và trở nên ý nghĩa hơn.'
+        : 'Where beautiful moments are connected, shared, and made meaningful.',
+      imageUrl: '/rysocial-og-banner.png',
       favicon: '/logo.svg',
       isInternal: true,
     };

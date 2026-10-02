@@ -65,11 +65,11 @@ export const LinkPreviewCard: React.FC<LinkPreviewCardProps> = ({ url, className
 
         {/* Visual Banner Media */}
         {preview.imageUrl && (
-          <div className="w-full rounded-xl overflow-hidden border border-gray-200/60 dark:border-[#21262D] bg-[#070913] relative aspect-[1.91/1] max-h-[340px] flex items-center justify-center">
+          <div className="w-full rounded-xl overflow-hidden border border-gray-200/60 dark:border-[#21262D] bg-[#F1F5F9] dark:bg-[#070913] relative flex items-center justify-center">
             <img
               src={preview.imageUrl}
               alt={preview.title}
-              className="w-full h-full object-cover group-hover:scale-[1.015] transition-transform duration-300"
+              className="w-full h-auto max-h-[380px] object-cover group-hover:scale-[1.012] transition-transform duration-300"
               loading="lazy"
             />
           </div>
