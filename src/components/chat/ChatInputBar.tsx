@@ -19,7 +19,9 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useChat } from '../../contexts/ChatContext';
 import { EmojiPickerPopover } from '../common/EmojiPickerPopover';
 import { GifPickerPopover } from '../common/GifPickerPopover';
+import { getFilesFromClipboard } from '../../utils/media';
 import type { ChatMessage } from '../../types/chat';
+
 import clsx from 'clsx';
 
 interface ChatInputBarProps {
@@ -88,6 +90,17 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
       }
     };
   }, [stagedAttachment]);
+
+  // Auto focus input when replying to a message
+  useEffect(() => {
+    if (replyingMessage) {
+      const timer = setTimeout(() => {
+        inputRef.current?.focus();
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [replyingMessage]);
+
 
   // Handle stage file helper
   const stageFile = useCallback((file: File) => {
@@ -185,7 +198,7 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
   const handleSelectGif = async (gifUrl: string) => {
     setShowGifPicker(false);
     const replyId = replyingMessage?.id || null;
-    await sendMessage(t('messages.sentGif'), replyId, 'IMAGE', gifUrl);
+    await sendMessage('', replyId, 'IMAGE', gifUrl);
     onCancelReply();
     toast.success(t('messages.sentGif'));
   };
@@ -204,24 +217,24 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
     e.target.value = '';
   };
 
-  // Clipboard paste support (e.g. screenshot paste)
-  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-    const items = e.clipboardData?.items;
-    if (!items) return;
-
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      if (item.kind === 'file') {
-        const file = item.getAsFile();
-        if (file) {
-          e.preventDefault();
-          stageFile(file);
-          toast.success(t('messages.sentPhoto'));
-          break;
-        }
-      }
+  // Clipboard paste support (media, documents, screenshots from clipboard)
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const files = getFilesFromClipboard(e);
+    if (files.length > 0) {
+      const file = files[0];
+      e.preventDefault();
+      e.stopPropagation();
+      stageFile(file);
+      const isImg = file.type.startsWith('image/');
+      toast.success(
+        isImg
+          ? (t('messages.sentPhoto') || 'Đã dán hình ảnh từ clipboard')
+          : (t('messages.sentFile') || 'Đã dán tệp đính kèm từ clipboard')
+      );
     }
   };
+
+
 
   // Drag & Drop handlers
   const handleDragOver = (e: React.DragEvent) => {
@@ -337,6 +350,7 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
+      onPaste={handlePaste}
       className={clsx(
         'bg-white dark:bg-[#121212] border-t border-gray-100 dark:border-[#262626] relative transition-colors shadow-2xs',
         isDraggingOver && 'ring-2 ring-[#0084FF] bg-blue-50/20 dark:bg-blue-950/20'
@@ -543,7 +557,6 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
                   void handleSend();
                 }
               }}
-              onPaste={handlePaste}
               disabled={isRateLimited || isUploading}
               placeholder={
                 isRateLimited
@@ -554,6 +567,7 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
               }
               className="flex-1 bg-transparent text-[14px] sm:text-[14.5px] text-gray-900 dark:text-[#F5F5F5] placeholder-[#8E8E8E] dark:placeholder-[#737373] outline-none font-normal leading-normal disabled:opacity-50 min-w-0"
             />
+
 
             {/* Right-Side Controls: Actions or Blue Send button */}
             {messageText.trim() || stagedAttachment ? (

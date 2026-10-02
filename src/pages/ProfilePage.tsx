@@ -598,9 +598,15 @@ export const ProfilePage = () => {
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
           user={displayUser}
-          onSave={(updated) => setUser(updated)}
+          onSave={(updated) => {
+            setUser(updated);
+            if (updated.username && (!identifier || updated.username !== identifier)) {
+              navigate(`/${updated.username}`, { replace: true });
+            }
+          }}
         />
       )}
+
 
       {/* Follow List Modal Dialog */}
       {!isNotFound && !isBlockedByThem && !isBlockedByMe && displayUser.id && (

@@ -59,3 +59,39 @@ export const isVideoMedia = (mediaUrl?: string | null, mediaType?: string | null
     cleanUrl.endsWith('.mkv')
   );
 };
+
+/**
+ * Extracts unique File objects from clipboard event data
+ */
+export const getFilesFromClipboard = (e: React.ClipboardEvent | ClipboardEvent): File[] => {
+  const clipboardData = e.clipboardData;
+  if (!clipboardData) return [];
+
+  const files: File[] = [];
+  const seen = new Set<string>();
+
+  const addFile = (file: File | null) => {
+    if (!file) return;
+    const key = `${file.name}-${file.size}-${file.type}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      files.push(file);
+    }
+  };
+
+  if (clipboardData.files && clipboardData.files.length > 0) {
+    for (let i = 0; i < clipboardData.files.length; i++) {
+      addFile(clipboardData.files[i]);
+    }
+  } else if (clipboardData.items && clipboardData.items.length > 0) {
+    for (let i = 0; i < clipboardData.items.length; i++) {
+      const item = clipboardData.items[i];
+      if (item.kind === 'file') {
+        addFile(item.getAsFile());
+      }
+    }
+  }
+  return files;
+};
+
+

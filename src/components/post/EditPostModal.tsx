@@ -15,8 +15,9 @@ import {
 import { useLanguage } from '../../contexts/LanguageContext';
 import { postService } from '../../services/postService';
 import { mediaService } from '../../services/mediaService';
-import { getMediaUrl } from '../../utils/media';
+import { getMediaUrl, getFilesFromClipboard } from '../../utils/media';
 import { extractHashtags } from '../../utils/text';
+
 import type { PostResponse, PostVisibility, PostMediaRequest } from '../../types';
 import EmojiPickerPopover from '../common/EmojiPickerPopover';
 import GifPickerPopover from '../common/GifPickerPopover';
@@ -159,7 +160,31 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
     }
   };
 
+  // Clipboard paste support (media from screenshot, file copy, etc.)
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const files = getFilesFromClipboard(e);
+    const mediaFiles = files.filter(
+      (f) => f.type.startsWith('image/') || f.type.startsWith('video/')
+    );
+
+    if (mediaFiles.length > 0) {
+      e.preventDefault();
+      e.stopPropagation();
+      handleAddNewFiles(mediaFiles);
+      toast.success(
+        mediaFiles.length === 1
+          ? (t('feed.pastedSingleMedia', { defaultValue: 'Đã dán media từ clipboard' }))
+          : (t('feed.pastedMultipleMedia', {
+              count: mediaFiles.length,
+              defaultValue: `Đã dán ${mediaFiles.length} tệp media từ clipboard`,
+            }))
+      );
+    }
+  };
+
+
   const handleSave = async () => {
+
     if (!content.trim() && mediaList.length === 0) {
       toast.error(t('feed.postEmptyError'));
       return;
@@ -232,11 +257,13 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
     <div 
       className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto animate-fadeIn"
       onClick={onClose}
+      onPaste={handlePaste}
     >
       <div 
         className="bg-white dark:bg-[#121212] rounded-t-3xl sm:rounded-3xl shadow-2xl border-t sm:border border-gray-100 dark:border-[#262626] w-full max-w-xl h-[100dvh] sm:h-auto sm:max-h-[90vh] flex flex-col relative pb-safe sm:pb-0"
         onClick={(e) => e.stopPropagation()}
       >
+
         {/* Header */}
         <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 pt-[calc(0.875rem+env(safe-area-inset-top,0px))] sm:pt-4 border-b border-gray-100 dark:border-[#262626]">
           {isGifPickerOpen ? (
@@ -344,6 +371,8 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
             className="w-full text-sm text-gray-800 dark:text-[#F5F5F5] placeholder-gray-400 dark:placeholder-[#737373] border-none outline-none resize-none p-0 custom-scrollbar leading-relaxed bg-transparent"
             placeholder="Nội dung bài viết..."
           />
+
+
 
           {/* Media Manager & Reordering */}
           {mediaList.length > 0 && (

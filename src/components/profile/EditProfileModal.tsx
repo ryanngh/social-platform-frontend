@@ -1,4 +1,5 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { X, Camera, MapPin, Link2, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { userService } from '../../services/userService';
@@ -18,6 +19,7 @@ interface EditProfileModalProps {
 export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileModalProps) => {
   const { t, language } = useLanguage();
   const { refreshUser } = useAuth();
+  const navigate = useNavigate();
   const [firstName, setFirstName] = useState(user.firstName || '');
   const [lastName, setLastName] = useState(user.lastName || '');
   const [username, setUsername] = useState(user.username || '');
@@ -50,6 +52,36 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
     imageSrc: null,
     cropType: 'avatar',
   });
+
+  // Sync state whenever modal opens or user prop changes
+  useEffect(() => {
+    if (isOpen) {
+      setFirstName(user.firstName || '');
+      setLastName(user.lastName || '');
+      setUsername(user.username || '');
+      setBio(user.bio || '');
+      setLocation(user.location || '');
+      setWebsiteUrl(user.websiteUrl || '');
+      setAvatarFile(null);
+      setBannerFile(null);
+      setAvatarPreview(user.avatarUrl ? getAvatarUrl(user.avatarUrl) : null);
+      setBannerPreview(user.bannerUrl ? getBannerUrl(user.bannerUrl) : null);
+      setIsAddingInterest(false);
+      setNewInterestInput('');
+    }
+  }, [isOpen, user]);
+
+  const isFormChanged =
+    firstName.trim() !== (user.firstName || '').trim() ||
+    lastName.trim() !== (user.lastName || '').trim() ||
+    username.trim() !== (user.username || '').trim() ||
+    bio.trim() !== (user.bio || '').trim() ||
+    location.trim() !== (user.location || '').trim() ||
+    websiteUrl.trim() !== (user.websiteUrl || '').trim() ||
+    avatarFile !== null ||
+    bannerFile !== null;
+
+  const isSaveDisabled = isLoading || !isFormChanged || !username.trim();
 
   if (!isOpen) return null;
 
@@ -92,6 +124,7 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (isSaveDisabled) return;
     setIsLoading(true);
 
     try {
@@ -117,6 +150,10 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
       onSave(finalUser);
       toast.success(t('profile.updateSuccess'));
       onClose();
+
+      if (finalUser.username && finalUser.username !== user.username) {
+        navigate(`/${finalUser.username}`, { replace: true });
+      }
     } catch (error) {
       console.error(error);
       toast.error(language === 'vi' ? 'Không thể cập nhật hồ sơ. Vui lòng thử lại!' : 'Could not update profile. Please try again!');
@@ -124,6 +161,7 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
       setIsLoading(false);
     }
   };
+
 
   return (
     <div
@@ -150,12 +188,13 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
           </div>
           <button
             onClick={() => handleSubmit()}
-            disabled={isLoading}
-            className="h-10 sm:h-9 px-4 min-h-[40px] bg-[#004AC6] hover:bg-[#002970] dark:bg-[#0095F6] dark:hover:bg-[#1877F2] text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+            disabled={isSaveDisabled}
+            className="h-10 sm:h-9 px-4 min-h-[40px] bg-[#004AC6] hover:bg-[#002970] dark:bg-[#0095F6] dark:hover:bg-[#1877F2] text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
             type="button"
           >
             {isLoading ? t('profile.saving') : t('profile.saveChanges')}
           </button>
+
         </div>
 
         {/* Scrollable Content */}
@@ -389,12 +428,13 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
           </button>
           <button
             onClick={() => handleSubmit()}
-            disabled={isLoading}
-            className="h-9 px-5 bg-[#004AC6] hover:bg-[#002970] dark:bg-[#0095F6] dark:hover:bg-[#1877F2] text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition cursor-pointer disabled:opacity-50"
+            disabled={isSaveDisabled}
+            className="h-9 px-5 bg-[#004AC6] hover:bg-[#002970] dark:bg-[#0095F6] dark:hover:bg-[#1877F2] text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
             type="button"
           >
             {isLoading ? t('profile.saving') : t('profile.saveChanges')}
           </button>
+
         </div>
       </div>
 

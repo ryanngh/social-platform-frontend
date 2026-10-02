@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Heart,
@@ -40,6 +40,8 @@ import RepostersModal from './RepostersModal';
 import CreateRepostModal from './CreateRepostModal';
 import UserAvatar from '../common/UserAvatar';
 import FormattedText from '../common/FormattedText';
+import LinkPreviewCard from '../common/LinkPreviewCard';
+import { extractFirstUrl } from '../../utils/linkPreview';
 import PostMediaLightbox from './PostMediaLightbox';
 import RepostBubble from './RepostBubble';
 import { usePostViewTracker } from '../../hooks/usePostViewTracker';
@@ -426,6 +428,7 @@ export const PostCard: React.FC<PostCardProps> = ({
 
   const authorName = post.author.fullName || `${post.author.firstName} ${post.author.lastName}`.trim() || post.author.username;
   const cleanContent = getContentWithoutHashtags(post.content);
+  const firstUrl = extractFirstUrl(post.content);
 
   const toggleLike = async () => {
     if (isLiking) return;
@@ -675,9 +678,18 @@ export const PostCard: React.FC<PostCardProps> = ({
           </div>
         </div>
       ) : cleanContent ? (
-        <p className="text-[15px] sm:text-base leading-relaxed text-gray-800 dark:text-[#E5E5E5] mb-3.5 whitespace-pre-line select-text">
-          <FormattedText text={cleanContent} />
-        </p>
+        <div className="mb-3.5">
+          <p className="text-[15px] sm:text-base leading-relaxed text-gray-800 dark:text-[#E5E5E5] whitespace-pre-line select-text">
+            <FormattedText text={cleanContent} />
+          </p>
+          {firstUrl && (!post.media || post.media.length === 0) && (
+            <LinkPreviewCard url={firstUrl} />
+          )}
+        </div>
+      ) : firstUrl && (!post.media || post.media.length === 0) ? (
+        <div className="mb-3.5">
+          <LinkPreviewCard url={firstUrl} />
+        </div>
       ) : null}
 
       {/* Media Attachment (Self-adapting aspect ratio) */}

@@ -104,7 +104,8 @@ export const SignInPage: React.FC = () => {
     <div className="min-h-[100dvh] bg-[#EEF2F6] dark:bg-[#0B0F19] flex flex-col items-center justify-center p-3 sm:p-6 lg:p-10 pt-[calc(0.75rem+env(safe-area-inset-top,0px))] pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] transition-colors duration-200">
       {/* Top Bar with Language Selector & Theme Toggle */}
       <div className="w-full max-w-[1240px] flex justify-between items-center mb-4 sm:mb-6 px-1">
-        <Link to="/feed" className="flex items-center gap-2">
+        <Link to="/feed" className="flex items-center gap-2.5">
+          <img src="/logo.svg" alt="RySocial" className="w-8 h-8 object-contain shrink-0 drop-shadow-xs" />
           <span className="text-2xl font-black text-[#004AC6] dark:text-[#38BDF8] tracking-tight">
             RySocial
           </span>

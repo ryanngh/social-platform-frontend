@@ -75,27 +75,32 @@ interface ChatContextType {
 }
 
 export const inferMediaTypeAndUrl = (body?: string) => {
-  if (!body) return { mediaType: 'TEXT' as MediaType, mediaUrl: undefined, cleanBody: '' };
+  if (!body) return { mediaType: 'TEXT' as MediaType, mediaUrl: undefined, cleanBody: '', fileName: undefined };
   const trimmed = body.trim();
+  if (!trimmed) return { mediaType: 'TEXT' as MediaType, mediaUrl: undefined, cleanBody: '', fileName: undefined };
 
-  // Check if body is a storage media path or direct URL
+  // Check if body starts with a media URL or contains a media URL on the first line with caption after
+  const newlineIdx = trimmed.indexOf('\n');
+  const firstLine = newlineIdx !== -1 ? trimmed.slice(0, newlineIdx).trim() : trimmed;
+  const caption = newlineIdx !== -1 ? trimmed.slice(newlineIdx + 1).trim() : '';
+
   const isUrlLike =
-    trimmed.startsWith('http://') ||
-    trimmed.startsWith('https://') ||
-    trimmed.startsWith('blob:') ||
-    trimmed.startsWith('/social-media/') ||
-    trimmed.startsWith('chat/attachments/');
+    firstLine.startsWith('http://') ||
+    firstLine.startsWith('https://') ||
+    firstLine.startsWith('blob:') ||
+    firstLine.startsWith('/social-media/') ||
+    firstLine.startsWith('chat/attachments/');
 
   if (isUrlLike) {
-    const resolvedUrl = getMediaUrl(trimmed);
-    const cleanUrl = trimmed.split('?')[0].toLowerCase();
+    const resolvedUrl = getMediaUrl(firstLine);
+    const cleanUrl = firstLine.split('?')[0].toLowerCase();
 
     // 1. Inspect query parameters if present (e.g., ?type=IMAGE&name=foo.jpg)
     let explicitType: MediaType | null = null;
     let explicitName: string | null = null;
-    if (trimmed.includes('?')) {
+    if (firstLine.includes('?')) {
       try {
-        const queryStr = trimmed.split('?')[1];
+        const queryStr = firstLine.split('?')[1];
         const params = new URLSearchParams(queryStr);
         const tParam = params.get('type')?.toUpperCase();
         if (tParam === 'IMAGE' || tParam === 'VIDEO' || tParam === 'AUDIO' || tParam === 'FILE') {
@@ -112,7 +117,7 @@ export const inferMediaTypeAndUrl = (body?: string) => {
       return {
         mediaType: explicitType,
         mediaUrl: resolvedUrl,
-        cleanBody: '',
+        cleanBody: caption,
         fileName: explicitName || (explicitType === 'FILE' ? 'attachment' : undefined),
       };
     }
@@ -124,20 +129,20 @@ export const inferMediaTypeAndUrl = (body?: string) => {
       testString.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp|jfif|pjpeg|pjp|avif)$/i) ||
       cleanUrl.includes('/images/')
     ) {
-      return { mediaType: 'IMAGE' as MediaType, mediaUrl: resolvedUrl, cleanBody: '', fileName: explicitName || undefined };
+      return { mediaType: 'IMAGE' as MediaType, mediaUrl: resolvedUrl, cleanBody: caption, fileName: explicitName || undefined };
     }
     if (
       testString.match(/\.(mp4|webm|mov|mkv|ogg|avi|wmv|3gp|flv)$/i) ||
       cleanUrl.includes('/videos/')
     ) {
-      return { mediaType: 'VIDEO' as MediaType, mediaUrl: resolvedUrl, cleanBody: '', fileName: explicitName || undefined };
+      return { mediaType: 'VIDEO' as MediaType, mediaUrl: resolvedUrl, cleanBody: caption, fileName: explicitName || undefined };
     }
     if (
       testString.match(/\.(mp3|wav|ogg|m4a|aac|weba|flac|wma)$/i) ||
       cleanUrl.includes('/audios/') ||
       cleanUrl.includes('voice_')
     ) {
-      return { mediaType: 'AUDIO' as MediaType, mediaUrl: resolvedUrl, cleanBody: '', fileName: explicitName || undefined };
+      return { mediaType: 'AUDIO' as MediaType, mediaUrl: resolvedUrl, cleanBody: caption, fileName: explicitName || undefined };
     }
     if (
       testString.match(/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|zip|rar|tar|gz|txt|csv|json|xml|html|js|ts)$/i) ||
@@ -149,13 +154,13 @@ export const inferMediaTypeAndUrl = (body?: string) => {
       return {
         mediaType: 'FILE' as MediaType,
         mediaUrl: resolvedUrl,
-        cleanBody: '',
+        cleanBody: caption,
         fileName: extractedFileName,
       };
     }
   }
 
-  return { mediaType: 'TEXT' as MediaType, mediaUrl: undefined, cleanBody: body };
+  return { mediaType: 'TEXT' as MediaType, mediaUrl: undefined, cleanBody: body, fileName: undefined };
 };
 
 const formatChatMessage = (m: any, currentUserId: string): ChatMessage => {
@@ -613,13 +618,13 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // 2. Update conversation preview
       const previewText =
         mediaType === 'IMAGE'
-          ? 'Bạn: 📷 [Hình ảnh]'
+          ? (trimmed ? `Bạn: 📷 [Hình ảnh] ${trimmed}` : 'Bạn: 📷 [Hình ảnh]')
           : mediaType === 'VIDEO'
-          ? 'Bạn: 🎥 [Video]'
+          ? (trimmed ? `Bạn: 🎥 [Video] ${trimmed}` : 'Bạn: 🎥 [Video]')
           : mediaType === 'AUDIO'
           ? 'Bạn: 🎤 [Tin nhắn thoại]'
           : mediaType === 'FILE'
-          ? `Bạn: 📎 ${fileName || 'Tệp đính kèm'}`
+          ? (trimmed ? `Bạn: 📎 ${fileName || 'Tệp đính kèm'}: ${trimmed}` : `Bạn: 📎 ${fileName || 'Tệp đính kèm'}`)
           : `Bạn: ${trimmed}`;
 
       setConversations((prev) =>
@@ -640,8 +645,10 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         })
       );
 
-      // 3. Construct message body to send: if media exists, send body or mediaUrl
-      const effectiveBodyToSend = trimmed || mediaUrl || '';
+      // 3. Construct message body to send: if media exists, send mediaUrl with caption
+      const effectiveBodyToSend = mediaUrl
+        ? (trimmed ? `${mediaUrl}\n${trimmed}` : mediaUrl)
+        : trimmed;
 
       // Send via WebSocket if connected
       const sentViaWs = chatSocket.sendMessage(activeConversationId, clientMsgId, effectiveBodyToSend, replyToId);
@@ -737,12 +744,16 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         prev.map((m) => (m.clientMsgId === clientMsgId ? { ...m, status: 'SENDING' } : m))
       );
 
-      const sentViaWs = chatSocket.sendMessage(activeConversationId, clientMsgId, msg.body, msg.replyToId);
+      const bodyToSend = msg.mediaUrl
+        ? (msg.body ? `${msg.mediaUrl}\n${msg.body}` : msg.mediaUrl)
+        : msg.body;
+
+      const sentViaWs = chatSocket.sendMessage(activeConversationId, clientMsgId, bodyToSend, msg.replyToId);
       if (!sentViaWs) {
         try {
           const res = await chatService.sendMessage(activeConversationId, {
             client_msg_id: clientMsgId,
-            body: msg.body,
+            body: bodyToSend,
             reply_to_id: msg.replyToId,
           });
           setMessages((prev) =>
@@ -1075,13 +1086,13 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const mediaInfo = inferMediaTypeAndUrl(payload.body);
       const previewText =
         mediaInfo.mediaType === 'IMAGE'
-          ? '📷 [Hình ảnh]'
+          ? (mediaInfo.cleanBody ? `📷 [Hình ảnh] ${mediaInfo.cleanBody}` : '📷 [Hình ảnh]')
           : mediaInfo.mediaType === 'VIDEO'
-          ? '🎥 [Video]'
+          ? (mediaInfo.cleanBody ? `🎥 [Video] ${mediaInfo.cleanBody}` : '🎥 [Video]')
           : mediaInfo.mediaType === 'AUDIO'
           ? '🎤 [Tin nhắn thoại]'
           : mediaInfo.mediaType === 'FILE'
-          ? `📎 ${mediaInfo.fileName || 'Tệp đính kèm'}`
+          ? (mediaInfo.cleanBody ? `📎 ${mediaInfo.fileName || 'Tệp đính kèm'}: ${mediaInfo.cleanBody}` : `📎 ${mediaInfo.fileName || 'Tệp đính kèm'}`)
           : payload.body;
 
       setConversations((prev) => {
@@ -1162,7 +1173,20 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // 5. message.updated (Edited message)
     const unsubUpdated = chatSocket.on('message.updated', (payload) => {
       setMessages((prev) =>
-        prev.map((m) => (m.id === payload.id ? { ...m, body: payload.body, editedAt: payload.edited_at } : m))
+        prev.map((m) => {
+          if (m.id === payload.id) {
+            const mediaInfo = inferMediaTypeAndUrl(payload.body);
+            return {
+              ...m,
+              body: mediaInfo.cleanBody,
+              mediaType: mediaInfo.mediaType,
+              mediaUrl: mediaInfo.mediaUrl,
+              fileName: mediaInfo.fileName,
+              editedAt: payload.edited_at,
+            };
+          }
+          return m;
+        })
       );
     });
 

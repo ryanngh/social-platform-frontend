@@ -26,7 +26,9 @@ import chatService from '../../services/chatService';
 import chatSocket from '../../services/chatSocket';
 import { playMessageSound } from '../../utils/sound';
 import { generateUUID } from '../../utils/uuid';
+import { getFilesFromClipboard } from '../../utils/media';
 import UserAvatar from '../common/UserAvatar';
+
 import ChatMessageItem from './ChatMessageItem';
 import { EmojiPickerPopover } from '../common/EmojiPickerPopover';
 import { GifPickerPopover } from '../common/GifPickerPopover';
@@ -235,6 +237,17 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
     }
   }, [isMinimized, conversationId]);
 
+  // Auto focus input when replying to a message
+  useEffect(() => {
+    if (replyingMessage) {
+      const timer = setTimeout(() => {
+        inputRef.current?.focus();
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [replyingMessage]);
+
+
   // Listen to WebSocket events for this specific conversation
   useEffect(() => {
     // 1. message.ack
@@ -391,7 +404,26 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
     setIsUploading(false);
   };
 
+  // Clipboard paste support (media, documents, screenshots from clipboard)
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const files = getFilesFromClipboard(e);
+    if (files.length > 0) {
+      const file = files[0];
+      e.preventDefault();
+      e.stopPropagation();
+      stageFile(file);
+      const isImg = file.type.startsWith('image/');
+      toast.success(
+        isImg
+          ? (t('messages.sentPhoto') || 'Đã dán hình ảnh từ clipboard')
+          : (t('messages.sentFile') || 'Đã dán tệp đính kèm từ clipboard')
+      );
+    }
+  };
+
+
   // Send message
+
   const handleSendMessage = async (customText?: string) => {
     if (isRateLimited || isUploading) return;
 
@@ -434,7 +466,9 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
         setMessageText('');
         setReplyingMessage(null);
 
-        const bodyToSend = caption || uploadRes.mediaUrl || '';
+        const bodyToSend = uploadRes.mediaUrl
+          ? (caption ? `${uploadRes.mediaUrl}\n${caption}` : uploadRes.mediaUrl)
+          : caption;
         const sentWs = chatSocket.sendMessage(conversationId, clientMsgId, bodyToSend, replyId);
         if (!sentWs) {
           const res = await chatService.sendMessage(conversationId, {
@@ -671,8 +705,12 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
   // 2. EXPANDED FULL MINI CHAT WINDOW
   // =========================================================
   return (
-    <div className="w-[328px] sm:w-[338px] h-[455px] bg-white dark:bg-[#181818] rounded-t-2xl shadow-2xl border border-b-0 border-gray-200 dark:border-[#333333] flex flex-col overflow-hidden transition-all duration-200 pointer-events-auto select-none">
+    <div
+      onPaste={handlePaste}
+      className="w-[328px] sm:w-[338px] h-[455px] bg-white dark:bg-[#181818] rounded-t-2xl shadow-2xl border border-b-0 border-gray-200 dark:border-[#333333] flex flex-col overflow-hidden transition-all duration-200 pointer-events-auto select-none"
+    >
       {/* Top Header */}
+
       <div className="h-13 px-3 bg-white dark:bg-[#1E1E1E] border-b border-gray-100 dark:border-[#2C2C2C] flex items-center justify-between shrink-0 shadow-2xs">
         {/* Left Partner Info */}
         <div
@@ -1037,6 +1075,8 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
               }}
               className="flex-1 bg-transparent text-[13px] text-gray-900 dark:text-[#F5F5F5] placeholder-gray-400 outline-none leading-normal min-w-0"
             />
+
+
 
             {/* Right Buttons: Send or Actions */}
             {messageText.trim() || stagedAttachment ? (

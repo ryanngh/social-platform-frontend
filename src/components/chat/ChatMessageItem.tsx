@@ -27,6 +27,9 @@ import {
 import toast from 'react-hot-toast';
 import { useLanguage } from '../../contexts/LanguageContext';
 import UserAvatar from '../common/UserAvatar';
+import FormattedText from '../common/FormattedText';
+import LinkPreviewCard from '../common/LinkPreviewCard';
+import { extractFirstUrl } from '../../utils/linkPreview';
 import { getMediaUrl } from '../../utils/media';
 import type { ChatMessage, ChatConversationItem } from '../../types/chat';
 import clsx from 'clsx';
@@ -390,7 +393,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
 
               {/* 2. Video Attachment */}
               {message.mediaType === 'VIDEO' && mediaUrl && (
-                <div className="pt-0.5 overflow-hidden rounded-xl max-w-full">
+                <div className="relative pt-0.5 overflow-hidden rounded-xl group/media max-w-full">
                   <video
                     src={mediaUrl}
                     controls
@@ -398,6 +401,17 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                     preload="metadata"
                     className="rounded-xl max-h-60 sm:max-h-80 w-full bg-black/90 object-contain shadow-2xs"
                   />
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsLightboxOpen(true);
+                    }}
+                    className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 text-white opacity-0 group-hover/media:opacity-100 transition-opacity hover:bg-black/70 cursor-pointer shadow-md z-10"
+                    title="Phóng to video"
+                  >
+                    <Maximize2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               )}
 
@@ -507,9 +521,35 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
 
               {/* 5. Text Message Body (or caption) */}
               {message.body && (
-                <p className="whitespace-pre-wrap leading-[1.45] select-text font-normal">
-                  {message.body}
-                </p>
+                <div className="space-y-1.5">
+                  <p className="whitespace-pre-wrap leading-[1.45] select-text font-normal">
+                    <FormattedText
+                      text={message.body}
+                      urlClassName={
+                        isMine
+                          ? 'text-white underline font-semibold cursor-pointer break-all inline-flex items-center'
+                          : 'text-[#0084FF] dark:text-[#38BDF8] underline font-medium cursor-pointer break-all inline-flex items-center'
+                      }
+                      mentionClassName={
+                        isMine
+                          ? 'text-white underline font-semibold cursor-pointer inline-flex items-center'
+                          : 'text-[#0084FF] dark:text-[#38BDF8] underline font-semibold cursor-pointer inline-flex items-center'
+                      }
+                      hashtagClassName={
+                        isMine
+                          ? 'text-white underline font-semibold cursor-pointer inline-flex items-center'
+                          : 'text-[#0084FF] dark:text-[#38BDF8] underline font-semibold cursor-pointer inline-flex items-center'
+                      }
+                    />
+                  </p>
+                  {(() => {
+                    const chatUrl = extractFirstUrl(message.body);
+                    if (chatUrl && !message.mediaType) {
+                      return <LinkPreviewCard url={chatUrl} className="mt-1.5 mb-0.5" />;
+                    }
+                    return null;
+                  })()}
+                </div>
               )}
             </div>
           )}
@@ -648,7 +688,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
         )}
       </div>
 
-      {/* 6. Fullscreen Image Lightbox Modal via Portal */}
+      {/* 6. Fullscreen Media (Image / Video) Lightbox Modal via Portal */}
       {isLightboxOpen && mediaUrl && createPortal(
         <div
           className="fixed inset-0 z-[999999] bg-black/92 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn select-none"
@@ -661,9 +701,15 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
           >
             <button
               type="button"
-              onClick={(e) => handleDownloadFile(e, mediaUrl, message.fileName || 'image.png')}
+              onClick={(e) =>
+                handleDownloadFile(
+                  e,
+                  mediaUrl,
+                  message.fileName || (message.mediaType === 'VIDEO' ? 'video.mp4' : 'image.png')
+                )
+              }
               className="p-2.5 bg-white/15 hover:bg-white/25 text-white rounded-full transition cursor-pointer backdrop-blur-md shadow-lg"
-              title="Tải ảnh về máy"
+              title={message.mediaType === 'VIDEO' ? 'Tải video về máy' : 'Tải ảnh về máy'}
             >
               <Download className="w-5 h-5" />
             </button>
@@ -677,16 +723,26 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
             </button>
           </div>
 
-          {/* Centered Image Container */}
+          {/* Centered Media Container */}
           <div
             className="relative max-w-5xl max-h-[90vh] flex items-center justify-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <img
-              src={mediaUrl}
-              alt={message.fileName || 'fullscreen preview'}
-              className="max-h-[88vh] max-w-full rounded-xl object-contain shadow-2xl transition-transform"
-            />
+            {message.mediaType === 'VIDEO' ? (
+              <video
+                src={mediaUrl}
+                controls
+                autoPlay
+                playsInline
+                className="max-h-[88vh] max-w-full rounded-xl object-contain shadow-2xl transition-transform"
+              />
+            ) : (
+              <img
+                src={mediaUrl}
+                alt={message.fileName || 'fullscreen preview'}
+                className="max-h-[88vh] max-w-full rounded-xl object-contain shadow-2xl transition-transform"
+              />
+            )}
           </div>
         </div>,
         document.body

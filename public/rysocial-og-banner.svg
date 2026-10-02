@@ -1,0 +1,139 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#070913" />
+      <stop offset="40%" stop-color="#0E122C" />
+      <stop offset="75%" stop-color="#181342" />
+      <stop offset="100%" stop-color="#0B0F19" />
+    </linearGradient>
+
+    <!-- Radial Ambient Glows -->
+    <radialGradient id="topGlow" cx="50%" cy="30%" r="60%">
+      <stop offset="0%" stop-color="#2563EB" stop-opacity="0.35" />
+      <stop offset="60%" stop-color="#1D4ED8" stop-opacity="0.1" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+    </radialGradient>
+
+    <radialGradient id="purpleGlow" cx="50%" cy="85%" r="50%">
+      <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.4" />
+      <stop offset="50%" stop-color="#6366F1" stop-opacity="0.15" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Cloud Gradients -->
+    <linearGradient id="cloudGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.95" />
+      <stop offset="100%" stop-color="#BFDBFE" stop-opacity="0.8" />
+    </linearGradient>
+
+    <linearGradient id="cloudGrad2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#E0E7FF" stop-opacity="0.9" />
+      <stop offset="100%" stop-color="#A5B4FC" stop-opacity="0.75" />
+    </linearGradient>
+
+    <!-- Character / Mascot Gradient -->
+    <linearGradient id="mascotGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#C084FC" />
+      <stop offset="45%" stop-color="#EC4899" />
+      <stop offset="100%" stop-color="#3B82F6" />
+    </linearGradient>
+
+    <!-- Logo Filter Glow -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Background Layer -->
+  <rect width="1200" height="630" fill="url(#bgGrad)" />
+  <rect width="1200" height="630" fill="url(#topGlow)" />
+  <rect width="1200" height="630" fill="url(#purpleGlow)" />
+
+  <!-- Background Grid Stars / Particle Dots -->
+  <g opacity="0.35">
+    <circle cx="120" cy="110" r="2" fill="#FFFFFF" />
+    <circle cx="280" cy="80" r="1.5" fill="#93C5FD" />
+    <circle cx="950" cy="140" r="2.5" fill="#FFFFFF" />
+    <circle cx="1080" cy="90" r="1.5" fill="#C4B5FD" />
+    <circle cx="180" cy="340" r="2" fill="#60A5FA" />
+    <circle cx="1020" cy="310" r="2" fill="#F472B6" />
+    <circle cx="850" cy="70" r="1.5" fill="#FFFFFF" />
+    <circle cx="340" cy="220" r="1" fill="#FFFFFF" />
+  </g>
+
+  <!-- Brand Logo Emblem at Top Center -->
+  <g transform="translate(568, 90)">
+    <!-- Outer Glow Circle -->
+    <circle cx="32" cy="32" r="34" fill="#0095F6" fill-opacity="0.2" filter="url(#glow)" />
+    <!-- White Circle Backdrop -->
+    <circle cx="32" cy="32" r="30" fill="#FFFFFF" />
+    <!-- Stylized 'R' Emblem with Gradient -->
+    <path d="M 22 17 L 34 17 C 39.5 17 43.5 20.2 43.5 25 C 43.5 28.5 41.2 31.2 37.8 32.3 L 44.5 45 L 37.8 45 L 32 33.5 L 28 33.5 L 28 45 L 22 45 Z M 28 22 L 28 28.5 L 33.5 28.5 C 36 28.5 37.8 27.2 37.8 25.2 C 37.8 23.2 36 22 33.5 22 Z" fill="#004AC6" />
+    <!-- Accent Dot -->
+    <circle cx="41.5" cy="18" r="3.5" fill="#00D2FF" />
+  </g>
+
+  <!-- Main Headline Typography -->
+  <text x="600" y="235" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="52" font-weight="900" fill="#FFFFFF" letter-spacing="-1.5">
+    The future of building
+  </text>
+  <text x="600" y="300" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="52" font-weight="900" fill="#FFFFFF" letter-spacing="-1.5">
+    happens together
+  </text>
+
+  <!-- Bottom Visual Artwork: Floating Clouds & Mascot -->
+  <!-- Left Cloud Formations -->
+  <g transform="translate(60, 410)">
+    <ellipse cx="140" cy="80" rx="90" ry="32" fill="url(#cloudGrad1)" />
+    <ellipse cx="210" cy="65" rx="70" ry="40" fill="url(#cloudGrad1)" />
+    <ellipse cx="90" cy="75" rx="60" ry="28" fill="url(#cloudGrad1)" />
+    <ellipse cx="270" cy="82" rx="55" ry="24" fill="url(#cloudGrad1)" />
+  </g>
+
+  <g transform="translate(820, 390)">
+    <!-- Right Cloud Formations -->
+    <ellipse cx="160" cy="90" rx="100" ry="34" fill="url(#cloudGrad2)" />
+    <ellipse cx="100" cy="72" rx="75" ry="42" fill="url(#cloudGrad2)" />
+    <ellipse cx="230" cy="80" rx="65" ry="30" fill="url(#cloudGrad2)" />
+    <ellipse cx="50" cy="92" rx="50" ry="22" fill="url(#cloudGrad2)" />
+  </g>
+
+  <!-- Center Mascot / Cosmic Orb Character with Glow -->
+  <g transform="translate(600, 505)">
+    <!-- Glow behind Mascot -->
+    <ellipse cx="0" cy="40" rx="190" ry="110" fill="url(#purpleGlow)" />
+    
+    <!-- Mascot Head/Body -->
+    <path d="M -130 180 C -135 70 -90 -30 -30 -50 C 0 -60 30 -60 55 -40 C 90 -15 130 50 135 180 Z" fill="url(#mascotGrad)" />
+    
+    <!-- Face details (Friendly Eyes) -->
+    <ellipse cx="-15" cy="-5" rx="8" ry="14" fill="#1E1B4B" />
+    <circle cx="-13" cy="-9" r="4" fill="#FFFFFF" />
+
+    <ellipse cx="38" cy="-2" rx="7" ry="12" fill="#1E1B4B" />
+    <circle cx="39" cy="-6" r="3.5" fill="#FFFFFF" />
+
+    <!-- Cute Blush -->
+    <ellipse cx="-32" cy="12" rx="11" ry="6" fill="#F43F5E" fill-opacity="0.45" />
+    <ellipse cx="52" cy="14" rx="10" ry="5.5" fill="#F43F5E" fill-opacity="0.45" />
+
+    <!-- Glowing Butterfly on Nose -->
+    <g transform="translate(14, 0) scale(1.1)">
+      <!-- Butterfly Glow -->
+      <circle cx="0" cy="0" r="14" fill="#FFFFFF" fill-opacity="0.3" filter="url(#glow)" />
+      <!-- Wings -->
+      <path d="M 0 0 C 8 -18 24 -14 16 -2 C 22 6 12 14 0 0 Z" fill="#FFFFFF" />
+      <path d="M 0 0 C -8 -18 -24 -14 -16 -2 C -22 6 -12 14 0 0 Z" fill="#FFFFFF" />
+      <!-- Butterfly body -->
+      <ellipse cx="0" cy="-1" rx="2" ry="6" fill="#E0E7FF" />
+    </g>
+
+    <!-- Forehead / Ear Accent -->
+    <path d="M -75 -10 C -95 -50 -70 -70 -50 -50 Z" fill="#A855F7" />
+  </g>
+
+  <!-- Bottom Clean Fade / Edge -->
+  <rect x="0" y="618" width="1200" height="12" fill="#070913" fill-opacity="0.8" />
+</svg>

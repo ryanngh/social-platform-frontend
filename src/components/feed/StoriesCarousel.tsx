@@ -21,10 +21,10 @@ const StoriesCarousel: React.FC = () => {
 
     const loadUsers = async () => {
       try {
-        // Fetch following users for the stories carousel
-        const followingRes = await userService.getFollowing(user.id, { page: 0, size: 25 });
+        // Fetch mutual following (friends / following 2 chiều) for the stories carousel
+        const friendsRes = await userService.getFriends(user.id, { page: 0, size: 25 });
         if (isMounted) {
-          setUserList(followingRes.content || []);
+          setUserList(friendsRes.content || []);
         }
       } catch (err) {
         console.warn('[StoriesCarousel] Failed to load horizontal users list:', err);

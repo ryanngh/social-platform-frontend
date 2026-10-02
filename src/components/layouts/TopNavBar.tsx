@@ -95,9 +95,10 @@ const TopNavBar: React.FC = () => {
           <Link
             to="/feed"
             onClick={() => window.dispatchEvent(new CustomEvent('reset-feed-to-for-you'))}
-            className="text-xl sm:text-2xl font-black text-[#004AC6] dark:text-[#0095F6] tracking-tight hover:opacity-95 transition"
+            className="flex items-center gap-2 text-xl sm:text-2xl font-black text-[#004AC6] dark:text-[#0095F6] tracking-tight hover:opacity-95 transition"
           >
-            RySocial
+            <img src="/logo.svg" alt="RySocial" className="w-7 h-7 sm:w-8 sm:h-8 object-contain shrink-0 drop-shadow-xs" />
+            <span>RySocial</span>
           </Link>
           <div className="hidden md:block relative md:w-[320px] lg:w-[380px]" ref={searchContainerRef}>
           <form onSubmit={handleSearchSubmit} className="relative w-full">

@@ -43,9 +43,11 @@ export const AuthHeroPanel: React.FC<AuthHeroPanelProps> = ({ mode }) => {
             <div className="w-full bg-white/90 dark:bg-[#1A2234]/90 backdrop-blur-md rounded-2xl border border-white/60 dark:border-white/10 p-3.5 shadow-md shadow-blue-500/5">
               <div className="flex items-center gap-3">
                 <div className="relative">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#004AC6] to-[#38BDF8] text-white font-bold flex items-center justify-center text-sm shadow-xs">
-                    R
-                  </div>
+                  <img
+                    src="/logo.svg"
+                    alt="RySocial"
+                    className="w-10 h-10 rounded-full object-contain p-0.5 bg-white dark:bg-[#0F172A] border border-blue-100 dark:border-blue-900/40 shadow-xs"
+                  />
                   <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white dark:border-[#1A2234]" />
                 </div>
                 <div className="flex-1 min-w-0">

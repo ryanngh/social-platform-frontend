@@ -20,18 +20,22 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { getAvatarUrl, DEFAULT_AVATAR_FALLBACK } from '../../utils/media';
+import { getAvatarUrl, DEFAULT_AVATAR_FALLBACK, getFilesFromClipboard } from '../../utils/media';
 import { mediaService } from '../../services/mediaService';
 import type { PostMediaRequest, PostVisibility } from '../../types';
 import EmojiPickerPopover from '../common/EmojiPickerPopover';
 import GifPickerPopover from '../common/GifPickerPopover';
+import LinkPreviewCard from '../common/LinkPreviewCard';
+import { extractFirstUrl } from '../../utils/linkPreview';
 import toast from 'react-hot-toast';
 
 interface CreatePostModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmitPost?: (content: string, media?: PostMediaRequest[], visibility?: PostVisibility) => void | Promise<void>;
+  initialFiles?: File[];
 }
+
 
 interface FilePreview {
   id: string;
@@ -45,6 +49,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
   isOpen,
   onClose,
   onSubmitPost,
+  initialFiles,
 }) => {
   const { user } = useAuth();
   const { t } = useLanguage();
@@ -54,6 +59,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
   const audienceMenuRef = useRef<HTMLDivElement>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<FilePreview[]>([]);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
   const [isDragging, setIsDragging] = useState(false);
@@ -218,6 +224,36 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
     }
   };
 
+  // Ingest initialFiles if provided
+  useEffect(() => {
+    if (isOpen && initialFiles && initialFiles.length > 0) {
+      processNewFiles(initialFiles);
+    }
+  }, [isOpen, initialFiles]);
+
+  // Clipboard paste support (image / video from screenshot, clipboard copy, etc.)
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const files = getFilesFromClipboard(e);
+    const mediaFiles = files.filter(
+      (f) => f.type.startsWith('image/') || f.type.startsWith('video/')
+    );
+
+    if (mediaFiles.length > 0) {
+      e.preventDefault();
+      e.stopPropagation();
+      processNewFiles(mediaFiles);
+      toast.success(
+        mediaFiles.length === 1
+          ? (t('feed.pastedSingleMedia', { defaultValue: 'Đã dán media từ clipboard' }))
+          : (t('feed.pastedMultipleMedia', {
+              count: mediaFiles.length,
+              defaultValue: `Đã dán ${mediaFiles.length} tệp media từ clipboard`,
+            }))
+      );
+    }
+  };
+
+
   // Click outside audience dropdown
   useEffect(() => {
     if (!isAudienceDropdownOpen) return;
@@ -229,6 +265,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isAudienceDropdownOpen]);
+
 
   const handlePublish = React.useCallback(async () => {
     const hasText = !!content.trim();
@@ -300,7 +337,9 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
+      onPaste={handlePaste}
     >
+
       <div 
         className="bg-white dark:bg-[#121212] rounded-t-3xl sm:rounded-3xl shadow-2xl border-t sm:border border-gray-100 dark:border-[#262626] w-full max-w-xl h-[100dvh] sm:h-auto sm:max-h-[90vh] overflow-hidden flex flex-col transition-all relative pb-safe sm:pb-0"
         onClick={(e) => e.stopPropagation()}
@@ -489,6 +528,17 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
                 rows={3}
               ></textarea>
             </div>
+
+
+
+            {/* Live Link Preview if content has URL and no uploaded media */}
+            {(() => {
+              const liveUrl = extractFirstUrl(content);
+              if (liveUrl && previews.length === 0) {
+                return <LinkPreviewCard url={liveUrl} className="mb-3" />;
+              }
+              return null;
+            })()}
 
             {/* Media Previews Gallery */}
             {previews.length > 0 && (

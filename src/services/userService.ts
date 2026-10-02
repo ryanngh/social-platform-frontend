@@ -74,4 +74,14 @@ export const userService = {
     });
     return response.data;
   },
+
+  /**
+   * Lấy danh sách following 2 chiều (mutual follow / bạn bè)
+   */
+  async getFriends(userId: string, params?: PaginationParams): Promise<PaginatedResponse<UserSummary>> {
+    const response = await api.get<PaginatedResponse<UserSummary>>(`/users/${userId}/friends`, {
+      params,
+    });
+    return response.data;
+  },
 };

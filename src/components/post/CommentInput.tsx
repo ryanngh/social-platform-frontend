@@ -2,8 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Smile, ImagePlus, Send, X, Loader2, Play, Upload } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { getAvatarUrl } from '../../utils/media';
+import { getAvatarUrl, getFilesFromClipboard } from '../../utils/media';
 import { mediaService } from '../../services/mediaService';
+
 import type { CommentMediaRequest } from '../../types';
 import EmojiPickerPopover from '../common/EmojiPickerPopover';
 import GifPickerPopover from '../common/GifPickerPopover';
@@ -47,10 +48,15 @@ export const CommentInput: React.FC<CommentInputProps> = ({
 
   // Focus input when replyingTo changes
   useEffect(() => {
-    if (replyingTo?.username) {
-      setTimeout(() => textInputRef.current?.focus(), 50);
+    if (replyingTo) {
+      const timer = setTimeout(() => {
+        textInputRef.current?.focus();
+        textInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 50);
+      return () => clearTimeout(timer);
     }
   }, [replyingTo]);
+
 
   // Ref previews để dọn dẹp object URLs CHỈ KHI component unmount
   const previewsRef = useRef(previews);
@@ -170,7 +176,28 @@ export const CommentInput: React.FC<CommentInputProps> = ({
     }
   };
 
+  // Clipboard paste support (media from screenshot, file copy, etc.)
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const files = getFilesFromClipboard(e);
+    const mediaFiles = files.filter(
+      (f) => f.type.startsWith('image/') || f.type.startsWith('video/')
+    );
+
+    if (mediaFiles.length > 0) {
+      e.preventDefault();
+      e.stopPropagation();
+      processFiles(mediaFiles);
+      toast.success(
+        language === 'vi'
+          ? `Đã dán ${mediaFiles.length} ảnh/video từ clipboard`
+          : `Pasted ${mediaFiles.length} media item(s) from clipboard`
+      );
+    }
+  };
+
+
   const handleRemoveFile = (index: number) => {
+
     setPreviews((prev) => {
       const removed = prev[index];
       if (removed) {
@@ -242,10 +269,12 @@ export const CommentInput: React.FC<CommentInputProps> = ({
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
+      onPaste={handlePaste}
       className={`p-4 bg-white border-t border-[#E2E2EC] dark:bg-[#121212] dark:border-[#262626] flex-shrink-0 flex flex-col gap-2 relative transition-[box-shadow,border-color] ${
         isDragging ? 'ring-2 ring-inset ring-[#004AC6] dark:ring-[#0095F6]' : ''
       }`}
     >
+
       {/* Dragging drop overlay - Không làm dịch chuyển layout, không bị glitching */}
       {isDragging && (
         <div className="absolute inset-0 z-30 bg-blue-50/90 dark:bg-[#121212]/90 border-2 border-dashed border-[#004AC6] dark:border-[#0095F6] flex flex-col items-center justify-center gap-1.5 backdrop-blur-xs pointer-events-none animate-fadeIn select-none">
@@ -329,6 +358,8 @@ export const CommentInput: React.FC<CommentInputProps> = ({
             }
             disabled={busy}
           />
+
+
           <div className="flex items-center gap-1 text-[#535F70] dark:text-[#A8A8A8] relative">
             {/* GIF Button */}
             <div className="relative">
