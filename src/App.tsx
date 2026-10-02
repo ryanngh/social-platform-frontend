@@ -36,15 +36,13 @@ const queryClient = new QueryClient({
   },
 });
 
+import BrandLoadingScreen from './components/common/BrandLoadingScreen';
+
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#FAFAFB] dark:bg-[#000000] transition-colors">
-        <div className="w-10 h-10 border-4 border-[#004AC6] dark:border-[#0095F6] border-t-transparent dark:border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
+    return <BrandLoadingScreen />;
   }
 
   if (!isAuthenticated) {
@@ -57,11 +55,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const ProfileRouteWrapper = () => {
   const { user, isLoading } = useAuth();
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#FAFAFB] dark:bg-[#000000] transition-colors">
-        <div className="w-10 h-10 border-4 border-[#004AC6] dark:border-[#0095F6] border-t-transparent dark:border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
+    return <BrandLoadingScreen />;
   }
   if (user?.username) {
     return <Navigate to={`/${user.username}`} replace />;
