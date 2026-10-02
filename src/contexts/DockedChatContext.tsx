@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import { useChat } from './ChatContext';
+import chatSocket from '../services/chatSocket';
 import type { UserSummary } from '../types';
 
 interface DockedChatContextType {
@@ -91,6 +92,20 @@ export const DockedChatProvider: React.FC<{ children: ReactNode }> = ({ children
       return prev;
     });
   }, []);
+
+  // Automatically open or show docked chat window when an incoming message arrives
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const unsub = chatSocket.on('message.new', (payload) => {
+      const myId = user?.id;
+      if (myId && payload.sender_id !== myId) {
+        if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/messages')) {
+          openMiniChat(payload.conversation_id);
+        }
+      }
+    });
+    return unsub;
+  }, [isAuthenticated, user?.id, openMiniChat]);
 
   const openMiniChatWithUser = useCallback(
     async (userId: string, partnerProfile?: Partial<UserSummary>): Promise<string> => {

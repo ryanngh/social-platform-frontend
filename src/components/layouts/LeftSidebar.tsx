@@ -71,6 +71,11 @@ const LeftSidebar: React.FC = () => {
                         <Link
                             key={item.name}
                             to={item.path}
+                            onClick={() => {
+                                if (item.path === '/feed') {
+                                    window.dispatchEvent(new CustomEvent('reset-feed-to-for-you'));
+                                }
+                            }}
                             className={clsx(
                                 'flex items-center justify-between px-3.5 py-2.5 rounded-2xl transition-all',
                                 isActive

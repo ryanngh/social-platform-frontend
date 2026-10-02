@@ -17,6 +17,10 @@ export const en: Translations = {
         comingSoon: 'Feature coming soon!',
         online: 'Online',
         offline: 'Offline',
+        featureUnavailableTitle: 'Feature Under Development',
+        featureUnavailableDesc: 'This feature is currently under development. Please check back later!',
+        underDevelopmentBadge: 'Coming Soon',
+        backToHome: 'Back to Feed',
     },
     topNav: {
         searchPlaceholder: 'Search...',

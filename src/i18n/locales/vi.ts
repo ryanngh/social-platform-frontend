@@ -15,6 +15,10 @@ export const vi = {
         comingSoon: 'Tính năng sẽ sớm ra mắt!',
         online: 'Trực tuyến',
         offline: 'Ngoại tuyến',
+        featureUnavailableTitle: 'Tính năng đang phát triển',
+        featureUnavailableDesc: 'Tính năng này hiện đang được nâng cấp và hoàn thiện. Vui lòng quay lại sau!',
+        underDevelopmentBadge: 'Sắp ra mắt',
+        backToHome: 'Quay lại Bảng tin',
     },
     topNav: {
         searchPlaceholder: 'Tìm kiếm...',

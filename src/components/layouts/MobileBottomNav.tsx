@@ -43,6 +43,8 @@ const MobileBottomNav: React.FC = () => {
         e.preventDefault();
         window.dispatchEvent(new CustomEvent('open-create-post'));
       }
+    } else if (item.path === '/feed') {
+      window.dispatchEvent(new CustomEvent('reset-feed-to-for-you'));
     }
   };
 

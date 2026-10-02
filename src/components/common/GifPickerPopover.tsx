@@ -346,7 +346,7 @@ export const GifPickerPopover: React.FC<GifPickerPopoverProps> = ({
   return (
     <div
       ref={popoverRef}
-      className={`bg-white dark:bg-[#262626] rounded-2xl shadow-2xl border border-gray-100 dark:border-[#363636] p-3 w-80 sm:w-84 max-w-[calc(100vw-24px)] z-50 flex flex-col gap-2.5 animate-fadeIn select-none ${className}`}
+      className={`bg-white dark:bg-[#262626] rounded-2xl shadow-2xl border border-gray-100 dark:border-[#363636] p-3 w-80 sm:w-92 h-[380px] sm:h-[410px] max-w-[calc(100vw-24px)] z-50 flex flex-col gap-2.5 animate-fadeIn select-none ${className}`}
       onClick={(e) => e.stopPropagation()}
     >
       {pickerContent}

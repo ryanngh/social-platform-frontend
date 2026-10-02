@@ -226,6 +226,14 @@ export type WSServerFrame =
         is_online: boolean;
         last_active?: string;
       };
+    }
+  | {
+      type: 'conversation.new';
+      payload: {
+        id: string;
+        type: ConversationType;
+        created_by: string;
+      };
     };
 
 // ==========================================

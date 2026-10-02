@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Heart,
@@ -689,13 +689,15 @@ export const PostCard: React.FC<PostCardProps> = ({
         const effectiveHeight = currentItem.height || detected?.height;
         const fallbackRatio = isVid ? 16 / 9 : 1;
         const clampedRatio = calculateClampedAspectRatio(effectiveWidth, effectiveHeight, fallbackRatio);
+        // IG-style: width luon fill 100% card, height = width/ratio, clamp [200px, 560px]. Khong shrink width.
 
         return (
           <div
-            className="relative rounded-2xl overflow-hidden mb-3.5 border border-gray-100 dark:border-[#262626] cursor-pointer group bg-black/5 dark:bg-zinc-900 w-full flex items-center justify-center select-none transition-[aspect-ratio] duration-200"
+            className="relative rounded-2xl overflow-hidden mb-3.5 border border-gray-100 dark:border-[#262626] cursor-pointer group bg-black/5 dark:bg-zinc-900 w-full mx-auto flex items-center justify-center select-none transition-[aspect-ratio] duration-200"
             style={{
               aspectRatio: `${clampedRatio}`,
-              maxHeight: '760px',
+              minHeight: '200px',
+              maxHeight: '560px',
             }}
             onClick={() => handleMediaClick(activeMediaIndex)}
           >

@@ -18,6 +18,7 @@ import {
   type MarketplaceCondition,
 } from '../mocks/marketplaceData';
 import clsx from 'clsx';
+import { FeatureUnavailableOverlay } from '../components/common/FeatureUnavailableOverlay';
 
 type CategoryKey = 'all' | 'electronics' | 'vehicles' | 'furniture' | 'fashion' | 'gaming' | 'books' | 'free';
 type ItemCategory = 'electronics' | 'vehicles' | 'furniture' | 'fashion' | 'gaming' | 'books' | 'free';
@@ -194,7 +195,10 @@ export const MarketplacePage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-5 pb-8">
+    <FeatureUnavailableOverlay
+      icon={<Store className="w-8 h-8 sm:w-10 sm:h-10 text-[#004AC6] dark:text-[#0095F6] animate-pulse" />}
+    >
+      <div className="space-y-5 pb-8">
       {/* 1. Header Banner & Action Bar */}
       <div className="bg-white dark:bg-[#121212] rounded-3xl p-4 sm:p-5 border border-gray-100 dark:border-[#262626] shadow-sm transition-colors duration-200">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
@@ -696,7 +700,8 @@ export const MarketplacePage: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </FeatureUnavailableOverlay>
   );
 };
 

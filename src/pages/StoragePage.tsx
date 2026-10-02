@@ -33,6 +33,7 @@ import {
   type StorageFileType,
 } from '../mocks/storageData';
 import clsx from 'clsx';
+import { FeatureUnavailableOverlay } from '../components/common/FeatureUnavailableOverlay';
 
 type CategoryFilter = 'all' | 'recent' | 'media' | 'documents' | 'starred' | 'trash';
 
@@ -194,7 +195,10 @@ export const StoragePage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-5 pb-8">
+    <FeatureUnavailableOverlay
+      icon={<Cloud className="w-8 h-8 sm:w-10 sm:h-10 text-[#004AC6] dark:text-[#0095F6] animate-pulse" />}
+    >
+      <div className="space-y-5 pb-8">
       {/* 1. Storage Quota Banner */}
       <div className="bg-gradient-to-r from-[#003A9F] to-[#0066FF] dark:from-[#081B4B] dark:to-[#0D3B8E] rounded-3xl p-5 sm:p-6 text-white shadow-lg border border-blue-400/20">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
@@ -729,7 +733,8 @@ export const StoragePage: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </FeatureUnavailableOverlay>
   );
 };
 

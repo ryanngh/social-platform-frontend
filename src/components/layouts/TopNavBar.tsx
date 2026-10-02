@@ -92,7 +92,11 @@ const TopNavBar: React.FC = () => {
       <div className="h-14 sm:h-16 flex items-center justify-between px-3 sm:px-6">
         {/* Brand Logo & Search */}
         <div className="flex items-center gap-3 sm:gap-8">
-          <Link to="/feed" className="text-xl sm:text-2xl font-black text-[#004AC6] dark:text-[#0095F6] tracking-tight hover:opacity-95 transition">
+          <Link
+            to="/feed"
+            onClick={() => window.dispatchEvent(new CustomEvent('reset-feed-to-for-you'))}
+            className="text-xl sm:text-2xl font-black text-[#004AC6] dark:text-[#0095F6] tracking-tight hover:opacity-95 transition"
+          >
             RySocial
           </Link>
           <div className="hidden md:block relative md:w-[320px] lg:w-[380px]" ref={searchContainerRef}>

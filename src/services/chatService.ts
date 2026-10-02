@@ -265,8 +265,11 @@ export const chatService = {
 
     // Object key format standard in Go Switchboard
     const objectKey = `chat/attachments/${conversationId}/${prep.id}`;
-    // Strip query parameters from presigned url to get public media url, then attach type and file name metadata
-    const baseMediaUrl = prep.presigned_url.split('?')[0];
+    // Strip query parameters from presigned url and replace internal minio docker domains to get public media url
+    let baseMediaUrl = prep.presigned_url.split('?')[0];
+    if (typeof window !== 'undefined') {
+      baseMediaUrl = baseMediaUrl.replace(/^https?:\/\/(minio|host\.docker\.internal|localhost|127\.0\.0\.1):9000/, '');
+    }
     const cleanMediaUrl = `${baseMediaUrl}?type=${mediaType}&name=${encodeURIComponent(fileName)}`;
 
     return {

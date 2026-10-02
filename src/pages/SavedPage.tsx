@@ -24,6 +24,7 @@ import {
 } from '../mocks/savedData';
 import { getMediaUrl } from '../utils/media';
 import clsx from 'clsx';
+import { FeatureUnavailableOverlay } from '../components/common/FeatureUnavailableOverlay';
 
 export const SavedPage: React.FC = () => {
   const { t } = useLanguage();
@@ -126,7 +127,10 @@ export const SavedPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-5 pb-8">
+    <FeatureUnavailableOverlay
+      icon={<Bookmark className="w-8 h-8 sm:w-10 sm:h-10 text-[#004AC6] dark:text-[#0095F6] fill-current animate-pulse" />}
+    >
+      <div className="space-y-5 pb-8">
       {/* 1. Header Card */}
       <div className="bg-white dark:bg-[#121212] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-gray-100 dark:border-[#262626] shadow-2xs transition-colors duration-200">
         <div className="flex items-center justify-between gap-3 mb-3.5">
@@ -439,7 +443,8 @@ export const SavedPage: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </FeatureUnavailableOverlay>
   );
 };
 

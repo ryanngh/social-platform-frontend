@@ -1084,26 +1084,53 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           ? `📎 ${mediaInfo.fileName || 'Tệp đính kèm'}`
           : payload.body;
 
-      setConversations((prev) =>
-        prev.map((c) => {
-          if (c.id === payload.conversation_id) {
-            const isRead = isForActive;
-            return {
-              ...c,
-              lastSeq: payload.seq,
-              unreadSeqDistance: isRead ? 0 : c.unreadSeqDistance + 1,
-              lastMessagePreview: {
+      setConversations((prev) => {
+        const existing = prev.find((c) => c.id === payload.conversation_id);
+        if (existing) {
+          const isRead = isForActive;
+          const updated: ChatConversationItem = {
+            ...existing,
+            lastSeq: payload.seq,
+            lastMessageAt: payload.created_at,
+            unreadSeqDistance: isRead ? 0 : existing.unreadSeqDistance + 1,
+            lastMessagePreview: {
+              text: previewText,
+              senderId: payload.sender_id,
+              senderName: payload.sender_id === currentUserId ? 'Bạn' : existing.displayName,
+              timestamp: new Date(payload.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              isRead,
+            },
+          };
+          return [updated, ...prev.filter((c) => c.id !== payload.conversation_id)];
+        } else {
+          // If conversation not present in state, fetch details and prepend
+          void (async () => {
+            try {
+              const rawConv = await chatService.getConversation(payload.conversation_id);
+              const enriched = await transformConversationRef.current(rawConv);
+              const isRead = isForActive;
+              enriched.lastSeq = payload.seq;
+              enriched.lastMessageAt = payload.created_at;
+              enriched.unreadSeqDistance = isRead ? 0 : 1;
+              enriched.lastMessagePreview = {
                 text: previewText,
                 senderId: payload.sender_id,
-                senderName: payload.sender_id === currentUserId ? 'Bạn' : c.displayName,
+                senderName: payload.sender_id === currentUserId ? 'Bạn' : enriched.displayName,
                 timestamp: new Date(payload.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 isRead,
-              },
-            };
-          }
-          return c;
-        })
-      );
+              };
+              setConversations((currentPrev) => [
+                enriched,
+                ...currentPrev.filter((c) => c.id !== enriched.id),
+              ]);
+            } catch (err) {
+              console.warn('[ChatContext] Failed to load new conversation on message.new:', err);
+              void fetchConversations();
+            }
+          })();
+          return prev;
+        }
+      });
     });
 
     // 3. message.sync_res (Gap Recovery Response)
@@ -1184,6 +1211,10 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     });
 
+    const unsubConvNew = chatSocket.on('conversation.new', () => {
+      void fetchConversations();
+    });
+
     return () => {
       unsubAck();
       unsubNew();
@@ -1193,6 +1224,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       unsubDeleted();
       unsubTyping();
       unsubError();
+      unsubConvNew();
     };
   }, [activeConversationId, currentUserId]);
 

@@ -36,6 +36,16 @@ const FeedPage: React.FC<FeedPageProps> = ({ defaultTab = 'for-you' }) => {
     return () => window.removeEventListener('open-create-post', handleOpenModal);
   }, []);
 
+  // Listen to reset-feed-to-for-you (clicking RySocial brand / Home)
+  useEffect(() => {
+    const handleResetTab = () => {
+      setActiveTab('for-you');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+    window.addEventListener('reset-feed-to-for-you', handleResetTab);
+    return () => window.removeEventListener('reset-feed-to-for-you', handleResetTab);
+  }, []);
+
   // Lightbox Modal State
   const [lightboxState, setLightboxState] = useState<{
     isOpen: boolean;
