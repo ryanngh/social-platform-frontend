@@ -29,7 +29,7 @@ import {
 import toast from 'react-hot-toast';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { getMediaUrl, isVideoMedia } from '../../utils/media';
+import { getMediaUrl, isVideoMedia, handleMediaImageError } from '../../utils/media';
 import { getProfileUrl } from '../../utils/user';
 import { commentService } from '../../services/commentService';
 import { postService } from '../../services/postService';
@@ -763,6 +763,7 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
                     onMouseDown={handleMouseDownPan}
                     onMouseMove={handleMouseMovePan}
                     onMouseUp={handleMouseUpPan}
+                    onError={handleMediaImageError}
                     className={`max-h-[85vh] md:max-h-[72vh] w-auto max-w-full object-contain rounded-xl md:rounded-2xl shadow-2xl select-none ${
                       isFullscreen ? 'max-h-[calc(100vh-8rem)]' : ''
                     }`}
@@ -831,6 +832,7 @@ export const PostMediaLightbox: React.FC<PostMediaLightboxProps> = ({
                         <img
                           src={getMediaUrl(media.thumbnailUrl || media.mediaUrl)}
                           alt={`Thumbnail ${idx + 1}`}
+                          onError={handleMediaImageError}
                           className="w-full h-full object-cover"
                         />
                       )}

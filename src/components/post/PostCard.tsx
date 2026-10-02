@@ -26,7 +26,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { postService } from '../../services/postService';
 import { repostService } from '../../services/repostService';
 import { commentService } from '../../services/commentService';
-import { getMediaUrl, isVideoMedia } from '../../utils/media';
+import { getMediaUrl, isVideoMedia, handleMediaImageError } from '../../utils/media';
 import { getProfileUrl } from '../../utils/user';
 import { getContentWithoutHashtags, extractHashtags } from '../../utils/text';
 import { handleCopyAndSharePost } from '../../utils/share';
@@ -775,6 +775,7 @@ export const PostCard: React.FC<PostCardProps> = ({
                   className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
                   src={getMediaUrl(currentItem.mediaUrl)}
                   onLoad={(e) => handleImageLoad(activeMediaIndex, e)}
+                  onError={handleMediaImageError}
                   ref={(imgEl) => {
                     if (imgEl && imgEl.complete && imgEl.naturalWidth && imgEl.naturalHeight) {
                       if (!detectedDimensions[activeMediaIndex]) {

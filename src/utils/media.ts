@@ -2,6 +2,7 @@
  * Utility for handling MinIO storage URLs and media assets
  */
 import defaultAvatar from '../assets/default-avatar.png';
+import { convertHeicToJpeg } from './heicHelper';
 
 const resolveMinioBase = (): string => {
   const envVal = import.meta.env.VITE_MINIO_URL;
@@ -92,6 +93,26 @@ export const getFilesFromClipboard = (e: React.ClipboardEvent | ClipboardEvent):
     }
   }
   return files;
+};
+
+/**
+ * Tự động giải mã on-the-fly nếu ảnh từ remote URL là định dạng HEIC/HEIF chưa qua chuyển đổi
+ */
+export const handleMediaImageError = async (e: React.SyntheticEvent<HTMLImageElement>) => {
+  const target = e.currentTarget;
+  const currentSrc = target.src;
+  if (/\.(heic|heif)($|\?)/i.test(currentSrc) && !target.dataset.heicRetried) {
+    target.dataset.heicRetried = 'true';
+    try {
+      const res = await fetch(currentSrc);
+      const blob = await res.blob();
+      const file = new File([blob], 'image.heic', { type: 'image/heic' });
+      const converted = await convertHeicToJpeg(file);
+      target.src = URL.createObjectURL(converted);
+    } catch (err) {
+      console.warn('Could not decode remote HEIC on-the-fly:', err);
+    }
+  }
 };
 
 
