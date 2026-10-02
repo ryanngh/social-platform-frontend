@@ -10,31 +10,48 @@ rysocial.app {
 		}
 	}
 
+	# Nén HTTP tự động (zstd & gzip) cho toàn bộ web, API, static assets
+	encode zstd gzip
+
+	# Bảo mật Header toàn diện tại Gateway
+	header {
+		X-Frame-Options "SAMEORIGIN"
+		X-Content-Type-Options "nosniff"
+		X-XSS-Protection "1; mode=block"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
 	# 1. Chuyển WebSocket về Switchboard
 	handle /ws* {
 		reverse_proxy switchboard:8081
 	}
 
-	# 2. Chuyển ảnh/storage về MinIO
+	# 2. Chuyển Chat REST API về Switchboard (/api/v1/conversations, /api/v1/messages, /api/v1/attachments/prepare)
+	handle /api/v1/* {
+		reverse_proxy switchboard:8081
+	}
+
+	# 3. Chuyển ảnh/storage về MinIO
 	handle /social-media/* {
 		reverse_proxy minio:9000 {
 			header_up Host {upstream_hostport}
 		}
 	}
 
-	# 3. Chuyển toàn bộ API về backend Spring Boot (hq)
+	# 4. Chuyển toàn bộ API về backend Spring Boot (hq)
 	# Lưu ý: "not header Accept *text/html*" giúp phân biệt giữa:
 	# - Browser navigation (F5 / gõ URL trực tiếp / link reload): có header Accept text/html -> chuyển tiếp xuống Frontend SPA
 	# - API requests (Axios / Fetch / Mobile / cURL): Accept application/json hoặc không chứa text/html -> reverse_proxy hq:8080
 	@api {
-		path /auth /auth/* /users /users/* /posts /posts/* /comments /comments/* /feed /feed/* /hashtags /hashtags/* /api /api/* /media /media/* /friend-requests /friend-requests/* /close-friends /close-friends/* /relationships /relationships/* /follows /follows/* /notifications /notifications/* /search /search/* /presence /presence/* /actuator /actuator/* /internal /internal/*
+		path /auth /auth/* /users /users/* /posts /posts/* /comments /comments/* /feed /feed/* /explore /explore/* /reposts /reposts/* /reactions /reactions/* /hashtags /hashtags/* /api /api/* /media /media/* /friend-requests /friend-requests/* /close-friends /close-friends/* /relationships /relationships/* /follows /follows/* /notifications /notifications/* /search /search/* /presence /presence/* /actuator /actuator/* /internal /internal/*
 		not header Accept *text/html*
 	}
 	handle @api {
 		reverse_proxy hq:8080
 	}
 
-	# 4. Giao diện Frontend (SPA - React Router)
+	# 5. Giao diện Frontend (SPA - React Router)
 	handle {
 		reverse_proxy frontend:80
 	}
