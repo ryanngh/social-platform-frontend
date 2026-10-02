@@ -21,7 +21,7 @@ import { extractHashtags } from '../../utils/text';
 import type { PostResponse, PostVisibility, PostMediaRequest } from '../../types';
 import EmojiPickerPopover from '../common/EmojiPickerPopover';
 import GifPickerPopover from '../common/GifPickerPopover';
-import { isMediaFile, ensureCompatibleMediaFiles } from '../../utils/heicHelper';
+import { isMediaFile, ensureCompatibleMediaFiles, isHeicFile } from '../../utils/heicHelper';
 import toast from 'react-hot-toast';
 
 interface EditPostModalProps {
@@ -46,6 +46,7 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
   const [visibility, setVisibility] = useState<PostVisibility>(post.visibility || 'PUBLIC');
   const [mediaList, setMediaList] = useState<EditMediaItem[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [isConvertingMedia, setIsConvertingMedia] = useState(false);
   const [isAudienceOpen, setIsAudienceOpen] = useState(false);
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
   const [isGifPickerOpen, setIsGifPickerOpen] = useState(false);
@@ -121,20 +122,33 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
     if (rawValid.length < files.length) {
       toast.error(t('feed.unsupportedFileError'));
     }
-    const valid = await ensureCompatibleMediaFiles(rawValid);
-    if (mediaList.length + valid.length > 30) {
-      toast.error(t('feed.maxFilesExceeded'));
+    if (rawValid.length === 0) return;
+
+    const hasHeic = rawValid.some((f) => isHeicFile(f));
+    if (hasHeic) {
+      setIsConvertingMedia(true);
     }
-    const canAdd = valid.slice(0, 30 - mediaList.length);
-    const newItems: EditMediaItem[] = canAdd.map((file) => ({
-      id: `new-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-      isNew: true,
-      file,
-      previewUrl: URL.createObjectURL(file),
-      mediaType: file.type.startsWith('video/') ? 'VIDEO' : 'IMAGE',
-      name: file.name,
-    }));
-    setMediaList((prev) => [...prev, ...newItems]);
+
+    try {
+      const valid = await ensureCompatibleMediaFiles(rawValid);
+      if (mediaList.length + valid.length > 30) {
+        toast.error(t('feed.maxFilesExceeded'));
+      }
+      const canAdd = valid.slice(0, 30 - mediaList.length);
+      const newItems: EditMediaItem[] = canAdd.map((file) => ({
+        id: `new-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        isNew: true,
+        file,
+        previewUrl: URL.createObjectURL(file),
+        mediaType: file.type.startsWith('video/') ? 'VIDEO' : 'IMAGE',
+        name: file.name,
+      }));
+      setMediaList((prev) => [...prev, ...newItems]);
+    } finally {
+      if (hasHeic) {
+        setIsConvertingMedia(false);
+      }
+    }
   };
 
   const handleRemoveMedia = (index: number) => {
@@ -182,6 +196,7 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
 
 
   const handleSave = async () => {
+    if (isSaving || isConvertingMedia) return;
 
     if (!content.trim() && mediaList.length === 0) {
       toast.error(t('feed.postEmptyError'));
@@ -603,11 +618,11 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
           <button
             type="button"
             onClick={handleSave}
-            disabled={isSaving}
+            disabled={isSaving || isConvertingMedia}
             className="px-6 py-2.5 min-h-[44px] sm:min-h-0 rounded-xl text-xs sm:text-sm font-semibold bg-[#004AC6] hover:bg-[#003da3] dark:bg-[#0095F6] dark:hover:bg-[#1877F2] text-white transition flex items-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50"
           >
-            {isSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-            <span>{t('profile.saveChanges')}</span>
+            {(isSaving || isConvertingMedia) && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+            <span>{isConvertingMedia ? t('feed.processingMedia', { defaultValue: 'Đang xử lý ảnh...' }) : t('profile.saveChanges')}</span>
           </button>
         </div>
         </>

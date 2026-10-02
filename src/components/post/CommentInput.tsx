@@ -8,7 +8,7 @@ import { mediaService } from '../../services/mediaService';
 import type { CommentMediaRequest } from '../../types';
 import EmojiPickerPopover from '../common/EmojiPickerPopover';
 import GifPickerPopover from '../common/GifPickerPopover';
-import { isMediaFile, ensureCompatibleMediaFiles } from '../../utils/heicHelper';
+import { isMediaFile, ensureCompatibleMediaFiles, isHeicFile } from '../../utils/heicHelper';
 import toast from 'react-hot-toast';
 
 interface CommentInputProps {
@@ -38,6 +38,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
   const [content, setContent] = useState('');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<CommentPreviewItem[]>([]);
+  const [isConvertingMedia, setIsConvertingMedia] = useState(false);
   const [isUploadingMedia, setIsUploadingMedia] = useState(false);
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
   const [isGifPickerOpen, setIsGifPickerOpen] = useState(false);
@@ -89,33 +90,44 @@ export const CommentInput: React.FC<CommentInputProps> = ({
 
     if (rawValidFiles.length === 0) return;
 
-    // Chuyển đổi file HEIC/HEIF sang JPEG
-    const validFiles = await ensureCompatibleMediaFiles(rawValidFiles);
+    const hasHeic = rawValidFiles.some((f) => isHeicFile(f));
+    if (hasHeic) {
+      setIsConvertingMedia(true);
+    }
 
-    setPreviews((prev) => {
-      if (prev.length + validFiles.length > 5) {
-        toast.error(
-          language === 'vi'
-            ? 'Tối đa 5 ảnh hoặc video cho mỗi bình luận'
-            : 'Maximum 5 media items per comment'
-        );
+    try {
+      // Chuyển đổi file HEIC/HEIF sang JPEG
+      const validFiles = await ensureCompatibleMediaFiles(rawValidFiles);
+
+      setPreviews((prev) => {
+        if (prev.length + validFiles.length > 5) {
+          toast.error(
+            language === 'vi'
+              ? 'Tối đa 5 ảnh hoặc video cho mỗi bình luận'
+              : 'Maximum 5 media items per comment'
+          );
+        }
+
+        const availableSlots = 5 - prev.length;
+        if (availableSlots <= 0) return prev;
+
+        const filesToAdd = validFiles.slice(0, availableSlots);
+        const addedPreviews: CommentPreviewItem[] = filesToAdd.map((file) => ({
+          id: `c-media-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+          url: URL.createObjectURL(file),
+          type: file.type,
+          file,
+        }));
+
+        const nextPreviews = [...prev, ...addedPreviews];
+        setSelectedFiles(nextPreviews.map((p) => p.file));
+        return nextPreviews;
+      });
+    } finally {
+      if (hasHeic) {
+        setIsConvertingMedia(false);
       }
-
-      const availableSlots = 5 - prev.length;
-      if (availableSlots <= 0) return prev;
-
-      const filesToAdd = validFiles.slice(0, availableSlots);
-      const addedPreviews: CommentPreviewItem[] = filesToAdd.map((file) => ({
-        id: `c-media-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-        url: URL.createObjectURL(file),
-        type: file.type,
-        file,
-      }));
-
-      const nextPreviews = [...prev, ...addedPreviews];
-      setSelectedFiles(nextPreviews.map((p) => p.file));
-      return nextPreviews;
-    });
+    }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -216,7 +228,7 @@ export const CommentInput: React.FC<CommentInputProps> = ({
   const handleSubmit = async () => {
     const trimmed = content.trim();
     const currentFiles = previews.map((p) => p.file);
-    if ((!trimmed && currentFiles.length === 0) || isSubmitting || isUploadingMedia) return;
+    if ((!trimmed && currentFiles.length === 0) || isSubmitting || isUploadingMedia || isConvertingMedia) return;
 
     try {
       let uploadedMedia: CommentMediaRequest[] = [];

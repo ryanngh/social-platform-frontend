@@ -27,7 +27,7 @@ import EmojiPickerPopover from '../common/EmojiPickerPopover';
 import GifPickerPopover from '../common/GifPickerPopover';
 import LinkPreviewCard from '../common/LinkPreviewCard';
 import { extractFirstUrl } from '../../utils/linkPreview';
-import { isMediaFile, ensureCompatibleMediaFiles } from '../../utils/heicHelper';
+import { isMediaFile, ensureCompatibleMediaFiles, isHeicFile } from '../../utils/heicHelper';
 import toast from 'react-hot-toast';
 
 interface CreatePostModalProps {
@@ -58,8 +58,8 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
   const [visibility, setVisibility] = useState<PostVisibility>('PUBLIC');
   const [isAudienceDropdownOpen, setIsAudienceDropdownOpen] = useState(false);
   const audienceMenuRef = useRef<HTMLDivElement>(null);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<FilePreview[]>([]);
+  const [isConvertingMedia, setIsConvertingMedia] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
@@ -101,7 +101,6 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
       const nextPreviews = [...prev];
       const [moved] = nextPreviews.splice(fromIdx, 1);
       nextPreviews.splice(toIdx, 0, moved);
-      setSelectedFiles(nextPreviews.map((p) => p.file));
       return nextPreviews;
     });
   };
@@ -119,30 +118,40 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
 
     if (rawValidFiles.length === 0) return;
 
-    // Chuyển đổi HEIC/HEIF sang JPEG
-    const validFiles = await ensureCompatibleMediaFiles(rawValidFiles);
+    const hasHeic = rawValidFiles.some((f) => isHeicFile(f));
+    if (hasHeic) {
+      setIsConvertingMedia(true);
+    }
 
-    setPreviews((prev) => {
-      if (prev.length + validFiles.length > 30) {
-        toast.error(t('feed.maxFilesExceeded'));
+    try {
+      // Chuyển đổi HEIC/HEIF sang JPEG
+      const validFiles = await ensureCompatibleMediaFiles(rawValidFiles);
+
+      setPreviews((prev) => {
+        if (prev.length + validFiles.length > 30) {
+          toast.error(t('feed.maxFilesExceeded'));
+        }
+
+        const availableSlots = 30 - prev.length;
+        if (availableSlots <= 0) return prev;
+
+        const filesToAdd = validFiles.slice(0, availableSlots);
+        const addedPreviews: FilePreview[] = filesToAdd.map((file) => ({
+          id: `media-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+          url: URL.createObjectURL(file),
+          type: file.type,
+          name: file.name,
+          file,
+        }));
+
+        const nextPreviews = [...prev, ...addedPreviews];
+        return nextPreviews;
+      });
+    } finally {
+      if (hasHeic) {
+        setIsConvertingMedia(false);
       }
-
-      const availableSlots = 30 - prev.length;
-      if (availableSlots <= 0) return prev;
-
-      const filesToAdd = validFiles.slice(0, availableSlots);
-      const addedPreviews: FilePreview[] = filesToAdd.map((file) => ({
-        id: `media-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-        url: URL.createObjectURL(file),
-        type: file.type,
-        name: file.name,
-        file,
-      }));
-
-      const nextPreviews = [...prev, ...addedPreviews];
-      setSelectedFiles(nextPreviews.map((p) => p.file));
-      return nextPreviews;
-    });
+    }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -166,7 +175,6 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
         }
       }
       const nextPreviews = prev.filter((_, i) => i !== index);
-      setSelectedFiles(nextPreviews.map((p) => p.file));
       return nextPreviews;
     });
   };
@@ -300,7 +308,6 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
       });
 
       setContent('');
-      setSelectedFiles([]);
       setPreviews([]);
       onClose();
     } catch (error) {
@@ -328,7 +335,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
 
   if (!isOpen) return null;
 
-  const canPublish = !!content.trim() || selectedFiles.length > 0;
+  const canPublish = (!!content.trim() || previews.length > 0) && !isConvertingMedia;
 
   return (
     <div 
@@ -783,13 +790,18 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
             <div className="flex flex-col gap-2 pt-1 flex-shrink-0">
               <button
                 onClick={handlePublish}
-                disabled={isSubmitting || !canPublish}
+                disabled={isSubmitting || isConvertingMedia || !canPublish}
                 className="w-full bg-[#004AC6] hover:bg-blue-700 dark:bg-[#0095F6] dark:hover:bg-[#1877F2] disabled:opacity-50 text-white font-semibold text-sm py-3 sm:py-2.5 min-h-[44px] rounded-2xl shadow transition flex items-center justify-center gap-2 cursor-pointer"
               >
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
                     <span>{uploadStatus || t('feed.publishing')}</span>
+                  </>
+                ) : isConvertingMedia ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>{t('feed.processingMedia', { defaultValue: 'Đang xử lý ảnh...' })}</span>
                   </>
                 ) : (
                   <span>{t('feed.publish')}</span>

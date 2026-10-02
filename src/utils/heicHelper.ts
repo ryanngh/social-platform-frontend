@@ -35,8 +35,18 @@ export async function convertHeicToJpeg(file: File): Promise<File> {
   }
 
   try {
-    const convertedBlob = await heic2any({
-      blob: file,
+    // Chuẩn bị blob với mime type image/heic chuẩn xác để heic2any giải mã mượt mà
+    const blobToConvert = file.slice(0, file.size, 'image/heic');
+
+    // Hỗ trợ cả default export lẫn named export từ Vite/bundler/browser environment
+    const convertFn = (
+      typeof heic2any === 'function'
+        ? heic2any
+        : (heic2any as unknown as { default?: typeof heic2any })?.default || heic2any
+    ) as typeof heic2any;
+
+    const convertedBlob = await convertFn({
+      blob: blobToConvert,
       toType: 'image/jpeg',
       quality: 0.92,
     });
@@ -49,8 +59,12 @@ export async function convertHeicToJpeg(file: File): Promise<File> {
       lastModified: file.lastModified || Date.now(),
     });
   } catch (err) {
-    console.error('Failed to convert HEIC to JPEG:', err);
-    return file;
+    console.warn('HEIC to JPEG conversion encountered issue, setting explicit image/heic MIME type:', err);
+    // Nếu chuyển đổi trên client thất bại (vd: HEIC nâng cao), chuẩn hóa type là image/heic thay vì rỗng
+    return new File([file], file.name, {
+      type: 'image/heic',
+      lastModified: file.lastModified || Date.now(),
+    });
   }
 }
 
@@ -62,3 +76,4 @@ export async function ensureCompatibleMediaFiles(files: File[]): Promise<File[]>
     files.map((file) => (isHeicFile(file) ? convertHeicToJpeg(file) : Promise.resolve(file)))
   );
 }
+
