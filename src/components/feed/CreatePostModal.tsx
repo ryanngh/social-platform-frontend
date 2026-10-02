@@ -27,6 +27,7 @@ import EmojiPickerPopover from '../common/EmojiPickerPopover';
 import GifPickerPopover from '../common/GifPickerPopover';
 import LinkPreviewCard from '../common/LinkPreviewCard';
 import { extractFirstUrl } from '../../utils/linkPreview';
+import { isMediaFile, ensureCompatibleMediaFiles } from '../../utils/heicHelper';
 import toast from 'react-hot-toast';
 
 interface CreatePostModalProps {
@@ -106,19 +107,20 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
   };
 
   // Xử lý nạp danh sách files mới (chỉ tạo URL mới cho file mới thêm, giữ nguyên URL cũ)
-  const processNewFiles = (files: File[]) => {
+  const processNewFiles = async (files: File[]) => {
     if (files.length === 0) return;
 
-    // Lọc chỉ nhận ảnh hoặc video
-    const validFiles = files.filter(
-      (f) => f.type.startsWith('image/') || f.type.startsWith('video/')
-    );
+    // Lọc chỉ nhận ảnh, video hoặc HEIC/HEIF
+    const rawValidFiles = files.filter(isMediaFile);
 
-    if (validFiles.length < files.length) {
+    if (rawValidFiles.length < files.length) {
       toast.error(t('feed.unsupportedFileError'));
     }
 
-    if (validFiles.length === 0) return;
+    if (rawValidFiles.length === 0) return;
+
+    // Chuyển đổi HEIC/HEIF sang JPEG
+    const validFiles = await ensureCompatibleMediaFiles(rawValidFiles);
 
     setPreviews((prev) => {
       if (prev.length + validFiles.length > 30) {
@@ -234,14 +236,12 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
   // Clipboard paste support (image / video from screenshot, clipboard copy, etc.)
   const handlePaste = (e: React.ClipboardEvent) => {
     const files = getFilesFromClipboard(e);
-    const mediaFiles = files.filter(
-      (f) => f.type.startsWith('image/') || f.type.startsWith('video/')
-    );
+    const mediaFiles = files.filter(isMediaFile);
 
     if (mediaFiles.length > 0) {
       e.preventDefault();
       e.stopPropagation();
-      processNewFiles(mediaFiles);
+      void processNewFiles(mediaFiles);
       toast.success(
         mediaFiles.length === 1
           ? (t('feed.pastedSingleMedia', { defaultValue: 'Đã dán media từ clipboard' }))
@@ -681,7 +681,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
               ref={fileInputRef}
               onChange={handleFileSelect}
               multiple
-              accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm"
+              accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,.heic,.heif,.HEIC,.HEIF,video/mp4,video/quicktime,video/webm"
               className="hidden"
             />
 

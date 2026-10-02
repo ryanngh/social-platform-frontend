@@ -25,6 +25,7 @@ import { useChat } from '../../contexts/ChatContext';
 import { userService } from '../../services/userService';
 import { getBannerUrl } from '../../utils/media';
 import { copyToClipboard } from '../../utils/share';
+import { convertHeicToJpeg } from '../../utils/heicHelper';
 import UserAvatar from '../common/UserAvatar';
 import ImageCropModal from '../common/ImageCropModal';
 
@@ -99,12 +100,13 @@ export const ProfileHeader = ({
 
   const [isBioExpanded, setIsBioExpanded] = useState(false);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'banner') => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'banner') => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     e.target.value = '';
-    const previewUrl = URL.createObjectURL(file);
+    const processedFile = await convertHeicToJpeg(file);
+    const previewUrl = URL.createObjectURL(processedFile);
     setCropModalState({
       isOpen: true,
       imageSrc: previewUrl,
@@ -256,9 +258,9 @@ export const ProfileHeader = ({
             <input
               ref={bannerInputRef}
               type="file"
-              accept="image/*"
+              accept="image/*,.heic,.heif,.HEIC,.HEIF"
               className="hidden"
-              onChange={(e) => handleFileSelect(e, 'banner')}
+              onChange={(e) => void handleFileSelect(e, 'banner')}
             />
           </div>
         )}
@@ -297,9 +299,9 @@ export const ProfileHeader = ({
                 <input
                   ref={avatarInputRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/*,.heic,.heif,.HEIC,.HEIF"
                   className="hidden"
-                  onChange={(e) => handleFileSelect(e, 'avatar')}
+                  onChange={(e) => void handleFileSelect(e, 'avatar')}
                 />
               </>
             )}

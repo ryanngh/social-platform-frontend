@@ -7,6 +7,7 @@ import type { User, ProfileUpdateRequest } from '../../types';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { getAvatarUrl, getBannerUrl, DEFAULT_AVATAR_FALLBACK } from '../../utils/media';
+import { convertHeicToJpeg } from '../../utils/heicHelper';
 import ImageCropModal from '../common/ImageCropModal';
 
 interface EditProfileModalProps {
@@ -88,14 +89,15 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
 
   if (!isOpen) return null;
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'banner') => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'banner') => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     // Reset value so user can select the same file again if desired
     e.target.value = '';
 
-    const previewUrl = URL.createObjectURL(file);
+    const processedFile = await convertHeicToJpeg(file);
+    const previewUrl = URL.createObjectURL(processedFile);
     setCropModalState({
       isOpen: true,
       imageSrc: previewUrl,
@@ -226,9 +228,9 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
             <input
               ref={bannerInputRef}
               type="file"
-              accept="image/*"
+              accept="image/*,.heic,.heif,.HEIC,.HEIF"
               className="hidden"
-              onChange={(e) => handleFileChange(e, 'banner')}
+              onChange={(e) => void handleFileChange(e, 'banner')}
             />
 
             {/* Avatar Upload Area */}
@@ -262,9 +264,9 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
             <input
               ref={avatarInputRef}
               type="file"
-              accept="image/*"
+              accept="image/*,.heic,.heif,.HEIC,.HEIF"
               className="hidden"
-              onChange={(e) => handleFileChange(e, 'avatar')}
+              onChange={(e) => void handleFileChange(e, 'avatar')}
             />
           </div>
 

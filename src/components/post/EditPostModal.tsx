@@ -21,6 +21,7 @@ import { extractHashtags } from '../../utils/text';
 import type { PostResponse, PostVisibility, PostMediaRequest } from '../../types';
 import EmojiPickerPopover from '../common/EmojiPickerPopover';
 import GifPickerPopover from '../common/GifPickerPopover';
+import { isMediaFile, ensureCompatibleMediaFiles } from '../../utils/heicHelper';
 import toast from 'react-hot-toast';
 
 interface EditPostModalProps {
@@ -115,13 +116,12 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleAddNewFiles = (files: File[]) => {
-    const valid = files.filter(
-      (f) => f.type.startsWith('image/') || f.type.startsWith('video/')
-    );
-    if (valid.length < files.length) {
+  const handleAddNewFiles = async (files: File[]) => {
+    const rawValid = files.filter(isMediaFile);
+    if (rawValid.length < files.length) {
       toast.error(t('feed.unsupportedFileError'));
     }
+    const valid = await ensureCompatibleMediaFiles(rawValid);
     if (mediaList.length + valid.length > 30) {
       toast.error(t('feed.maxFilesExceeded'));
     }
@@ -163,14 +163,12 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
   // Clipboard paste support (media from screenshot, file copy, etc.)
   const handlePaste = (e: React.ClipboardEvent) => {
     const files = getFilesFromClipboard(e);
-    const mediaFiles = files.filter(
-      (f) => f.type.startsWith('image/') || f.type.startsWith('video/')
-    );
+    const mediaFiles = files.filter(isMediaFile);
 
     if (mediaFiles.length > 0) {
       e.preventDefault();
       e.stopPropagation();
-      handleAddNewFiles(mediaFiles);
+      void handleAddNewFiles(mediaFiles);
       toast.success(
         mediaFiles.length === 1
           ? (t('feed.pastedSingleMedia', { defaultValue: 'Đã dán media từ clipboard' }))
@@ -523,7 +521,7 @@ export const EditPostModal: React.FC<EditPostModalProps> = ({
               }
             }}
             multiple
-            accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm"
+            accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,.heic,.heif,.HEIC,.HEIF,video/mp4,video/quicktime,video/webm"
             className="hidden"
           />
 

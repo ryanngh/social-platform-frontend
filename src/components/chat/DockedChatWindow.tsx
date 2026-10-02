@@ -27,6 +27,7 @@ import chatSocket from '../../services/chatSocket';
 import { playMessageSound } from '../../utils/sound';
 import { generateUUID } from '../../utils/uuid';
 import { getFilesFromClipboard } from '../../utils/media';
+import { convertHeicToJpeg, isHeicFile } from '../../utils/heicHelper';
 import UserAvatar from '../common/UserAvatar';
 
 import ChatMessageItem from './ChatMessageItem';
@@ -371,7 +372,8 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
   };
 
   // Stage file helper
-  const stageFile = useCallback((file: File) => {
+  const stageFile = useCallback(async (rawFile: File) => {
+    const file = await convertHeicToJpeg(rawFile);
     const mime = file.type || '';
     let fileType: StagedAttachment['type'] = 'FILE';
     let previewUrl: string | undefined = undefined;
@@ -411,8 +413,8 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
       const file = files[0];
       e.preventDefault();
       e.stopPropagation();
-      stageFile(file);
-      const isImg = file.type.startsWith('image/');
+      void stageFile(file);
+      const isImg = file.type.startsWith('image/') || isHeicFile(file);
       toast.success(
         isImg
           ? (t('messages.sentPhoto') || 'Đã dán hình ảnh từ clipboard')
@@ -1011,11 +1013,11 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
             <input
               ref={mediaInputRef}
               type="file"
-              accept="image/*,video/*"
+              accept="image/*,video/*,.heic,.heif,.HEIC,.HEIF"
               className="hidden"
               onChange={(e) => {
                 const file = e.target.files?.[0];
-                if (file) stageFile(file);
+                if (file) void stageFile(file);
                 e.target.value = '';
               }}
             />

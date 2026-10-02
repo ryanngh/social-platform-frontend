@@ -20,6 +20,7 @@ import { useChat } from '../../contexts/ChatContext';
 import { EmojiPickerPopover } from '../common/EmojiPickerPopover';
 import { GifPickerPopover } from '../common/GifPickerPopover';
 import { getFilesFromClipboard } from '../../utils/media';
+import { convertHeicToJpeg, isHeicFile } from '../../utils/heicHelper';
 import type { ChatMessage } from '../../types/chat';
 
 import clsx from 'clsx';
@@ -103,7 +104,8 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
 
 
   // Handle stage file helper
-  const stageFile = useCallback((file: File) => {
+  const stageFile = useCallback(async (rawFile: File) => {
+    const file = await convertHeicToJpeg(rawFile);
     const mime = file.type || '';
     let fileType: StagedAttachment['type'] = 'FILE';
     let previewUrl: string | undefined = undefined;
@@ -224,8 +226,8 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
       const file = files[0];
       e.preventDefault();
       e.stopPropagation();
-      stageFile(file);
-      const isImg = file.type.startsWith('image/');
+      void stageFile(file);
+      const isImg = file.type.startsWith('image/') || isHeicFile(file);
       toast.success(
         isImg
           ? (t('messages.sentPhoto') || 'Đã dán hình ảnh từ clipboard')
@@ -252,7 +254,7 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
     setIsDraggingOver(false);
     const file = e.dataTransfer.files?.[0];
     if (file) {
-      stageFile(file);
+      void stageFile(file);
     }
   };
 
@@ -505,7 +507,7 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
             <input
               ref={mediaInputRef}
               type="file"
-              accept="image/*,video/*"
+              accept="image/*,video/*,.heic,.heif,.HEIC,.HEIF"
               className="hidden"
               onChange={handleMediaFileChange}
             />
