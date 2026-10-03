@@ -20,7 +20,7 @@ function getAudioCtx(): AudioContext | null {
   }
 
   if (audioCtx && audioCtx.state === 'suspended') {
-    void audioCtx.resume();
+    void audioCtx.resume().catch(() => { /* Browser requires a user gesture. */ });
   }
 
   return audioCtx;
@@ -184,5 +184,10 @@ export function stopCallSounds(): void {
   if (dialtoneInterval !== null) {
     clearInterval(dialtoneInterval);
     dialtoneInterval = null;
+  }
+  if (audioCtx) {
+    const previous = audioCtx;
+    audioCtx = null;
+    void previous.close().catch(() => { /* Already closed by the browser. */ });
   }
 }

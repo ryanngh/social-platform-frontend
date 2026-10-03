@@ -19,7 +19,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   onToggleInfoDrawer,
 }) => {
   const { t } = useLanguage();
-  const { startCall } = useCall();
+  const { startCall, enabled: callingEnabled, ready: callingReady, status: callStatus } = useCall();
   const { activeConversation, connectionState, reconnectWs, typingUsers } = useChat();
 
   const isGroup = activeConversation?.type === 'GROUP';
@@ -46,7 +46,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
       username: activeConversation.partner?.username || activeConversation.displayName.toLowerCase().replace(/\s+/g, '_'),
       avatarUrl: activeConversation.partner?.avatarUrl || activeConversation.avatarUrl || '',
     };
-    startCall(target, callType);
+    if (isGroup) return; void startCall(activeConversation.id, callType, target);
   };
 
   return (
@@ -143,9 +143,11 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
 
       {/* 2. Action Buttons */}
       <div className="flex items-center gap-1">
+        {!isGroup && callingEnabled && <>
         {/* Audio Call */}
         <button
-          onClick={() => handleStartCall('audio')}
+          disabled={!callingReady || !['idle', 'ended'].includes(callStatus)}
+            onClick={() => handleStartCall('audio')}
           className="p-2 text-gray-700 dark:text-[#E0E0E0] hover:bg-gray-100 dark:hover:bg-[#262626] rounded-full transition cursor-pointer"
           title={t('messages.audioCall')}
           aria-label={t('messages.audioCall')}
@@ -155,13 +157,16 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
 
         {/* Video Call */}
         <button
-          onClick={() => handleStartCall('video')}
+          disabled={!callingReady || !['idle', 'ended'].includes(callStatus)}
+            onClick={() => handleStartCall('video')}
           className="p-2 text-gray-700 dark:text-[#E0E0E0] hover:bg-gray-100 dark:hover:bg-[#262626] rounded-full transition cursor-pointer"
           title={t('messages.videoCall')}
           aria-label={t('messages.videoCall')}
         >
           <Video className="w-5 h-5 stroke-[1.8]" />
         </button>
+
+        </>}
 
         {/* Info Drawer Toggle */}
         <button

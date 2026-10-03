@@ -41,7 +41,7 @@ export const ChatInfoDrawer: React.FC<ChatInfoDrawerProps> = ({
 }) => {
   const { t } = useLanguage();
   const { user } = useAuth();
-  const { startCall } = useCall();
+  const { startCall, enabled: callingEnabled, ready: callingReady, status: callStatus } = useCall();
   const { activeConversation, messages, removeMemberFromGroup, leaveGroup } = useChat();
 
   const [isMuted, setIsMuted] = useState(false);
@@ -80,7 +80,7 @@ export const ChatInfoDrawer: React.FC<ChatInfoDrawerProps> = ({
       username: activeConversation.partner?.username || activeConversation.displayName.toLowerCase().replace(/\s+/g, '_'),
       avatarUrl: activeConversation.partner?.avatarUrl || activeConversation.avatarUrl || '',
     };
-    startCall(target, callType);
+    if (isGroup) return; void startCall(activeConversation.id, callType, target);
   };
 
   const handleToggleMute = () => {
@@ -175,7 +175,9 @@ export const ChatInfoDrawer: React.FC<ChatInfoDrawerProps> = ({
 
         {/* Quick Action Buttons */}
         <div className="flex items-center justify-center gap-2 w-full">
+          {!isGroup && callingEnabled && <>
           <button
+            disabled={!callingReady || !['idle', 'ended'].includes(callStatus)}
             onClick={() => handleStartCall('audio')}
             className="flex-1 py-2 px-3 rounded-2xl bg-[#EFF6FF] dark:bg-blue-950/60 text-[#0084FF] dark:text-[#3797F0] hover:bg-blue-100 dark:hover:bg-blue-900/60 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs transition"
           >
@@ -184,6 +186,7 @@ export const ChatInfoDrawer: React.FC<ChatInfoDrawerProps> = ({
           </button>
 
           <button
+            disabled={!callingReady || !['idle', 'ended'].includes(callStatus)}
             onClick={() => handleStartCall('video')}
             className="flex-1 py-2 px-3 rounded-2xl bg-[#EFF6FF] dark:bg-blue-950/60 text-[#0084FF] dark:text-[#3797F0] hover:bg-blue-100 dark:hover:bg-blue-900/60 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs transition"
           >
@@ -191,6 +194,7 @@ export const ChatInfoDrawer: React.FC<ChatInfoDrawerProps> = ({
             <span>{t('messages.videoCallShort')}</span>
           </button>
 
+          </>}
           <button
             onClick={handleToggleMute}
             className={clsx(

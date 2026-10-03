@@ -1,3 +1,4 @@
+import { callPreview } from '../utils/callHistory';
 import React, {
   createContext,
   useContext,
@@ -10,12 +11,13 @@ import React, {
 } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from './AuthContext';
+import { useLanguage } from './LanguageContext';
 import chatService from '../services/chatService';
 import chatSocket from '../services/chatSocket';
 import { userService } from '../services/userService';
 import { presenceService } from '../services/presenceService';
 import { playMessageSound } from '../utils/sound';
-import { getMediaUrl } from '../utils/media';
+import { inferMediaTypeAndUrl, formatChatMessage } from '../utils/chatMessage';
 import { generateUUID } from '../utils/uuid';
 import type {
   ChatMessage,
@@ -74,116 +76,6 @@ interface ChatContextType {
   reconnectWs: () => void;
 }
 
-export const inferMediaTypeAndUrl = (body?: string) => {
-  if (!body) return { mediaType: 'TEXT' as MediaType, mediaUrl: undefined, cleanBody: '', fileName: undefined };
-  const trimmed = body.trim();
-  if (!trimmed) return { mediaType: 'TEXT' as MediaType, mediaUrl: undefined, cleanBody: '', fileName: undefined };
-
-  // Check if body starts with a media URL or contains a media URL on the first line with caption after
-  const newlineIdx = trimmed.indexOf('\n');
-  const firstLine = newlineIdx !== -1 ? trimmed.slice(0, newlineIdx).trim() : trimmed;
-  const caption = newlineIdx !== -1 ? trimmed.slice(newlineIdx + 1).trim() : '';
-
-  const isUrlLike =
-    firstLine.startsWith('http://') ||
-    firstLine.startsWith('https://') ||
-    firstLine.startsWith('blob:') ||
-    firstLine.startsWith('/social-media/') ||
-    firstLine.startsWith('chat/attachments/');
-
-  if (isUrlLike) {
-    const resolvedUrl = getMediaUrl(firstLine);
-    const cleanUrl = firstLine.split('?')[0].toLowerCase();
-
-    // 1. Inspect query parameters if present (e.g., ?type=IMAGE&name=foo.jpg)
-    let explicitType: MediaType | null = null;
-    let explicitName: string | null = null;
-    if (firstLine.includes('?')) {
-      try {
-        const queryStr = firstLine.split('?')[1];
-        const params = new URLSearchParams(queryStr);
-        const tParam = params.get('type')?.toUpperCase();
-        if (tParam === 'IMAGE' || tParam === 'VIDEO' || tParam === 'AUDIO' || tParam === 'FILE') {
-          explicitType = tParam as MediaType;
-        }
-        const nParam = params.get('name');
-        if (nParam) {
-          explicitName = decodeURIComponent(nParam);
-        }
-      } catch {}
-    }
-
-    if (explicitType) {
-      return {
-        mediaType: explicitType,
-        mediaUrl: resolvedUrl,
-        cleanBody: caption,
-        fileName: explicitName || (explicitType === 'FILE' ? 'attachment' : undefined),
-      };
-    }
-
-    // 2. Infer by filename extension if explicitName exists or from cleanUrl
-    const testString = explicitName ? explicitName.toLowerCase() : cleanUrl;
-
-    if (
-      testString.match(/\.(jpg|jpeg|png|gif|webp|svg|bmp|jfif|pjpeg|pjp|avif)$/i) ||
-      cleanUrl.includes('/images/')
-    ) {
-      return { mediaType: 'IMAGE' as MediaType, mediaUrl: resolvedUrl, cleanBody: caption, fileName: explicitName || undefined };
-    }
-    if (
-      testString.match(/\.(mp4|webm|mov|mkv|ogg|avi|wmv|3gp|flv)$/i) ||
-      cleanUrl.includes('/videos/')
-    ) {
-      return { mediaType: 'VIDEO' as MediaType, mediaUrl: resolvedUrl, cleanBody: caption, fileName: explicitName || undefined };
-    }
-    if (
-      testString.match(/\.(mp3|wav|ogg|m4a|aac|weba|flac|wma)$/i) ||
-      cleanUrl.includes('/audios/') ||
-      cleanUrl.includes('voice_')
-    ) {
-      return { mediaType: 'AUDIO' as MediaType, mediaUrl: resolvedUrl, cleanBody: caption, fileName: explicitName || undefined };
-    }
-    if (
-      testString.match(/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|zip|rar|tar|gz|txt|csv|json|xml|html|js|ts)$/i) ||
-      cleanUrl.includes('chat/attachments/')
-    ) {
-      const urlSegments = cleanUrl.split('/');
-      const rawName = urlSegments[urlSegments.length - 1] || 'attachment';
-      const extractedFileName = explicitName || decodeURIComponent(rawName);
-      return {
-        mediaType: 'FILE' as MediaType,
-        mediaUrl: resolvedUrl,
-        cleanBody: caption,
-        fileName: extractedFileName,
-      };
-    }
-  }
-
-  return { mediaType: 'TEXT' as MediaType, mediaUrl: undefined, cleanBody: body, fileName: undefined };
-};
-
-const formatChatMessage = (m: any, currentUserId: string): ChatMessage => {
-  const mediaInfo = inferMediaTypeAndUrl(m.body);
-  return {
-    id: m.id,
-    conversationId: m.conversation_id,
-    seq: m.seq,
-    senderId: m.sender_id,
-    clientMsgId: m.client_msg_id || `srv-${m.id || m.seq}`,
-    body: mediaInfo.cleanBody,
-    replyToId: m.reply_to_id,
-    createdAt: m.created_at,
-    editedAt: m.edited_at,
-    isDeleted: m.is_deleted,
-    status: 'SENT',
-    isMine: m.sender_id === currentUserId,
-    mediaType: mediaInfo.mediaType,
-    mediaUrl: mediaInfo.mediaUrl,
-    fileName: mediaInfo.fileName,
-  };
-};
-
 const getMyUserId = (userObj?: Partial<UserSummary> | User | null): string => {
   if (userObj?.id) return userObj.id;
   try {
@@ -203,6 +95,7 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { user, isAuthenticated } = useAuth();
+  const { t } = useLanguage();
 
   const [conversations, setConversations] = useState<ChatConversationItem[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
@@ -368,18 +261,18 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isOnline,
         lastActiveText,
         partner,
-        lastMessagePreview: raw.last_message_at
+        lastMessagePreview: raw.last_message
           ? {
-              text: raw.last_seq > 0 ? `Tin nhắn mới` : 'Chưa có tin nhắn',
+              text: raw.last_message?.kind === 'CALL' && raw.last_message.call ? callPreview(raw.last_message.call, currentUserId, t) : raw.last_message?.body || (raw.last_seq > 0 ? 'Tin nhắn mới' : 'Chưa có tin nhắn'),
               senderId: raw.created_by,
               senderName: raw.created_by === currentUserId ? 'Bạn' : displayName,
-              timestamp: new Date(raw.last_message_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              timestamp: new Date(raw.last_message!.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
               isRead: (raw.unread_seq_distance || 0) === 0,
             }
           : undefined,
       };
     },
-    [currentUserId, fetchUserProfile, getPartnerIdFromDM]
+    [currentUserId, fetchUserProfile, getPartnerIdFromDM, t]
   );
 
   // Load conversation list from REST API
@@ -1084,7 +977,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       // Update conversation list preview & unread distance
       const mediaInfo = inferMediaTypeAndUrl(payload.body);
-      const previewText =
+      const previewText = payload.kind === 'CALL' && payload.call ? callPreview(payload.call, currentUserId, t) :
         mediaInfo.mediaType === 'IMAGE'
           ? (mediaInfo.cleanBody ? `📷 [Hình ảnh] ${mediaInfo.cleanBody}` : '📷 [Hình ảnh]')
           : mediaInfo.mediaType === 'VIDEO'
@@ -1098,6 +991,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setConversations((prev) => {
         const existing = prev.find((c) => c.id === payload.conversation_id);
         if (existing) {
+          if (payload.kind === 'CALL' && payload.seq <= existing.lastSeq) return prev;
           const isRead = isForActive;
           const updated: ChatConversationItem = {
             ...existing,
@@ -1158,6 +1052,9 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         const maxSeq = Math.max(...payload.messages.map((m) => m.seq || 0), localLastSeqRef.current);
         localLastSeqRef.current = maxSeq;
+        if (payload.messages.length === 50) {
+          chatSocket.sendSync(payload.conversation_id, Math.max(...payload.messages.map(m => m.seq)));
+        }
       }
     });
 
@@ -1239,6 +1136,14 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       void fetchConversations();
     });
 
+    // Recover durable call cards even if the terminal event was missed during reconnect.
+    const unsubReconnect = chatSocket.onStateChange(state => {
+      if (state === 'CONNECTED') {
+        void fetchConversations();
+        if (activeConversationId) chatSocket.sendSync(activeConversationId, localLastSeqRef.current);
+      }
+    });
+
     return () => {
       unsubAck();
       unsubNew();
@@ -1249,8 +1154,9 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       unsubTyping();
       unsubError();
       unsubConvNew();
+      unsubReconnect();
     };
-  }, [activeConversationId, currentUserId]);
+  }, [activeConversationId, currentUserId, t, fetchConversations]);
 
   return (
     <ChatContext.Provider

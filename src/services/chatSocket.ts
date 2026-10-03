@@ -1,4 +1,6 @@
 import type { WSClientFrame, WSServerFrame, WSConnectionState } from '../types/chat';
+import type { CallCommand, CallClientEvent } from '../types/call';
+import { generateUUID } from '../utils/uuid';
 
 export type PayloadOf<T extends WSServerFrame['type']> = Extract<WSServerFrame, { type: T }> extends {
   payload: infer P;
@@ -11,6 +13,7 @@ type FrameHandler<T extends WSServerFrame['type']> = (payload: PayloadOf<T>) => 
 type StateChangeHandler = (state: WSConnectionState) => void;
 
 class ChatSocketManager {
+  public readonly callSessionId = generateUUID();
   private ws: WebSocket | null = null;
   private wsUrl: string;
   private state: WSConnectionState = 'DISCONNECTED';
@@ -109,7 +112,7 @@ class ChatSocketManager {
 
     try {
       // Connect using query param token fallback (most compatible across browser / proxies)
-      const connectUrl = `${this.wsUrl}?token=${encodeURIComponent(token)}`;
+      const connectUrl = `${this.wsUrl}?token=${encodeURIComponent(token)}&call_session_id=${this.callSessionId}`;
       this.ws = new WebSocket(connectUrl);
 
       this.ws.onopen = () => {
@@ -244,6 +247,10 @@ class ChatSocketManager {
         seq,
       },
     });
+  }
+
+  public sendCall(type: CallClientEvent, payload: CallCommand = {}): boolean {
+    return this.sendFrame({ type, payload });
   }
 
   public sendSync(conversationId: string, afterSeq: number): boolean {

@@ -53,6 +53,7 @@ export interface PrepareAttachmentResponse {
 // ==========================================
 
 export interface ConversationResponse {
+  last_message?: MessageResponse;
   id: string;
   type: ConversationType;
   dm_key?: string | null;
@@ -67,6 +68,8 @@ export interface ConversationResponse {
 }
 
 export interface MessageResponse {
+  kind?: 'TEXT' | 'CALL';
+  call?: import('./call').CallSummary;
   id: number;
   conversation_id: string;
   seq: number;
@@ -94,7 +97,7 @@ export interface ConversationDetailResponse extends ConversationResponse {
 // WEBSOCKET FRAME CONTRACTS
 // ==========================================
 
-export type WSClientFrame =
+export type WSClientFrame = import('./call').CallClientFrame
   | {
       type: 'message.send';
       payload: {
@@ -138,7 +141,7 @@ export type WSClientFrame =
       };
     };
 
-export type WSServerFrame =
+export type WSServerFrame = import('./call').CallServerFrame
   | {
       type: 'message.ack';
       payload: {
@@ -156,6 +159,8 @@ export type WSServerFrame =
         seq: number;
         sender_id: string;
         client_msg_id?: string;
+        kind?: 'TEXT' | 'CALL';
+        call?: import('./call').CallSummary;
         body: string;
         reply_to_id?: number | null;
         created_at: string;
@@ -250,6 +255,8 @@ export interface ChatReaction {
 }
 
 export interface ChatMessage {
+  kind?: 'TEXT' | 'CALL';
+  call?: import('./call').CallSummary;
   id?: number;
   conversationId: string;
   seq?: number;

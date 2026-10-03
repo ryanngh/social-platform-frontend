@@ -20,7 +20,8 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useCall } from '../../contexts/CallContext';
-import { useChat, inferMediaTypeAndUrl } from '../../contexts/ChatContext';
+import { useChat } from '../../contexts/ChatContext';
+import { formatChatMessage } from '../../utils/chatMessage';
 import { useUserPresence } from '../../contexts/PresenceContext';
 import chatService from '../../services/chatService';
 import chatSocket from '../../services/chatSocket';
@@ -67,7 +68,7 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
 }) => {
   const { user } = useAuth();
   const { t } = useLanguage();
-  const { startCall } = useCall();
+  const { startCall, enabled: callingEnabled, ready: callingReady, status: callStatus } = useCall();
   const { conversations, rateLimitCooldown } = useChat();
   const navigate = useNavigate();
 
@@ -125,26 +126,7 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
 
   // Format single raw message to ChatMessage
   const formatMsg = useCallback(
-    (m: any): ChatMessage => {
-      const mediaInfo = inferMediaTypeAndUrl(m.body);
-      return {
-        id: m.id,
-        conversationId: m.conversation_id,
-        seq: m.seq,
-        senderId: m.sender_id,
-        clientMsgId: m.client_msg_id || `srv-${m.id || m.seq}`,
-        body: mediaInfo.cleanBody,
-        replyToId: m.reply_to_id,
-        createdAt: m.created_at,
-        editedAt: m.edited_at,
-        isDeleted: m.is_deleted,
-        status: 'SENT',
-        isMine: m.sender_id === currentUserId,
-        mediaType: mediaInfo.mediaType,
-        mediaUrl: mediaInfo.mediaUrl,
-        fileName: mediaInfo.fileName,
-      };
-    },
+    (m: Parameters<typeof formatChatMessage>[0]): ChatMessage => formatChatMessage(m, currentUserId),
     [currentUserId]
   );
 
@@ -273,6 +255,7 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
     // 2. message.new
     const unsubNew = chatSocket.on('message.new', (payload) => {
       if (payload.conversation_id !== conversationId) return;
+      const duplicateCall = payload.kind === 'CALL' && payload.seq <= localLastSeqRef.current;
 
       if (payload.sender_id !== currentUserId) {
         playMessageSound();
@@ -308,7 +291,7 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
 
       localLastSeqRef.current = Math.max(localLastSeqRef.current, payload.seq);
 
-      if (isMinimized) {
+      if (isMinimized && !duplicateCall) {
         setUnreadCount((prev) => prev + 1);
       } else {
         chatSocket.sendRead(conversationId, payload.seq);
@@ -353,12 +336,31 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
       }
     });
 
+    const unsubSync = chatSocket.on('message.sync_res', payload => {
+      if (payload.conversation_id !== conversationId || !payload.messages.length) return;
+      const recovered = payload.messages.map(formatMsg);
+      setMessages(previous => {
+        const merged = new Map(previous.map(m => [m.seq || m.clientMsgId, m]));
+        recovered.forEach(m => merged.set(m.seq || m.clientMsgId, m));
+        return Array.from(merged.values()).sort((a, b) => (a.seq || 0) - (b.seq || 0));
+      });
+      const latest = Math.max(...payload.messages.map(m => m.seq));
+      localLastSeqRef.current = Math.max(localLastSeqRef.current, latest);
+      if (payload.messages.length === 50) chatSocket.sendSync(conversationId, latest);
+      if (!isMinimized) chatSocket.sendRead(conversationId, localLastSeqRef.current);
+    });
+    const unsubReconnect = chatSocket.onStateChange(state => {
+      if (state === 'CONNECTED') chatSocket.sendSync(conversationId, localLastSeqRef.current);
+    });
+
     return () => {
       unsubAck();
       unsubNew();
       unsubUpdated();
       unsubDeleted();
       unsubTyping();
+      unsubSync();
+      unsubReconnect();
     };
   }, [conversationId, currentUserId, formatMsg, isMinimized]);
 
@@ -554,7 +556,7 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
         conversation.partner?.username || conversation.displayName.toLowerCase().replace(/\s+/g, '_'),
       avatarUrl: conversation.partner?.avatarUrl || conversation.avatarUrl || '',
     };
-    startCall(target, callType);
+    if (isGroup) return; void startCall(conversationId, callType, target);
   };
 
   // Audio recording
@@ -762,9 +764,11 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
 
         {/* Right Header Action Icons */}
         <div className="flex items-center gap-0.5 text-gray-500 dark:text-[#A8A8A8]">
+          {!isGroup && callingEnabled && <>
           {/* Audio Call */}
           <button
             type="button"
+            disabled={!callingReady || !['idle', 'ended'].includes(callStatus)}
             onClick={() => handleStartCall('audio')}
             className="p-1.5 hover:text-[#0084FF] dark:hover:text-[#3797F0] hover:bg-gray-100 dark:hover:bg-[#2B2B2B] rounded-full transition cursor-pointer"
             title={t('messages.audioCall')}
@@ -775,6 +779,7 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
           {/* Video Call */}
           <button
             type="button"
+            disabled={!callingReady || !['idle', 'ended'].includes(callStatus)}
             onClick={() => handleStartCall('video')}
             className="p-1.5 hover:text-[#0084FF] dark:hover:text-[#3797F0] hover:bg-gray-100 dark:hover:bg-[#2B2B2B] rounded-full transition cursor-pointer"
             title={t('messages.videoCall')}
@@ -782,6 +787,7 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
             <Video className="w-4 h-4 stroke-[1.8]" />
           </button>
 
+          </>}
           {/* Open in full page */}
           <button
             type="button"

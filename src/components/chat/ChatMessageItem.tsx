@@ -1,3 +1,4 @@
+import CallHistoryCard from './CallHistoryCard';
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import {
@@ -246,6 +247,8 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
   const formattedTime = message.createdAt
     ? new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     : '';
+
+  if (message.kind === 'CALL' && message.call) return <CallHistoryCard call={message.call} conversation={conversation} createdAt={message.createdAt} />;
 
   const replyData = quotedMessage || message.replyToMessage;
   const replySenderName = replyData?.senderName

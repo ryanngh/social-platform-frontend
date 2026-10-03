@@ -16,7 +16,7 @@ import type {
 
 const CHAT_REST_BASE_URL = import.meta.env.VITE_CHAT_REST_URL || '';
 
-const chatApi = axios.create({
+export const chatApi = axios.create({
   baseURL: CHAT_REST_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
