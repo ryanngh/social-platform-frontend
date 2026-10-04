@@ -52,6 +52,7 @@ export class CallPeer {
   private closed = false;
   private remote = new MediaStream();
   private dataChannel?: RTCDataChannel;
+  private pendingMeta: string[] = [];
 
   constructor(call: CallSnapshot, local: MediaStream, config: IceConfig, callbacks: MediaCallbacks, isCaller: boolean) {
     this.call = call; this.isCaller = isCaller;
@@ -62,14 +63,12 @@ export class CallPeer {
       this.videoSender = track ? this.pc.addTrack(track, local) : this.pc.addTransceiver('video', { direction: 'sendrecv' }).sender;
     }
     if (typeof this.pc.createDataChannel === 'function') {
-      if (this.isCaller) {
-        this.dataChannel = this.pc.createDataChannel('call_meta');
+      try {
+        this.dataChannel = this.pc.createDataChannel('call_meta', { negotiated: true, id: 0 });
         this.setupDataChannel(this.dataChannel, callbacks);
+      } catch (e) {
+        console.warn('[call] data channel init failed', e);
       }
-      this.pc.ondatachannel = ({ channel }) => {
-        this.dataChannel = channel;
-        this.setupDataChannel(this.dataChannel, callbacks);
-      };
     }
     this.pc.ontrack = ({ track }) => {
       if (!this.remote.getTracks().some(t => t.id === track.id)) this.remote.addTrack(track);
@@ -85,24 +84,43 @@ export class CallPeer {
   }
 
   private setupDataChannel(channel: RTCDataChannel, callbacks: MediaCallbacks) {
-    channel.onopen = () => { callbacks.dataChannelReady?.(); };
+    const onOpen = () => {
+      while (this.pendingMeta.length > 0) {
+        const msg = this.pendingMeta.shift();
+        if (msg) {
+          try { channel.send(msg); } catch (e) { console.warn('[call] send queued meta failed', e); }
+        }
+      }
+      callbacks.dataChannelReady?.();
+    };
+
+    if (channel.readyState === 'open') {
+      onOpen();
+    } else {
+      channel.onopen = onOpen;
+    }
+
     channel.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
         callbacks.message?.(data);
-      } catch {}
+      } catch (e) {
+        console.warn('[call] data channel invalid message', e);
+      }
     };
   }
 
   sendMeta(data: unknown): boolean {
+    const payload = JSON.stringify(data);
     if (this.dataChannel && this.dataChannel.readyState === 'open') {
       try {
-        this.dataChannel.send(JSON.stringify(data));
+        this.dataChannel.send(payload);
         return true;
-      } catch {
-        return false;
+      } catch (e) {
+        console.warn('[call] sendMeta failed, queuing:', e);
       }
     }
+    this.pendingMeta.push(payload);
     return false;
   }
 
