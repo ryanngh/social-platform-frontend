@@ -168,7 +168,7 @@ export default function ActiveCallModal() {
         >
           <div className="relative flex h-full min-h-0 items-center justify-center overflow-hidden rounded-2xl bg-[#111218]">
             {c.type === 'video' && c.remoteMediaStream && !c.partnerVideoOff ? (
-              <CallVideo stream={c.remoteMediaStream} className="h-full w-full object-contain" />
+              <CallVideo stream={c.remoteMediaStream} mirrored={c.partnerFlipped} className="h-full w-full object-contain" />
             ) : (
               <div className="w-full max-w-xs text-center">
                 <img className="mx-auto mb-4 h-24 w-24 sm:h-28 sm:w-28 rounded-full object-cover" src={getAvatarUrl(c.partner?.avatarUrl)} alt="" />

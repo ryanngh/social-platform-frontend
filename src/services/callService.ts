@@ -34,6 +34,8 @@ export async function captureCallMedia(wantVideo: boolean, options: {
 interface MediaCallbacks {
   remote: (stream: MediaStream) => void;
   connection: (state: RTCPeerConnectionState) => void;
+  message?: (data: unknown) => void;
+  dataChannelReady?: () => void;
 }
 
 /** One owner for peer negotiation. Caller always offers, including ICE restarts. */
@@ -49,6 +51,7 @@ export class CallPeer {
   private refreshTimer?: ReturnType<typeof setTimeout>;
   private closed = false;
   private remote = new MediaStream();
+  private dataChannel?: RTCDataChannel;
 
   constructor(call: CallSnapshot, local: MediaStream, config: IceConfig, callbacks: MediaCallbacks, isCaller: boolean) {
     this.call = call; this.isCaller = isCaller;
@@ -57,6 +60,16 @@ export class CallPeer {
     if (call.type === 'video') {
       const track = local.getVideoTracks()[0];
       this.videoSender = track ? this.pc.addTrack(track, local) : this.pc.addTransceiver('video', { direction: 'sendrecv' }).sender;
+    }
+    if (typeof this.pc.createDataChannel === 'function') {
+      if (this.isCaller) {
+        this.dataChannel = this.pc.createDataChannel('call_meta');
+        this.setupDataChannel(this.dataChannel, callbacks);
+      }
+      this.pc.ondatachannel = ({ channel }) => {
+        this.dataChannel = channel;
+        this.setupDataChannel(this.dataChannel, callbacks);
+      };
     }
     this.pc.ontrack = ({ track }) => {
       if (!this.remote.getTracks().some(t => t.id === track.id)) this.remote.addTrack(track);
@@ -69,6 +82,28 @@ export class CallPeer {
       });
     };
     this.scheduleRefresh(config);
+  }
+
+  private setupDataChannel(channel: RTCDataChannel, callbacks: MediaCallbacks) {
+    channel.onopen = () => { callbacks.dataChannelReady?.(); };
+    channel.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        callbacks.message?.(data);
+      } catch {}
+    };
+  }
+
+  sendMeta(data: unknown): boolean {
+    if (this.dataChannel && this.dataChannel.readyState === 'open') {
+      try {
+        this.dataChannel.send(JSON.stringify(data));
+        return true;
+      } catch {
+        return false;
+      }
+    }
+    return false;
   }
 
   private serialize(task: () => Promise<void>): Promise<void> {
@@ -166,6 +201,7 @@ export class CallPeer {
   close() {
     this.closed = true;
     clearTimeout(this.refreshTimer);
+    try { this.dataChannel?.close(); } catch {}
     this.pc.ontrack = null; this.pc.onicecandidate = null; this.pc.onconnectionstatechange = null;
     this.pc.close(); this.remote.getTracks().forEach(track => track.stop()); this.pendingIce.clear();
   }

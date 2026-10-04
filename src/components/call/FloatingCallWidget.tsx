@@ -17,7 +17,7 @@ export default function FloatingCallWidget() {
       <button aria-label={t('calls.expand')} onClick={() => c.setViewMode('modal')} className="rounded-full p-3 hover:bg-white/10"><Maximize2 size={18} /></button>
     </div>
     <div className="flex h-32 items-center justify-center bg-black/30">
-      {c.type === 'video' && c.remoteMediaStream && !c.partnerVideoOff ? <CallVideo stream={c.remoteMediaStream} className="h-full w-full object-contain" /> : <><img className="h-14 w-14 rounded-full" src={getAvatarUrl(c.partner?.avatarUrl)} alt="" /><AudioVisualizer stream={c.remoteMediaStream} isMuted={c.partnerMuted} className="h-10 w-32" /></>}
+      {c.type === 'video' && c.remoteMediaStream && !c.partnerVideoOff ? <CallVideo stream={c.remoteMediaStream} mirrored={c.partnerFlipped} className="h-full w-full object-contain" /> : <><img className="h-14 w-14 rounded-full" src={getAvatarUrl(c.partner?.avatarUrl)} alt="" /><AudioVisualizer stream={c.remoteMediaStream} isMuted={c.partnerMuted} className="h-10 w-32" /></>}
     </div>
     {ended ? <p aria-live="polite" className="p-3 text-center text-sm text-gray-300">{t('calls.errors.' + (c.errorCode || 'completed'))}</p> : <div className="flex justify-center gap-3 p-2">
       <button aria-label={t('calls.microphone')} aria-pressed={!c.isMuted} disabled={!c.localMediaStream || preparing} onClick={c.toggleMute} className="rounded-full p-3 hover:bg-white/10 disabled:opacity-40">{c.isMuted ? <MicOff size={18} /> : <Mic size={18} />}</button>

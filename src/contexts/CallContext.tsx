@@ -24,6 +24,7 @@ interface CallContextType {
   changeOutputDevice: (id: string) => Promise<void>; registerAudioElement: (element: HTMLAudioElement | null) => void; setShowSettings: (open: boolean) => void;
   setGridMode: (grid: boolean) => void; setViewMode: (mode: CallViewMode) => void;
   isCameraFlipped: boolean;
+  partnerFlipped: boolean;
   toggleFlipCamera: () => void;
   switchCameraDevice: () => Promise<void>;
   continueWithoutCamera: () => void; formatDuration: (seconds: number) => string;
@@ -61,6 +62,9 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return true;
     }
   });
+  const [partnerFlipped, setPartnerFlipped] = useState(false);
+  const isCameraFlippedRef = useRef(isCameraFlipped);
+  isCameraFlippedRef.current = isCameraFlipped;
   const active = useRef<CallSnapshot | null>(null);
   const stream = useRef<MediaStream | null>(null);
   const audioElement = useRef<HTMLAudioElement | null>(null);
@@ -90,6 +94,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const finish = useCallback((code?: string) => {
     cleanup(); active.current = null; request.current = null;
     setLocalMediaStream(null); setRemoteMediaStream(null); setCameraFallback(false);
+    setPartnerFlipped(false);
     setShowSettings(false); setErrorCode(code || null); changeStatus('ended');
     playCallEndedSound();
     resetTimer.current = setTimeout(() => { stopCallSounds(); changeStatus('idle'); setCall(null); setPartner(null); setDuration(0); }, 3000);
@@ -170,6 +175,14 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
             recovery.current = setTimeout(() => terminate('connection_failed'), 15_000);
             void peer.current?.restart().catch(() => {});
           }
+        },
+        message: data => {
+          if (data && typeof data === 'object' && 'type' in data && (data as any).type === 'flip') {
+            setPartnerFlipped(Boolean((data as any).flipped));
+          }
+        },
+        dataChannelReady: () => {
+          engine.sendMeta({ type: 'flip', flipped: isCameraFlippedRef.current });
         },
       }, c.caller_id === user?.id);
       peer.current = engine;
@@ -336,7 +349,9 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const toggleFlipCamera = useCallback(() => {
     setIsCameraFlipped(prev => {
       const next = !prev;
+      isCameraFlippedRef.current = next;
       try { localStorage.setItem('call_flip_camera', String(next)); } catch {}
+      peer.current?.sendMeta({ type: 'flip', flipped: next });
       return next;
     });
   }, []);
@@ -378,7 +393,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localMediaStream, remoteMediaStream, showSettings, gridMode, outputDeviceId, cameraFallback, errorCode,
     startCall, acceptCall, declineCall: () => terminate(), endCall: () => terminate(), toggleMute, toggleVideo,
     changeDevice, changeOutputDevice, registerAudioElement, setShowSettings, setGridMode, setViewMode,
-    isCameraFlipped, toggleFlipCamera, switchCameraDevice,
+    isCameraFlipped, partnerFlipped, toggleFlipCamera, switchCameraDevice,
     continueWithoutCamera: () => fallback.current?.(true), formatDuration: formatCallDuration,
   }}>{children}</CallContext.Provider>;
 };
