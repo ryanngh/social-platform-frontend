@@ -342,11 +342,19 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const switchCameraDevice = useCallback(async () => {
-    if (!navigator.mediaDevices?.enumerateDevices) return;
+    if (!navigator.mediaDevices?.enumerateDevices) {
+      toggleFlipCamera();
+      toast.success(t('calls.flipCamera'));
+      return;
+    }
     try {
       const list = await navigator.mediaDevices.enumerateDevices();
       const videoDevices = list.filter(d => d.kind === 'videoinput');
-      if (videoDevices.length <= 1) return;
+      if (videoDevices.length <= 1) {
+        toggleFlipCamera();
+        toast.success(t('calls.flipCamera'));
+        return;
+      }
       const currentTrack = stream.current?.getVideoTracks()[0];
       const currentDeviceId = currentTrack?.getSettings().deviceId;
       const currentIndex = videoDevices.findIndex(d => d.deviceId === currentDeviceId);
@@ -358,8 +366,9 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (e) {
       console.warn('[call] switch camera failed', e);
+      toggleFlipCamera();
     }
-  }, [changeDevice, t]);
+  }, [changeDevice, t, toggleFlipCamera]);
 
   const mine = call?.caller_id === user?.id;
   return <CallContext.Provider value={{
