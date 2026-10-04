@@ -79,6 +79,8 @@ export interface User {
   isOwner?: boolean;
   isVerified?: boolean;
   interests?: string[];
+  profilePrivacy?: import("../services/accountSecurity").ProfilePrivacy;
+  profileTabAccess?: Record<string, boolean>;
   groups?: { name: string }[];
   createdAt?: string;
   updatedAt?: string;
@@ -114,6 +116,7 @@ export interface UserAccount {
 }
 
 export interface ProfileUpdateRequest {
+  interests?: string[];
   username?: string;
   firstName?: string;
   lastName?: string;

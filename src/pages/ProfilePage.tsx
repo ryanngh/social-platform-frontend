@@ -70,11 +70,6 @@ export const ProfilePage = () => {
   });
   const [searchQuery, setSearchQuery] = useState('');
 
-  // If user visits /profile without identifier, redirect to own username
-  if (!identifier && currentUser?.username) {
-    return <Navigate to={`/${currentUser.username}`} replace />;
-  }
-
   const isOwnProfile =
     !identifier || (currentUser && (identifier === currentUser.username || identifier === currentUser.id));
 
@@ -82,6 +77,7 @@ export const ProfilePage = () => {
     let isMounted = true;
 
     const fetchUser = async () => {
+      setUser(null);setActiveTab('Posts');
       setIsLoading(true);
       setIsNotFound(false);
       setIsBlockedByMe(false);
@@ -170,9 +166,12 @@ export const ProfilePage = () => {
       }
     };
 
-    fetchUser();
+    const refresh = () => { void fetchUser(); };
+    void fetchUser();
+    window.addEventListener('relationships-changed',refresh);
 
     return () => {
+      window.removeEventListener('relationships-changed',refresh);
       isMounted = false;
     };
   }, [identifier, isOwnProfile, currentUser]);
@@ -391,6 +390,8 @@ export const ProfilePage = () => {
       setIsUnblockPending(false);
     }
   };
+
+  if (!identifier && currentUser?.username) return <Navigate to={`/${currentUser.username}`} replace />;
 
   return (
     <div className="min-h-screen bg-[#F9F9FB] dark:bg-[#000000] text-[#1A1C1E] dark:text-[#F5F5F5] flex flex-col font-sans">

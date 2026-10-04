@@ -16,6 +16,8 @@ import {
   LogOut
 } from 'lucide-react';
 import { OtpInput } from './OtpInput';
+import OtpActionDialog from './OtpActionDialog';
+import { accountSecurity } from '../../services/accountSecurity';
 import { useResendCooldown } from '../../hooks/useResendCooldown';
 import { authService } from '../../services/authService';
 import { useAuth } from '../../contexts/AuthContext';
@@ -42,7 +44,8 @@ export const EmailVerificationStep: React.FC<EmailVerificationStepProps> = ({
   onResetAccount,
   onSuccessRedirect = '/feed',
 }) => {
-  const [currentEmail, setCurrentEmail] = useState(initialEmail);
+  const [currentEmail] = useState(initialEmail);
+  const [emailChallenge,setEmailChallenge] = useState<string>();
   const [otp, setOtp] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
@@ -54,7 +57,7 @@ export const EmailVerificationStep: React.FC<EmailVerificationStepProps> = ({
   const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [newEmailInput, setNewEmailInput] = useState('');
   const [newEmailError, setNewEmailError] = useState<string | null>(null);
-  const [isChangingEmail, setIsChangingEmail] = useState(false);
+  const isChangingEmail = !!emailChallenge;
 
   const { canResend, secondsLeft, startCooldown } = useResendCooldown(60);
   const { refreshUser, logout } = useAuth();
@@ -166,35 +169,7 @@ export const EmailVerificationStep: React.FC<EmailVerificationStepProps> = ({
       return;
     }
 
-    try {
-      setIsChangingEmail(true);
-      setNewEmailError(null);
-      await authService.changeEmail(cleanEmail);
-      
-      setCurrentEmail(cleanEmail);
-      setIsEditingEmail(false);
-      setNewEmailInput('');
-      setOtp('');
-      setErrorMessage(null);
-      startCooldown(60);
-
-      setSuccessNotice(
-        isVi
-          ? `Đã cập nhật email thành công! Mã OTP mới đã gửi đến ${cleanEmail}`
-          : `Email updated! A new OTP has been sent to ${cleanEmail}`
-      );
-      toast.success(isVi ? 'Đã cập nhật email nhận mã!' : 'Verification email updated!');
-    } catch (err: unknown) {
-      const errResponse = (err as { response?: { data?: { message?: string; status?: number } } })?.response;
-      const msg = errResponse?.data?.message;
-      if (msg?.includes('already in use') || errResponse?.data?.status === 409) {
-        setNewEmailError(isVi ? 'Email này đã được sử dụng bởi tài khoản khác.' : 'This email is already in use.');
-      } else {
-        setNewEmailError(msg || (isVi ? 'Không thể đổi email lúc này. Vui lòng thử lại.' : 'Failed to update email. Please try again.'));
-      }
-    } finally {
-      setIsChangingEmail(false);
-    }
+    setNewEmailError(null);setEmailChallenge(cleanEmail);
   };
 
   const handleAutoVerify = (completedOtp: string) => {
@@ -333,6 +308,8 @@ export const EmailVerificationStep: React.FC<EmailVerificationStepProps> = ({
   // Active OTP Input State
   return (
     <div className="w-full max-w-[480px] mx-auto flex flex-col animate-in fade-in duration-200">
+      {emailChallenge && <OtpActionDialog purpose="VERIFY_NEW_EMAIL" payload={{email:emailChallenge}} onClose={()=>setEmailChallenge(undefined)} onComplete={async token=>{await accountSecurity.email(emailChallenge,'',token);await logout();toast.success(isVi?'Email đã được xác minh. Vui lòng đăng nhập lại.':'Email verified. Please sign in again.');navigate('/signin',{replace:true});}} />}
+
       {/* Stepper Header (in SignUp flow) */}
       {isSignUpFlow && (
         <div className="text-center mb-6">

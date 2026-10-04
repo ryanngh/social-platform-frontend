@@ -8,6 +8,7 @@ export const relationshipService = {
    */
   async blockUser(targetUserId: string): Promise<UserBlockResponse> {
     const response = await api.post<UserBlockResponse>(`/relationships/blocks/${targetUserId}`);
+    window.dispatchEvent(new Event('relationships-changed'));
     return response.data;
   },
 
@@ -17,6 +18,7 @@ export const relationshipService = {
    */
   async unblockUser(targetUserId: string): Promise<void> {
     await api.delete(`/relationships/blocks/${targetUserId}`);
+    window.dispatchEvent(new Event('relationships-changed'));
   },
 
   /**

@@ -1,4 +1,13 @@
 export const vi = {
+    security: {
+        historyClearFailed: 'Không thể xóa lịch sử chat. Vui lòng thử lại.',
+        "deletedAccount": "Tài khoản đã xóa",
+        "unavailableAccount": "Người dùng hiện không nhận tin nhắn.",
+        "blockedByMe": "Bạn đã chặn người dùng này. Không thể nhắn tin hoặc gọi.",
+        "blockedByOther": "Bạn đang bị chặn. Không thể nhắn tin hoặc gọi.",
+        "unblock": "Bỏ chặn",
+        "blockConfirmation": "Chặn tài khoản này trên toàn ứng dụng? Lịch sử chat được giữ lại; follow sẽ bị hủy."
+    },
     calls: {
     "title": "Cuộc gọi",
     "user": "Người dùng",
@@ -23,6 +32,12 @@ export const vi = {
     "defaultDevice": "Thiết bị mặc định",
     "device": "Thiết bị",
     "deviceError": "Không thể chuyển thiết bị. Hãy kiểm tra quyền và kết nối.",
+    "devicePermissionError": "Trình duyệt chưa cấp quyền sử dụng thiết bị. Hãy cho phép trong cài đặt của website.",
+    "deviceMissingError": "Thiết bị đã chọn không khả dụng. Hãy kết nối lại hoặc chọn thiết bị khác.",
+    "deviceBusyError": "Thiết bị đang bận hoặc không thể sử dụng. Hãy đóng ứng dụng khác đang dùng thiết bị rồi thử lại.",
+    "deviceFormatError": "Định dạng camera này không phù hợp với cuộc gọi hiện tại. Hãy chọn camera khác.",
+    "deviceUnsupportedError": "Cần truy cập qua HTTPS (hoặc localhost trên chính thiết bị này) để sử dụng mic/camera.",
+    "systemAudioOutput": "Âm thanh sử dụng đầu ra đang chọn trên điện thoại hoặc hệ điều hành.",
     "mediaError": "Không thể truy cập micro. Hãy cho phép sử dụng micro rồi thử lại.",
     "cameraError": "Không thể truy cập camera. Bạn có thể tiếp tục với camera tắt.",
     "continueAudio": "Tiếp tục với camera tắt",
@@ -107,6 +122,8 @@ export const vi = {
         themeDark: 'Tối',
         themeSystem: 'Hệ thống',
         toggleTheme: 'Chuyển chế độ tối/sáng',
+        accountSettings: 'Cài đặt tài khoản',
+        privacy: 'Quyền riêng tư',
     },
     leftNav: {
         home: 'Trang chủ',

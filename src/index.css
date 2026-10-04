@@ -3,7 +3,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --font-sans: Arial, Helvetica, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
   
   /* Brand Colors */
   --color-brand: #004AC6;
@@ -24,6 +24,9 @@
 :root {
   --sat: env(safe-area-inset-top, 0px);
   --sab: env(safe-area-inset-bottom, 0px);
+  --text-main: 15px;
+  --text-secondary: 13px;
+  --text-timestamp: 12px;
   --sal: env(safe-area-inset-left, 0px);
   --sar: env(safe-area-inset-right, 0px);
 }
@@ -47,7 +50,7 @@ button,
 input,
 textarea,
 select {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -56,7 +59,7 @@ select {
 body {
   background-color: #FAFAFB;
   color: #0F1419;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.5;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
@@ -217,3 +220,10 @@ html.dark ::selection {
   animation: ripplePulse 2.4s cubic-bezier(0.22, 1, 0.36, 1) infinite;
 }
 
+
+.security-input { width:100%; padding:0.75rem; border:1px solid #b8bec7; border-radius:0.75rem; background:transparent; font:inherit; }
+.security-button { padding:0.7rem 1rem; border-radius:0.75rem; background:#004AC6; color:#fff; font-weight:600; cursor:pointer; }
+.security-button:disabled { opacity:0.5; cursor:default; }
+.security-input:focus-visible,.security-button:focus-visible { outline:2px solid #0095F6; outline-offset:3px; }
+.chat-body { font-size:var(--text-main); line-height:1.5; font-weight:400; }
+@media(max-width:768px) { :root { --text-main:16px; } body,.chat-body { font-size:var(--text-main); } }

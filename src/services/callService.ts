@@ -21,7 +21,7 @@ export async function captureCallMedia(wantVideo: boolean, options: {
   options.audioReady(audio);
   if (wantVideo) {
     try {
-      const camera = await navigator.mediaDevices.getUserMedia({ audio: false, video: { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } } });
+      const camera = await navigator.mediaDevices.getUserMedia({ audio: false, video: { width: { ideal: 1280, max: 1280 }, height: { ideal: 720, max: 720 }, frameRate: { ideal: 30, max: 30 } } });
       if (!options.current()) { camera.getTracks().forEach(track => track.stop()); stop(); return null; }
       camera.getVideoTracks().forEach(track => audio.addTrack(track));
     } catch {

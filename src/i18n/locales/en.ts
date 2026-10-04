@@ -1,6 +1,15 @@
 import type {Translations} from './vi';
 
 export const en: Translations = {
+    security: {
+        historyClearFailed: 'Failed to clear chat history. Please try again.',
+        "deletedAccount": "Deleted account",
+        "unavailableAccount": "This user is currently unavailable.",
+        "blockedByMe": "You blocked this user. Messaging and calls are disabled.",
+        "blockedByOther": "You are blocked. Messaging and calls are disabled.",
+        "unblock": "Unblock",
+        "blockConfirmation": "Block this account across the app? Chat history is kept; follows will be removed."
+    },
     calls: {
     "title": "Call",
     "user": "User",
@@ -25,6 +34,12 @@ export const en: Translations = {
     "defaultDevice": "Default device",
     "device": "Device",
     "deviceError": "Unable to switch devices. Check permissions and the connection.",
+    "devicePermissionError": "The browser denied access to this device. Allow device access in the website settings.",
+    "deviceMissingError": "The selected device is unavailable. Reconnect it or choose another device.",
+    "deviceBusyError": "The device is busy or unavailable. Close other apps using it and try again.",
+    "deviceFormatError": "This camera format cannot be used in the current call. Choose another camera.",
+    "deviceUnsupportedError": "Device access needs HTTPS (or localhost on this device) and a supported browser.",
+    "systemAudioOutput": "Audio uses the output selected by your phone or operating system.",
     "mediaError": "Unable to access your microphone. Allow microphone access and try again.",
     "cameraError": "Unable to access your camera. You can continue with your camera off.",
     "continueAudio": "Continue with camera off",
@@ -109,6 +124,8 @@ export const en: Translations = {
         themeDark: 'Dark',
         themeSystem: 'System',
         toggleTheme: 'Toggle dark/light mode',
+        accountSettings: 'Account settings',
+        privacy: 'Privacy',
     },
     leftNav: {
         home: 'Home',

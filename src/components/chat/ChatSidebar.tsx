@@ -3,7 +3,6 @@ import { Search, Plus, X, Pin, Users, MessageSquare, VolumeX } from 'lucide-reac
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useChat } from '../../contexts/ChatContext';
-import { usePresence } from '../../contexts/PresenceContext';
 import { userService } from '../../services/userService';
 import UserAvatar from '../common/UserAvatar';
 import type { UserSummary } from '../../types';
@@ -22,16 +21,15 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
   isMobileChatOpen,
   onSelectConversation,
 }) => {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const { user } = useAuth();
   const { conversations, activeConversationId, selectConversation, startOrOpenDM } = useChat();
-  const { getStatus, subscribeUsers, unsubscribeUsers: _unsubscribeUsers } = usePresence();
 
   const [activeTab, setActiveTab] = useState<ConversationTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [followingUsers, setFollowingUsers] = useState<UserSummary[]>([]);
 
-  // Load real following friends and subscribe to presence
+  // Load following accounts without exposing presence outside the mutual strip.
   useEffect(() => {
     if (!user?.id) return;
 
@@ -42,8 +40,6 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
         const list = (followingRes?.content || []).filter((u) => u.id !== user.id);
         if (list.length > 0 && isMounted) {
           setFollowingUsers(list);
-          const userIds = list.map((u) => u.id);
-          subscribeUsers(userIds);
         }
       } catch (err) {
         console.warn('Could not load following presence:', err);
@@ -55,17 +51,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [user?.id, subscribeUsers]);
-
-  // Subscribe all conversation DM partner IDs to real-time presence
-  useEffect(() => {
-    const partnerIds = conversations
-      .filter((c) => c.type === 'DM' && c.partner?.id)
-      .map((c) => c.partner!.id);
-    if (partnerIds.length > 0) {
-      subscribeUsers(partnerIds);
-    }
-  }, [conversations, subscribeUsers]);
+  }, [user?.id]);
 
   // Filter conversations
   const filteredConversations = useMemo(() => {
@@ -106,7 +92,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
             {t('messages.title')}
           </h1>
           {conversations.length > 0 && (
-            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 dark:bg-[#262626] text-[#8E8E8E] dark:text-[#A8A8A8]">
+            <span className="text-[12px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 dark:bg-[#262626] text-[#8E8E8E] dark:text-[#A8A8A8]">
               {conversations.length}
             </span>
           )}
@@ -148,14 +134,13 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
       {followingUsers.length > 0 && (
         <div className="px-3.5 pb-2 border-b border-gray-100 dark:border-[#262626]">
           <div className="flex items-center justify-between mb-1.5 px-0.5">
-            <p className="text-[11px] font-semibold text-[#8E8E8E] dark:text-[#737373] uppercase tracking-wider">
+            <p className="text-[12px] font-semibold text-[#8E8E8E] dark:text-[#737373] uppercase tracking-wider">
               {t('messages.followingContacts', { defaultValue: 'Đang theo dõi' })}
             </p>
           </div>
 
           <div className="flex items-center gap-2.5 overflow-x-auto pb-1 no-scrollbar">
             {followingUsers.map((fUser) => {
-              const status = getStatus(fUser.id);
               const displayName =
                 [fUser.firstName, fUser.lastName].filter(Boolean).join(' ') ||
                 fUser.username ||
@@ -166,19 +151,18 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                   key={fUser.id}
                   onClick={() => handleSelectFriendStory(fUser)}
                   className="flex flex-col items-center gap-1 shrink-0 cursor-pointer group"
-                  title={`${displayName} (${status === 'online' ? (language === 'vi' ? 'Đang hoạt động' : 'Active now') : status === 'away' ? (language === 'vi' ? 'Vắng mặt' : 'Away') : (language === 'vi' ? 'Ngoại tuyến' : 'Offline')})`}
+                  title={displayName}
                 >
                   <div className="relative p-[1.5px] rounded-full group-hover:bg-gradient-to-tr group-hover:from-[#FD5949] group-hover:via-[#D6249F] group-hover:to-[#285AEB] transition">
                     <UserAvatar
                       userId={fUser.id}
                       src={fUser.avatarUrl}
                       alt={displayName}
-                      presenceStatus={status}
                       size="lg"
                       className="w-11 h-11 border-2 border-white dark:border-[#121212] shadow-xs"
                     />
                   </div>
-                  <span className="text-[11px] text-gray-700 dark:text-[#D4D4D4] font-normal truncate max-w-[54px]">
+                  <span className="text-[12px] text-gray-700 dark:text-[#D4D4D4] font-normal truncate max-w-[54px]">
                     {displayName.split(' ')[0]}
                   </span>
                 </button>
@@ -260,7 +244,6 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
           filteredConversations.map((conv) => {
             const isSelected = conv.id === activeConversationId;
             const hasUnread = conv.unreadSeqDistance > 0;
-            const partnerPresenceStatus = conv.type === 'DM' && conv.partner?.id ? getStatus(conv.partner.id) : (conv.isOnline ? 'online' : 'offline');
 
             return (
               <div
@@ -290,7 +273,6 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                       userId={conv.partner?.id}
                       src={conv.avatarUrl}
                       alt={conv.displayName}
-                      presenceStatus={partnerPresenceStatus}
                       size="lg"
                       className="w-12 h-12 shadow-xs"
                     />
@@ -302,7 +284,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                   <div className="flex items-center justify-between mb-0.5">
                     <span
                       className={clsx(
-                        'text-[14px] truncate max-w-[170px]',
+                        'text-[15px] truncate max-w-[170px]',
                         hasUnread
                           ? 'text-gray-950 dark:text-white font-bold'
                           : 'text-gray-900 dark:text-[#F5F5F5] font-semibold'
@@ -313,7 +295,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
 
                     <span
                       className={clsx(
-                        'text-[11px] shrink-0 font-normal',
+                        'text-[12px] shrink-0 font-normal',
                         hasUnread
                           ? 'text-[#0095F6] font-semibold'
                           : 'text-[#8E8E8E] dark:text-[#737373]'

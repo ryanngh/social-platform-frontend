@@ -109,11 +109,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
   // Read indicator
-  const isReadByPartner =
-    isMine &&
-    message.seq !== undefined &&
-    conversation.lastReadSeq !== undefined &&
-    message.seq <= conversation.lastReadSeq;
+  const isReadByPartner = message.status === 'READ';
 
   // Resolve media URL
   const mediaUrl = message.mediaUrl ? getMediaUrl(message.mediaUrl) : undefined;
@@ -271,8 +267,8 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
           <div className="shrink-0 mb-0.5">
             <UserAvatar
               userId={message.senderId || conversation.partner?.id}
-              src={message.senderAvatar || conversation.avatarUrl}
-              alt={message.senderName || conversation.displayName}
+              src={message.senderDeleted ? undefined : (message.senderAvatar || conversation.avatarUrl)}
+              alt={message.senderDeleted ? t('security.deletedAccount') : (message.senderName || conversation.displayName)}
               size="xs"
               showPresence={false}
               className="w-7 h-7 rounded-full shadow-2xs"
@@ -283,7 +279,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
         {/* 2. Message Bubble Container */}
         <div
           className={clsx(
-            'max-w-[85%] sm:max-w-[70%] rounded-[18px] px-3.5 py-2 relative text-[13.5px] sm:text-[14px] leading-[1.45] tracking-[-0.01em] transition-all break-words select-text min-w-0',
+            'max-w-[85%] sm:max-w-[70%] rounded-[18px] px-3.5 py-2 relative text-[13px] sm:text-[15px] leading-[1.5] tracking-[-0.01em] transition-all break-words select-text min-w-0',
             isMine
               ? 'bg-[#0084FF] dark:bg-[#0095F6] text-white rounded-br-[4px] shadow-xs'
               : 'bg-[#F0F2F5] dark:bg-[#262626] text-gray-950 dark:text-[#F5F5F5] rounded-bl-[4px] shadow-2xs'
@@ -291,8 +287,8 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
         >
           {/* Group Sender Name */}
           {isGroup && !isMine && (
-            <p className="text-[11.5px] font-semibold text-[#0084FF] dark:text-[#3797F0] mb-0.5">
-              {message.senderName || 'Thành viên'}
+            <p className="text-[12px] font-semibold text-[#0084FF] dark:text-[#3797F0] mb-0.5">
+              {message.senderDeleted ? t('security.deletedAccount') : (message.senderName || 'Thành viên')}
             </p>
           )}
 
@@ -306,11 +302,11 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                   : 'bg-black/5 dark:bg-white/10 text-gray-800 dark:text-[#D4D4D4] border-[#0084FF] dark:border-[#3797F0]'
               )}
             >
-              <div className="flex items-center gap-1 font-semibold text-[10.5px] mb-0.5">
+              <div className="flex items-center gap-1 font-semibold text-[12px] mb-0.5">
                 <CornerUpLeft className="w-2.5 h-2.5 shrink-0" />
                 <span className="truncate max-w-[180px]">{replySenderName}</span>
               </div>
-              <p className="truncate line-clamp-1 italic text-[11.5px] opacity-85">
+              <p className="truncate line-clamp-1 italic text-[12px] opacity-85">
                 {replyBody}
               </p>
             </div>
@@ -330,7 +326,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                 value={editText}
                 onChange={(e) => setEditText(e.target.value)}
                 className={clsx(
-                  'w-full px-3 py-1.5 rounded-xl outline-none text-[13.5px] border transition',
+                  'w-full px-3 py-1.5 rounded-xl outline-none text-[13px] border transition',
                   isMine
                     ? 'bg-white/20 text-white placeholder-white/60 border-white/40 focus:border-white'
                     : 'bg-white dark:bg-[#1A1A1A] text-gray-900 dark:text-white border-gray-300 dark:border-[#404040]'
@@ -341,7 +337,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                   if (e.key === 'Escape') setIsEditing(false);
                 }}
               />
-              <div className="flex items-center justify-end gap-1.5 text-[11px]">
+              <div className="flex items-center justify-end gap-1.5 text-[12px]">
                 <button
                   type="button"
                   onClick={() => setIsEditing(false)}
@@ -465,7 +461,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                       />
                     </div>
 
-                    <div className="flex justify-between items-center text-[10.5px] opacity-80">
+                    <div className="flex justify-between items-center text-[12px] opacity-80">
                       <span>
                         {formatAudioDuration(audioCurrentTime)} /{' '}
                         {formatAudioDuration(audioTotalDuration) || message.audioDuration || '0:15'}
@@ -494,11 +490,11 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                   </div>
 
                   <div className="min-w-0 flex-1 overflow-hidden">
-                    <p className="text-[12.5px] font-semibold truncate leading-tight" title={message.fileName}>
+                    <p className="text-[13px] font-semibold truncate leading-tight" title={message.fileName}>
                       {message.fileName || 'Tệp đính kèm'}
                     </p>
                     {message.fileSize && message.fileSize > 0 && (
-                      <p className="text-[10.5px] opacity-75 mt-0.5">
+                      <p className="text-[12px] opacity-75 mt-0.5">
                         {formatFileSize(message.fileSize)}
                       </p>
                     )}
@@ -525,7 +521,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
               {/* 5. Text Message Body (or caption) */}
               {message.body && (
                 <div className="space-y-1.5">
-                  <p className="whitespace-pre-wrap leading-[1.45] select-text font-normal">
+                  <p className="chat-body whitespace-pre-wrap select-text">
                     <FormattedText
                       text={message.body}
                       urlClassName={
@@ -560,7 +556,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
           {/* 3. Timestamp, Edited label, and Delivery/Read Status check */}
           <div
             className={clsx(
-              'flex items-center justify-end gap-1 text-[10px] mt-0.5 select-none font-normal tracking-tight',
+              'flex items-center justify-end gap-1 text-[12px] mt-0.5 select-none font-normal',
               isMine ? 'text-white/70' : 'text-[#8E8E8E] dark:text-[#A8A8A8]'
             )}
           >
@@ -600,14 +596,14 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
           {message.reactions && message.reactions.length > 0 && (
             <div
               className={clsx(
-                'absolute -bottom-2.5 flex items-center gap-1 bg-white dark:bg-[#262626] border border-gray-200 dark:border-[#383838] rounded-full px-2 py-0.5 shadow-sm text-[11px] select-none z-10',
+                'absolute -bottom-2.5 flex items-center gap-1 bg-white dark:bg-[#262626] border border-gray-200 dark:border-[#383838] rounded-full px-2 py-0.5 shadow-sm text-[12px] select-none z-10',
                 isMine ? 'right-2' : 'left-2'
               )}
             >
               {message.reactions.map((r, i) => (
                 <span key={i} className="flex items-center gap-1">
                   <span>{r.emoji}</span>
-                  <span className="font-bold text-gray-700 dark:text-[#D4D4D4] text-[10px]">
+                  <span className="font-bold text-gray-700 dark:text-[#D4D4D4] text-[12px]">
                     {r.count}
                   </span>
                 </span>

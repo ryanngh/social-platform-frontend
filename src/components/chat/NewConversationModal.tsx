@@ -257,7 +257,7 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
           {/* Contact List */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <p className="text-[11px] font-bold text-gray-400 dark:text-[#737373] uppercase">
+              <p className="text-[12px] font-bold text-gray-400 dark:text-[#737373] uppercase">
                 {activeTab === 'dm'
                   ? t('messages.selectRecipient')
                   : `${t('messages.addMember')} (${selectedMemberIds.length})`}
@@ -311,7 +311,7 @@ export const NewConversationModal: React.FC<NewConversationModalProps> = ({
                           <p className="text-xs font-bold text-gray-900 dark:text-[#F5F5F5] truncate">
                             {displayName}
                           </p>
-                          <p className="text-[11px] text-gray-400 truncate">@{contact.username}</p>
+                          <p className="text-[12px] text-gray-400 truncate">@{contact.username}</p>
                         </div>
                       </div>
 

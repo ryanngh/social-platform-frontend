@@ -78,7 +78,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor: xử lý 401 và 403 bằng token refresh
+// Refresh expired sessions; authorization failures stay visible to callers.
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -87,11 +87,14 @@ api.interceptors.response.use(
     const isAuthEndpoint =
       originalRequest?.url?.includes('/auth/login') ||
       originalRequest?.url?.includes('/auth/register') ||
-      originalRequest?.url?.includes('/auth/refresh');
+      originalRequest?.url?.includes('/auth/refresh') ||
+      originalRequest?.url?.includes('/auth/otp-challenges') ||
+      originalRequest?.url?.includes('/auth/reset-password') ||
+      originalRequest?.url?.includes('/auth/restore-account');
 
-    // Bắt cả 401 lẫn 403 (khi token hết hạn hoặc chưa xác thực)
+    // A forbidden profile tab or OTP action must never trigger token refresh.
     const isAuthError =
-      (error.response?.status === 401 || error.response?.status === 403) &&
+      error.response?.status === 401 &&
       !originalRequest?._retry &&
       !isAuthEndpoint;
 

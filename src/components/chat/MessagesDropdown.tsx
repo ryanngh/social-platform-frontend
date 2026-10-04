@@ -15,7 +15,6 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useChat } from '../../contexts/ChatContext';
-import { usePresence } from '../../contexts/PresenceContext';
 import { useDockedChat } from '../../contexts/DockedChatContext';
 import UserAvatar from '../common/UserAvatar';
 import NewConversationModal from './NewConversationModal';
@@ -40,7 +39,6 @@ export const MessagesDropdown: React.FC<MessagesDropdownProps> = ({ isOpen, onCl
     markAsRead,
     selectConversation,
   } = useChat();
-  const { getStatus } = usePresence();
   const { openMiniChat } = useDockedChat();
 
   const [activeTab, setActiveTab] = useState<TabType>('all');
@@ -98,7 +96,7 @@ export const MessagesDropdown: React.FC<MessagesDropdownProps> = ({ isOpen, onCl
   const handleMarkAllAsRead = () => {
     conversations.forEach((c) => {
       if (c.unreadSeqDistance > 0) {
-        markAsRead(c.id);
+        markAsRead(c.id, c.lastSeq);
       }
     });
   };
@@ -250,7 +248,7 @@ export const MessagesDropdown: React.FC<MessagesDropdownProps> = ({ isOpen, onCl
                   ? t('messages.noConversations')
                   : t('messages.noFilteredConversations')}
               </p>
-              <p className="text-[11px] text-gray-400 dark:text-[#666666] mt-1 max-w-xs mx-auto">
+              <p className="text-[12px] text-gray-400 dark:text-[#666666] mt-1 max-w-xs mx-auto">
                 {conversations.length === 0
                   ? t('messages.noConversationsEmptyDesc')
                   : t('messages.noFilteredConversationsDesc')}
@@ -267,12 +265,7 @@ export const MessagesDropdown: React.FC<MessagesDropdownProps> = ({ isOpen, onCl
           ) : (
             filteredConversations.map((conv) => {
               const hasUnread = conv.unreadSeqDistance > 0;
-              const partnerPresence =
-                conv.type === 'DM' && conv.partner?.id
-                  ? getStatus(conv.partner.id)
-                  : conv.isOnline
-                  ? 'online'
-                  : 'offline';
+
 
               return (
                 <div
@@ -296,7 +289,6 @@ export const MessagesDropdown: React.FC<MessagesDropdownProps> = ({ isOpen, onCl
                         userId={conv.partner?.id}
                         src={conv.avatarUrl}
                         alt={conv.displayName}
-                        presenceStatus={partnerPresence}
                         size="md"
                         className="w-11 h-11 shadow-xs"
                       />
@@ -319,7 +311,7 @@ export const MessagesDropdown: React.FC<MessagesDropdownProps> = ({ isOpen, onCl
 
                       <span
                         className={clsx(
-                          'text-[10.5px] shrink-0',
+                          'text-[12px] shrink-0',
                           hasUnread
                             ? 'text-[#004AC6] dark:text-[#0095F6] font-bold'
                             : 'text-gray-400 dark:text-[#737373]'
@@ -332,7 +324,7 @@ export const MessagesDropdown: React.FC<MessagesDropdownProps> = ({ isOpen, onCl
                     <div className="flex items-center justify-between gap-1">
                       <p
                         className={clsx(
-                          'text-[11.5px] truncate leading-tight',
+                          'text-[12px] truncate leading-tight',
                           hasUnread
                             ? 'font-bold text-gray-900 dark:text-[#F5F5F5]'
                             : 'text-gray-500 dark:text-[#A0A0A0] font-normal'

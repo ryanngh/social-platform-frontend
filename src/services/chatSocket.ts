@@ -142,6 +142,7 @@ class ChatSocketManager {
       };
 
       this.ws.onclose = (event) => {
+        if(event.code === 4401) { window.dispatchEvent(new Event('auth-revoked')); this.stopHeartbeat();this.setState('DISCONNECTED');return; }
         this.stopHeartbeat();
         this.ws = null;
         console.log(`[ChatSocket] Disconnected (code: ${event.code}, reason: "${event.reason}")`);

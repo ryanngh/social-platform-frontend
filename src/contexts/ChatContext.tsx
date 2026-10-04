@@ -15,7 +15,6 @@ import { useLanguage } from './LanguageContext';
 import chatService from '../services/chatService';
 import chatSocket from '../services/chatSocket';
 import { userService } from '../services/userService';
-import { presenceService } from '../services/presenceService';
 import { playMessageSound } from '../utils/sound';
 import { inferMediaTypeAndUrl, formatChatMessage } from '../utils/chatMessage';
 import { generateUUID } from '../utils/uuid';
@@ -68,7 +67,7 @@ interface ChatContextType {
   deleteMessage: (messageId: number) => Promise<void>;
   clearHistory: (conversationId?: string) => Promise<void>;
   loadOlderMessages: () => Promise<void>;
-  markAsRead: (conversationId?: string) => void;
+  markAsRead: (conversationId: string, seq: number) => void;
   sendTyping: () => void;
   addMemberToGroup: (userId: string, role?: 'ADMIN' | 'MEMBER') => Promise<void>;
   removeMemberFromGroup: (userId: string) => Promise<void>;
@@ -216,20 +215,14 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       if (!isGroup) {
         const partnerId = getPartnerIdFromDM(raw.dm_key, raw.created_by);
-        const profile = await fetchUserProfile(partnerId);
+        const profile = raw.partner_deleted ? null : await fetchUserProfile(partnerId);
 
         if (profile) {
           const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(' ') || profile.username || 'Người dùng';
           displayName = fullName;
           avatarUrl = profile.avatarUrl || undefined;
           
-          try {
-            const presence = await presenceService.getPresence(partnerId);
-            isOnline = presence.status === 'online';
-            lastActiveText = presenceService.formatLastSeen(presence.lastSeen);
-          } catch {
-            isOnline = false;
-          }
+
 
           partner = {
             id: profile.id || partnerId,
@@ -240,12 +233,14 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             lastActive: lastActiveText,
           };
         } else {
-          displayName = `Người dùng #${partnerId.slice(0, 6)}`;
+          displayName = raw.partner_deleted ? t('security.deletedAccount') : t('security.unavailableAccount');
+          partner = { id: partnerId, username: '', displayName };
         }
       }
 
       return {
         id: raw.id,
+        blockedByMe: raw.blocked_by_me, blockedByOther: raw.blocked_by_other, canMessage: raw.can_message, canCall: raw.can_call, partnerDeleted: raw.partner_deleted,
         type: raw.type,
         dmKey: raw.dm_key,
         title: raw.title,
@@ -255,6 +250,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         lastMessageAt: raw.last_message_at,
         unreadSeqDistance: raw.unread_seq_distance || 0,
         lastReadSeq: raw.last_read_seq || 0,
+        partnerLastReadSeq: raw.partner_last_read_seq || 0,
         clearedBeforeSeq: raw.cleared_before_seq || 0,
         displayName,
         avatarUrl,
@@ -305,6 +301,16 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [isAuthenticated, fetchConversations]);
 
+  useEffect(() => {
+    const refresh = () => { userProfileCacheRef.current.clear(); void fetchConversations(); };
+    const off = chatSocket.on('relationship.changed', refresh);
+    const offAccount = chatSocket.on('account.changed', refresh);
+    window.addEventListener('relationships-changed', refresh);
+    return () => { off(); offAccount(); window.removeEventListener('relationships-changed', refresh); };
+  }, [fetchConversations]);
+
+  const selectedIdRef = useRef(activeConversationId);
+  selectedIdRef.current = activeConversationId;
   // Load messages when active conversation changes
   const fetchMessagesForActiveConversation = useCallback(
     async (convId: string) => {
@@ -312,6 +318,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setHasMoreOlderMessages(true);
       try {
         const rawMessages = await chatService.getMessages(convId, { limit: 50 });
+        if (selectedIdRef.current !== convId) return;
         if (rawMessages && rawMessages.length > 0) {
           const formatted: ChatMessage[] = rawMessages.map((m) => formatChatMessage(m, currentUserId));
 
@@ -321,23 +328,20 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           localLastSeqRef.current = maxSeq;
           oldestSeqRef.current = minSeq;
 
-          // Automatically mark read up to maxSeq
-          if (maxSeq > 0) {
-            chatSocket.sendRead(convId, maxSeq);
-            void chatService.markRead(convId, maxSeq).catch(() => {});
-          }
+
         } else {
           setMessages([]);
           localLastSeqRef.current = 0;
           oldestSeqRef.current = 0;
         }
       } catch (err) {
+        if (selectedIdRef.current !== convId) return;
         console.warn('[ChatContext] Failed to load messages:', err);
         setMessages([]);
         localLastSeqRef.current = 0;
         oldestSeqRef.current = 0;
       } finally {
-        setIsLoadingMessages(false);
+        if (selectedIdRef.current === convId) setIsLoadingMessages(false);
       }
     },
     [currentUserId]
@@ -375,6 +379,11 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeConversationId, fetchMessagesForActiveConversation]);
 
+  useEffect(() => {
+    const read=activeConversation?.partnerLastReadSeq || 0;
+    if(read) setMessages(prev=>prev.map(m=>m.isMine && (m.seq||0)<=read && m.status!=='READ'?{...m,status:'READ'}:m));
+  }, [activeConversation?.partnerLastReadSeq, messages.length]);
+
   // Load older messages (Pagination / Infinite Scroll Up)
   const loadOlderMessages = useCallback(async () => {
     if (!activeConversationId || isLoadingOlder || !hasMoreOlderMessages) return;
@@ -390,6 +399,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         before_seq: oldestSeq,
         limit: 30,
       });
+      if (selectedIdRef.current !== activeConversationId) return;
 
       if (!olderRaw || olderRaw.length === 0) {
         setHasMoreOlderMessages(false);
@@ -417,43 +427,22 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (id === activeConversationId) return;
       setActiveConversationId(id);
 
-      // Locally mark unread as 0
-      setConversations((prev) =>
-        prev.map((c) => {
-          if (c.id === id) {
-            return {
-              ...c,
-              unreadSeqDistance: 0,
-              lastMessagePreview: c.lastMessagePreview
-                ? { ...c.lastMessagePreview, isRead: true }
-                : undefined,
-            };
-          }
-          return c;
-        })
-      );
+
     },
     [activeConversationId]
   );
 
-  // Mark read explicitly
-  const markAsRead = useCallback(
-    (convId?: string) => {
-      const targetId = convId || activeConversationId;
-      if (!targetId) return;
-
-      const currentSeq = localLastSeqRef.current;
-      if (currentSeq > 0) {
-        chatSocket.sendRead(targetId, currentSeq);
-        void chatService.markRead(targetId, currentSeq).catch(() => {});
-      }
-
-      setConversations((prev) =>
-        prev.map((c) => (c.id === targetId ? { ...c, unreadSeqDistance: 0 } : c))
-      );
-    },
-    [activeConversationId]
-  );
+  const readRequestsRef = useRef(new Map<string, number>());
+  useEffect(() => { readRequestsRef.current.clear(); }, [currentUserId]);
+  const markAsRead = useCallback((targetId: string, seq: number) => {
+    if (!targetId || seq < 1 || document.hidden || !document.hasFocus()) return;
+    if ((readRequestsRef.current.get(targetId) || 0) >= seq) return;
+    readRequestsRef.current.set(targetId, seq);
+    setConversations(prev => prev.map(c => c.id === targetId ? { ...c, lastReadSeq: Math.max(c.lastReadSeq, seq), unreadSeqDistance: Math.max(0, c.lastSeq - Math.max(c.lastReadSeq, seq)), lastMessagePreview: c.lastMessagePreview ? { ...c.lastMessagePreview, isRead: c.lastSeq <= seq } : undefined } : c));
+    void chatService.markRead(targetId, seq).then(result => {
+      setConversations(prev => prev.map(c => c.id === targetId ? { ...c, lastReadSeq: Math.max(c.lastReadSeq, result.last_read_seq), unreadSeqDistance: Math.max(0, c.lastSeq - Math.max(c.lastReadSeq, result.last_read_seq)) } : c));
+    }).catch(() => { readRequestsRef.current.delete(targetId); void fetchConversations(); });
+  }, [fetchConversations]);
 
   // Send message action
   const sendMessage = useCallback(
@@ -711,16 +700,13 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (targetId === activeConversationId) {
           setMessages([]);
         }
-        toast.success('Đã xóa lịch sử cuộc trò chuyện');
+        toast.success(t('messages.clearHistorySuccess'));
       } catch (err) {
         console.error('Failed to clear history:', err);
-        if (targetId === activeConversationId) {
-          setMessages([]);
-        }
-        toast.success('Đã xóa lịch sử cuộc trò chuyện');
+        toast.error(t('security.historyClearFailed')); throw err;
       }
     },
-    [activeConversationId]
+    [activeConversationId, t]
   );
 
   // Start or open DM with a real user
@@ -971,8 +957,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         localLastSeqRef.current = Math.max(localLastSeqRef.current, payload.seq);
 
-        // Auto mark read if active
-        chatSocket.sendRead(payload.conversation_id, payload.seq);
+
       }
 
       // Update conversation list preview & unread distance
@@ -991,8 +976,8 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setConversations((prev) => {
         const existing = prev.find((c) => c.id === payload.conversation_id);
         if (existing) {
-          if (payload.kind === 'CALL' && payload.seq <= existing.lastSeq) return prev;
-          const isRead = isForActive;
+          if (payload.seq <= existing.lastSeq) return prev;
+          const isRead = payload.seq <= (readRequestsRef.current.get(payload.conversation_id) || 0);
           const updated: ChatConversationItem = {
             ...existing,
             lastSeq: payload.seq,
@@ -1013,7 +998,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             try {
               const rawConv = await chatService.getConversation(payload.conversation_id);
               const enriched = await transformConversationRef.current(rawConv);
-              const isRead = isForActive;
+              const isRead = payload.seq <= (readRequestsRef.current.get(payload.conversation_id) || 0);
               enriched.lastSeq = payload.seq;
               enriched.lastMessageAt = payload.created_at;
               enriched.unreadSeqDistance = isRead ? 0 : 1;
@@ -1059,11 +1044,13 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
 
     // 4. read.updated (Read Receipts)
-    const unsubReadUpdated = chatSocket.on('read.updated', (payload) => {
-      if (payload.conversation_id === activeConversationId) {
-        setConversations((prev) =>
-          prev.map((c) => (c.id === payload.conversation_id ? { ...c, lastReadSeq: payload.last_read_seq } : c))
-        );
+    const unsubReadUpdated = chatSocket.on('read.updated', payload => {
+      if (payload.user_id === currentUserId) {
+        readRequestsRef.current.set(payload.conversation_id, Math.max(readRequestsRef.current.get(payload.conversation_id) || 0, payload.last_read_seq));
+        setConversations(prev => prev.map(c => c.id === payload.conversation_id ? { ...c, lastReadSeq: Math.max(c.lastReadSeq,payload.last_read_seq), unreadSeqDistance: Math.max(0,c.lastSeq-Math.max(c.lastReadSeq,payload.last_read_seq)), lastMessagePreview: c.lastMessagePreview ? { ...c.lastMessagePreview,isRead:c.lastSeq<=payload.last_read_seq } : undefined } : c));
+      } else {
+        setConversations(prev=>prev.map(c=>c.id===payload.conversation_id && c.type==='DM' && c.partner?.id===payload.user_id?{...c,partnerLastReadSeq:Math.max(c.partnerLastReadSeq||0,payload.last_read_seq)}:c));
+        if (payload.conversation_id === activeConversationId) setMessages(prev => prev.map(m => m.isMine && (m.seq || 0) <= payload.last_read_seq ? { ...m, status: 'READ' } : m));
       }
     });
 
@@ -1132,6 +1119,11 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     });
 
+    const unsubHistory = chatSocket.on('history.cleared', payload => {
+      void fetchConversations();
+      readRequestsRef.current.delete(payload.conversation_id);
+      if(payload.conversation_id === selectedIdRef.current) { setMessages([]); void fetchMessagesForActiveConversation(payload.conversation_id); }
+    });
     const unsubConvNew = chatSocket.on('conversation.new', () => {
       void fetchConversations();
     });
@@ -1154,6 +1146,7 @@ export const ChatProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       unsubTyping();
       unsubError();
       unsubConvNew();
+      unsubHistory();
       unsubReconnect();
     };
   }, [activeConversationId, currentUserId, t, fetchConversations]);

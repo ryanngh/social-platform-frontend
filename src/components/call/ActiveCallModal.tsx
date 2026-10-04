@@ -43,7 +43,7 @@ export default function ActiveCallModal() {
             </div>}
         </div>
         {c.type === 'video' && <div className={'overflow-hidden rounded-2xl border border-white/15 bg-[#161720] ' + (c.gridMode ? 'min-h-0' : 'absolute bottom-3 right-3 h-28 w-36 sm:h-36 sm:w-52')}>
-          {c.localMediaStream && !c.isVideoOff ? <CallVideo stream={c.localMediaStream} mirror className="h-full w-full object-cover" /> : <div className="flex h-full flex-col items-center justify-center gap-2 text-gray-400"><VideoOff /><span className="text-xs">{t('calls.cameraOff')}</span></div>}
+          {c.localMediaStream && !c.isVideoOff ? <CallVideo stream={c.localMediaStream} className="h-full w-full object-cover" /> : <div className="flex h-full flex-col items-center justify-center gap-2 text-gray-400"><VideoOff /><span className="text-xs">{t('calls.cameraOff')}</span></div>}
         </div>}
         {c.type === 'audio' && !ended && <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2 text-xs text-gray-400"><img className="h-7 w-7 rounded-full" src={getAvatarUrl(user?.avatarUrl)} alt="" /><span>{t('calls.you')}</span><AudioVisualizer stream={c.localMediaStream} isMuted={c.isMuted} className="h-6 w-28" /></div>}
       </div>

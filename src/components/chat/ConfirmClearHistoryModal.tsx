@@ -23,7 +23,7 @@ export const ConfirmClearHistoryModal: React.FC<ConfirmClearHistoryModalProps> =
     try {
       await clearHistory(activeConversation.id);
       onClose();
-    } finally {
+    } catch { /* ChatContext reports the failure; keep the dialog open for retry. */ } finally {
       setIsClearing(false);
     }
   };

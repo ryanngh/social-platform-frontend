@@ -64,7 +64,7 @@ export const Rewind15Icon: React.FC<{ className?: string }> = ({ className = 'w-
       fontWeight="700"
       fill="currentColor"
       stroke="none"
-      fontFamily="system-ui, -apple-system, sans-serif"
+      fontFamily="Arial, Helvetica, sans-serif"
     >
       15
     </text>
@@ -92,7 +92,7 @@ export const Forward15Icon: React.FC<{ className?: string }> = ({ className = 'w
       fontWeight="700"
       fill="currentColor"
       stroke="none"
-      fontFamily="system-ui, -apple-system, sans-serif"
+      fontFamily="Arial, Helvetica, sans-serif"
     >
       15
     </text>

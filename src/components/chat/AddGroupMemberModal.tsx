@@ -245,7 +245,7 @@ export const AddGroupMemberModal: React.FC<AddGroupMemberModalProps> = ({
                         <p className="text-xs font-bold text-gray-900 dark:text-[#F5F5F5] truncate">
                           {displayName}
                         </p>
-                        <p className="text-[11px] text-gray-400 truncate">@{contact.username}</p>
+                        <p className="text-[12px] text-gray-400 truncate">@{contact.username}</p>
                       </div>
                     </div>
 

@@ -283,4 +283,9 @@ export const chatService = {
   },
 };
 
+export interface SharedMediaItem extends MessageResponse { media_type: MediaType; media_url: string; file_name: string; file_size: number }
+export async function getSharedMedia(conversationId: string, category: 'media' | 'files', cursor = 0) {
+  return (await chatApi.get<{ items: SharedMediaItem[]; next_cursor: number }>(`/api/v1/conversations/${conversationId}/media`, { params: { category, cursor, limit: 30 } })).data;
+}
+
 export default chatService;

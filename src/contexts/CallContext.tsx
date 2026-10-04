@@ -5,6 +5,7 @@ import { useAuth } from './AuthContext';
 import { useLanguage } from './LanguageContext';
 import type { CallParticipant, CallSnapshot, CallStatus, CallType, CallViewMode } from '../types/call';
 import { CallPeer, callService, captureCallMedia } from '../services/callService';
+import { switchCallInput, switchCallOutput } from '../services/callDevices';
 import chatSocket from '../services/chatSocket';
 import { userService } from '../services/userService';
 import { startOutgoingDialTone, startIncomingRingtone, playCallConnectedSound, playCallEndedSound, stopCallSounds } from '../utils/callSounds';
@@ -20,7 +21,7 @@ interface CallContextType {
   acceptCall: () => Promise<void>; declineCall: () => void; endCall: () => void;
   toggleMute: () => void; toggleVideo: () => Promise<void>;
   changeDevice: (kind: 'audio' | 'video', deviceId: string) => Promise<void>;
-  setOutputDeviceId: (id: string) => void; setShowSettings: (open: boolean) => void;
+  changeOutputDevice: (id: string) => Promise<void>; registerAudioElement: (element: HTMLAudioElement | null) => void; setShowSettings: (open: boolean) => void;
   setGridMode: (grid: boolean) => void; setViewMode: (mode: CallViewMode) => void;
   continueWithoutCamera: () => void; formatDuration: (seconds: number) => string;
 }
@@ -51,6 +52,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const active = useRef<CallSnapshot | null>(null);
   const stream = useRef<MediaStream | null>(null);
+  const audioElement = useRef<HTMLAudioElement | null>(null);
   const peer = useRef<CallPeer | null>(null);
   const peerStarting = useRef<Promise<void> | null>(null);
   const generation = useRef(0);
@@ -121,7 +123,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!chatSocket.sendCall('call.invite', { request_id: request.current, conversation_id: conversationId, type: callType })) throw new Error('SIGNALING_DISCONNECTED');
       changeStatus('calling'); startOutgoingDialTone();
       invitation.current = setTimeout(() => terminate('SIGNALING_DISCONNECTED'), 15_000);
-    } catch (error) { if (epoch === generation.current) { toast.error(t('calls.mediaError')); finish(error instanceof Error && ['SIGNALING_DISCONNECTED', 'MEDIA_UNSUPPORTED'].includes(error.message) ? error.message : 'MEDIA_ERROR'); } }
+    } catch (error) { if (epoch === generation.current) { const code = error instanceof Error && ['SIGNALING_DISCONNECTED', 'MEDIA_UNSUPPORTED'].includes(error.message) ? error.message : 'MEDIA_ERROR'; toast.error(t(code === 'MEDIA_UNSUPPORTED' ? 'calls.deviceUnsupportedError' : 'calls.mediaError')); finish(code); } }
   }, [enabled, registered, cleanup, changeStatus, media, terminate, finish, t]);
 
   const acceptCall = useCallback(async () => {
@@ -292,14 +294,23 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
   const changeDevice = useCallback(async (kind: 'audio' | 'video', deviceId: string) => {
     const epoch = generation.current;
-    const next = await navigator.mediaDevices.getUserMedia(kind === 'audio' ? { audio: { deviceId: deviceId ? { exact: deviceId } : undefined, echoCancellation: true, noiseSuppression: true }, video: false } : { audio: false, video: { deviceId: deviceId ? { exact: deviceId } : undefined } });
-    if (epoch !== generation.current || !stream.current) { next.getTracks().forEach(track => track.stop()); return; }
-    const track = kind === 'audio' ? next.getAudioTracks()[0] : next.getVideoTracks()[0];
-    track.enabled = kind === 'audio' ? !mutedRef.current : !videoOffRef.current;
-    try { await peer.current?.replace(kind, track); } catch (error) { next.getTracks().forEach(t => t.stop()); throw error; }
-    if (epoch !== generation.current || !stream.current) { next.getTracks().forEach(t => t.stop()); return; }
-    stream.current.getTracks().filter(t => t.kind === track.kind).forEach(t => { stream.current!.removeTrack(t); t.stop(); });
-    stream.current.addTrack(track); setLocalMediaStream(new MediaStream(stream.current.getTracks()));
+    const local = stream.current;
+    if (!local) return;
+    const track = await switchCallInput(kind, deviceId, {
+      stream: local,
+      current: () => epoch === generation.current && stream.current === local,
+      enabled: () => kind === 'audio' ? !mutedRef.current : !videoOffRef.current,
+      replace: (kind, track) => peer.current?.replace(kind, track),
+    });
+    if (track && epoch === generation.current && stream.current === local) setLocalMediaStream(new MediaStream(local.getTracks()));
+  }, []);
+  const registerAudioElement = useCallback((element: HTMLAudioElement | null) => { audioElement.current = element; }, []);
+  const changeOutputDevice = useCallback(async (id: string) => {
+    const epoch = generation.current;
+    const element = audioElement.current;
+    if (!element) return;
+    const selected = await switchCallOutput(element, id, () => epoch === generation.current && audioElement.current === element);
+    if (selected !== null) setOutputDeviceId(selected);
   }, []);
   const toggleVideo = useCallback(async () => {
     if (type !== 'video') return;
@@ -318,7 +329,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     partnerVideoOff: !!(mine ? call?.callee_video_off : call?.caller_video_off),
     localMediaStream, remoteMediaStream, showSettings, gridMode, outputDeviceId, cameraFallback, errorCode,
     startCall, acceptCall, declineCall: () => terminate(), endCall: () => terminate(), toggleMute, toggleVideo,
-    changeDevice, setOutputDeviceId, setShowSettings, setGridMode, setViewMode,
+    changeDevice, changeOutputDevice, registerAudioElement, setShowSettings, setGridMode, setViewMode,
     continueWithoutCamera: () => fallback.current?.(true), formatDuration: formatCallDuration,
   }}>{children}</CallContext.Provider>;
 };

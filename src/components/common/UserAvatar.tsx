@@ -65,8 +65,8 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
   alt = 'Avatar',
   userId,
   size = 'md',
-  showPresence = true,
-  showOfflineIndicator = true,
+  showPresence = false,
+  showOfflineIndicator: _showOfflineIndicator = false,
   presenceStatus,
   forceShowPresence = false,
   isSelf,
@@ -85,33 +85,18 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
   const shouldTrackPresence = Boolean(userId && (forceShowPresence || !isCurrentUser) && showPresence);
 
   // Auto-subscribe to presence for this user via viewport hook
-  const { status: trackedStatus, lastSeenText } = useUserPresence(userId, shouldTrackPresence);
+  const { status: trackedStatus } = useUserPresence(userId, shouldTrackPresence);
 
   // Effective status: explicit override prop takes precedence, otherwise tracked status
   const effectiveStatus: PresenceStatus = presenceStatus || (shouldTrackPresence ? trackedStatus : 'offline');
   const isOnline = effectiveStatus === 'online';
-  const isAway = effectiveStatus === 'away';
-  const isDnd = effectiveStatus === 'dnd';
-  const isOffline = effectiveStatus === 'offline';
-
-  // Check if indicator should be displayed
-  const hasVisiblePresence =
-    (forceShowPresence || !isCurrentUser) &&
-    showPresence &&
-    (isOnline || isAway || isDnd || (isOffline && showOfflineIndicator));
+  const hasVisiblePresence = (forceShowPresence || !isCurrentUser) && showPresence && isOnline;
 
   const resolvedSize = size !== 'custom' ? sizeConfig[size] : null;
 
   const defaultBorderClass = badgeBorderClassName || 'border-white dark:border-[#121212]';
 
-  const presenceLabel =
-    isOnline
-      ? language === 'vi' ? 'Đang hoạt động' : 'Active now'
-      : isAway
-      ? language === 'vi' ? 'Vắng mặt' : 'Away'
-      : isDnd
-      ? language === 'vi' ? 'Không làm phiền' : 'Do not disturb'
-      : lastSeenText || (language === 'vi' ? 'Ngoại tuyến' : 'Offline');
+  const presenceLabel = language === 'vi' ? 'Đang hoạt động' : 'Active now';
 
   return (
     <div
@@ -146,9 +131,6 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
             'absolute rounded-full shadow-xs transition-all duration-200 z-10',
             defaultBorderClass,
             isOnline && 'bg-[#22c55e]',
-            isAway && 'bg-[#eab308]',
-            isDnd && 'bg-[#ef4444]',
-            isOffline && 'bg-gray-400 dark:bg-[#737373]',
             resolvedSize?.badge || 'w-3 h-3 border-2 bottom-0 right-0',
             badgeClassName
           )}

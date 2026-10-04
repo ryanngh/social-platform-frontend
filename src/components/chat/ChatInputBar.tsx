@@ -1,3 +1,4 @@
+import ChatBlockNotice from './ChatBlockNotice';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   ThumbsUp,
@@ -105,7 +106,9 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
 
   // Handle stage file helper
   const stageFile = useCallback(async (rawFile: File) => {
+    if (activeConversation?.canMessage === false) return;
     const file = await convertHeicToJpeg(rawFile);
+    if (!canMessageRef.current) return;
     const mime = file.type || '';
     let fileType: StagedAttachment['type'] = 'FILE';
     let previewUrl: string | undefined = undefined;
@@ -259,7 +262,11 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
   };
 
   // Real Audio Recording using MediaRecorder API
+  const canMessageRef = useRef(true);
+  canMessageRef.current = activeConversation?.canMessage !== false;
+
   const startRecording = async () => {
+    if (activeConversation?.canMessage === false) return;
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         toast.error('Trình duyệt không hỗ trợ ghi âm trực tiếp!');
@@ -267,6 +274,7 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (!canMessageRef.current) { stream.getTracks().forEach(track => track.stop()); return; }
       mediaStreamRef.current = stream;
       audioChunksRef.current = [];
 
@@ -345,7 +353,13 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
     setRecordingSeconds(0);
   };
 
+  useEffect(() => {
+    if (activeConversation?.canMessage !== false) return;
+    cancelRecording(); setStagedAttachment(null);
+  }, [activeConversation?.canMessage]);
+
   if (!activeConversation && !activeConversationId) return null;
+  if (activeConversation?.canMessage === false) return <ChatBlockNotice conversation={activeConversation} />;
 
   return (
     <div
@@ -426,11 +440,11 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
                 {stagedAttachment.name}
               </p>
               <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-[11px] text-gray-500 dark:text-[#8E8E8E]">
+                <span className="text-[12px] text-gray-500 dark:text-[#8E8E8E]">
                   {formatFileSize(stagedAttachment.size)}
                 </span>
                 {isUploading && (
-                  <span className="text-[11px] font-semibold text-[#0084FF] dark:text-[#3797F0] flex items-center gap-1">
+                  <span className="text-[12px] font-semibold text-[#0084FF] dark:text-[#3797F0] flex items-center gap-1">
                     <Loader2 className="w-3 h-3 animate-spin" />
                     <span>{uploadPercent}%</span>
                   </span>
@@ -567,7 +581,7 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
                   ? 'Thêm chú thích cho tệp đính kèm...'
                   : t('messages.typeMessagePlaceholder')
               }
-              className="flex-1 bg-transparent text-[14px] sm:text-[14.5px] text-gray-900 dark:text-[#F5F5F5] placeholder-[#8E8E8E] dark:placeholder-[#737373] outline-none font-normal leading-normal disabled:opacity-50 min-w-0"
+              className="flex-1 bg-transparent text-[15px] sm:text-[15px] text-gray-900 dark:text-[#F5F5F5] placeholder-[#8E8E8E] dark:placeholder-[#737373] outline-none font-normal leading-normal disabled:opacity-50 min-w-0"
             />
 
 
@@ -578,7 +592,7 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
                 onTouchEnd={(e) => { e.preventDefault(); void handleSend(); }}
                 onClick={() => void handleSend()}
                 disabled={isRateLimited || isUploading}
-                className="text-[14px] font-semibold text-[#0095F6] hover:text-[#00376B] dark:hover:text-[#3897F0] px-3 py-1.5 min-h-[44px] min-w-[44px] transition cursor-pointer shrink-0 disabled:opacity-50 flex items-center justify-center gap-1.5 hover:scale-105 active:scale-95 rounded-full select-none"
+                className="text-[15px] font-semibold text-[#0095F6] hover:text-[#00376B] dark:hover:text-[#3897F0] px-3 py-1.5 min-h-[44px] min-w-[44px] transition cursor-pointer shrink-0 disabled:opacity-50 flex items-center justify-center gap-1.5 hover:scale-105 active:scale-95 rounded-full select-none"
                 title={t('messages.send')}
                 aria-label={t('messages.send')}
               >
@@ -647,7 +661,7 @@ export const ChatInputBar: React.FC<ChatInputBarProps> = ({
                     title={t('messages.attachGif')}
                     aria-label={t('messages.attachGif')}
                   >
-                    <span className="font-extrabold text-[10.5px] border border-current px-1 py-[1.5px] rounded-[4px] leading-none select-none tracking-tight">
+                    <span className="font-extrabold text-[12px] border border-current px-1 py-[1.5px] rounded-[4px] leading-none select-none tracking-tight">
                       GIF
                     </span>
                   </button>

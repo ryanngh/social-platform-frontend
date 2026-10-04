@@ -1,3 +1,4 @@
+import { AccountSettingsPage, PrivacySettingsPage, ForgotPasswordPage, AccountRecoveryPage } from './pages/AccountSettingsPages';
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -89,11 +90,15 @@ function App() {
                         <CallContainer />
                         <DockedChatContainer />
                         <Routes>
+                          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                          <Route path="/account/recovery" element={<AccountRecoveryPage />} />
                           <Route path="/signin" element={<SignInPage />} />
                           <Route path="/signup" element={<SignUpPage />} />
 
                           {/* Main App Layout Routes */}
                           <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
+                            <Route path="/settings/account" element={<AccountSettingsPage />} />
+                            <Route path="/settings/privacy" element={<PrivacySettingsPage />} />
                             <Route path="/feed" element={<FeedPage />} />
                             <Route path="/trending" element={<FeedPage defaultTab="trending" />} />
                             <Route path="/notifications" element={<NotificationsPage />} />

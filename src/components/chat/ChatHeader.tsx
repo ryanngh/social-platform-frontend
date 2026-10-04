@@ -1,9 +1,9 @@
+import { Link } from 'react-router-dom';
 import React from 'react';
 import { Phone, Video, Info, ArrowLeft, WifiOff, RefreshCw, Users } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useCall } from '../../contexts/CallContext';
 import { useChat } from '../../contexts/ChatContext';
-import { useUserPresence } from '../../contexts/PresenceContext';
 import UserAvatar from '../common/UserAvatar';
 import clsx from 'clsx';
 
@@ -23,14 +23,6 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   const { activeConversation, connectionState, reconnectWs, typingUsers } = useChat();
 
   const isGroup = activeConversation?.type === 'GROUP';
-  const partnerId = !isGroup ? activeConversation?.partner?.id : undefined;
-
-  // Real-time reactive presence tracking for DM partner
-  const { isOnline: isPartnerOnline, status: partnerStatus, lastSeenText } = useUserPresence(
-    partnerId,
-    Boolean(partnerId)
-  );
-
   if (!activeConversation) {
     return (
       <div className="h-16 px-4 bg-white dark:bg-[#121212] border-b border-gray-100 dark:border-[#262626] flex items-center justify-between" />
@@ -46,7 +38,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
       username: activeConversation.partner?.username || activeConversation.displayName.toLowerCase().replace(/\s+/g, '_'),
       avatarUrl: activeConversation.partner?.avatarUrl || activeConversation.avatarUrl || '',
     };
-    if (isGroup) return; void startCall(activeConversation.id, callType, target);
+    if (isGroup || activeConversation.canCall === false) return; void startCall(activeConversation.id, callType, target);
   };
 
   return (
@@ -61,6 +53,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
           <ArrowLeft className="w-5 h-5" />
         </button>
 
+        <Link to={isGroup || activeConversation.partnerDeleted ? "#" : `/${activeConversation.partner?.username || activeConversation.partner?.id}`} onClick={e => { if (isGroup || activeConversation.partnerDeleted) e.preventDefault(); }} className="flex gap-3 items-center min-w-0">
         {isGroup ? (
           <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-xs shadow-xs border-2 border-white dark:border-[#262626] shrink-0">
             <Users className="w-4 h-4" />
@@ -70,7 +63,6 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
             userId={activeConversation.partner?.id}
             src={activeConversation.avatarUrl}
             alt={activeConversation.displayName}
-            presenceStatus={isPartnerOnline ? 'online' : partnerStatus}
             size="md"
             className="w-9 h-9 sm:w-10 sm:h-10 shadow-xs"
           />
@@ -82,7 +74,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
               {activeConversation.displayName}
             </h2>
             {isGroup && (
-              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-[#004AC6] dark:text-[#0095F6]">
+              <span className="text-[12px] font-semibold px-1.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-[#004AC6] dark:text-[#0095F6]">
                 {t('messages.group')}
               </span>
             )}
@@ -98,30 +90,14 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
                 {t('messages.membersCount', { count: activeConversation.members?.length || 4 })}
               </span>
             ) : (
-              <span
-                className={clsx(
-                  'font-normal flex items-center gap-1.5',
-                  isPartnerOnline
-                    ? 'text-emerald-500 font-medium'
-                    : 'text-gray-400 dark:text-[#737373]'
-                )}
-              >
-                {isPartnerOnline ? (
-                  <>
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse inline-block" />
-                    <span>{t('messages.activeNow')}</span>
-                  </>
-                ) : (
-                  <span>{lastSeenText || t('messages.offline')}</span>
-                )}
-              </span>
+              <span />
             )}
 
             {/* Offline / Reconnecting Warning Pill */}
             {connectionState !== 'CONNECTED' && (
               <button
                 onClick={reconnectWs}
-                className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60 hover:bg-amber-100 transition cursor-pointer"
+                className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[12px] font-semibold bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60 hover:bg-amber-100 transition cursor-pointer"
                 title="Bấm để kết nối lại"
               >
                 {connectionState === 'CONNECTING' ? (
@@ -139,6 +115,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
             )}
           </div>
         </div>
+        </Link>
       </div>
 
       {/* 2. Action Buttons */}
@@ -146,7 +123,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
         {!isGroup && callingEnabled && <>
         {/* Audio Call */}
         <button
-          disabled={!callingReady || !['idle', 'ended'].includes(callStatus)}
+          disabled={activeConversation.canCall === false || !callingReady || !['idle', 'ended'].includes(callStatus)}
             onClick={() => handleStartCall('audio')}
           className="p-2 text-gray-700 dark:text-[#E0E0E0] hover:bg-gray-100 dark:hover:bg-[#262626] rounded-full transition cursor-pointer"
           title={t('messages.audioCall')}
@@ -157,7 +134,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
 
         {/* Video Call */}
         <button
-          disabled={!callingReady || !['idle', 'ended'].includes(callStatus)}
+          disabled={activeConversation.canCall === false || !callingReady || !['idle', 'ended'].includes(callStatus)}
             onClick={() => handleStartCall('video')}
           className="p-2 text-gray-700 dark:text-[#E0E0E0] hover:bg-gray-100 dark:hover:bg-[#262626] rounded-full transition cursor-pointer"
           title={t('messages.videoCall')}

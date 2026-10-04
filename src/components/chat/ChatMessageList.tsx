@@ -1,3 +1,4 @@
+import { useConversationRead } from '../../hooks/useConversationRead';
 import React, { useRef, useEffect, useState, useLayoutEffect } from 'react';
 import { ChevronDown, Loader2, MessageSquare } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -69,8 +70,10 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
   const [showScrollBottomBtn, setShowScrollBottomBtn] = useState(false);
   const [prevScrollHeight, setPrevScrollHeight] = useState<number | null>(null);
 
+  useConversationRead(activeConversation?.id, Math.max(0,...messages.map(m => m.seq || 0)), containerRef, !isLoadingMessages);
+
   const lastConvIdRef = useRef<string | undefined>(undefined);
-  const lastMessagesLenRef = useRef(0);
+  const newestVisibleRef = useRef(true);
 
   // Instant scroll to bottom when switching conversations (after loading)
   useEffect(() => {
@@ -78,7 +81,7 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
     const convId = activeConversation?.id;
     if (convId !== lastConvIdRef.current) {
       lastConvIdRef.current = convId;
-      lastMessagesLenRef.current = messages.length;
+      newestVisibleRef.current = true;
       // Instant — DOM is freshly painted, smooth looks broken
       if (containerRef.current) {
         containerRef.current.scrollTop = containerRef.current.scrollHeight;
@@ -89,11 +92,8 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
   // Smooth scroll only when a new message arrives in the current conversation
   useEffect(() => {
     if (isLoadingMessages) return;
-    if (messages.length > lastMessagesLenRef.current) {
-      lastMessagesLenRef.current = messages.length;
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages.length, isLoadingMessages]);
+    if (newestVisibleRef.current || messages[messages.length - 1]?.isMine) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages[messages.length - 1]?.seq, isLoadingMessages]);
 
   // Preserve scroll position when older messages are loaded at top
   useLayoutEffect(() => {
@@ -108,6 +108,7 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
   const handleScroll = () => {
     if (!containerRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
+    newestVisibleRef.current = scrollHeight - scrollTop - clientHeight <= 32;
 
     // Trigger load older messages when near top
     if (scrollTop < 80 && !isLoadingOlder && hasMoreOlderMessages) {
@@ -193,7 +194,7 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
                 {/* Clean Instagram Date Separator */}
                 {isNewDate && (
                   <div className="flex justify-center my-4 sm:my-5 select-none">
-                    <span className="text-[11px] font-medium text-[#8E8E8E] dark:text-[#8E8E8E] px-3 py-0.5 rounded-full bg-gray-100/70 dark:bg-[#1A1A1A] tracking-tight">
+                    <span className="text-[12px] font-medium text-[#8E8E8E] dark:text-[#8E8E8E] px-3 py-0.5 rounded-full bg-gray-100/70 dark:bg-[#1A1A1A] tracking-tight">
                       {formatDateSeparator(msg.createdAt, language, t)}
                     </span>
                   </div>

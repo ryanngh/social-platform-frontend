@@ -35,10 +35,15 @@ const StoriesCarousel: React.FC = () => {
       }
     };
 
-    loadUsers();
+    const refresh = () => { void loadUsers(); };
+    void loadUsers();
+    window.addEventListener('relationships-changed',refresh);
+    window.addEventListener('focus',refresh);
 
     return () => {
       isMounted = false;
+      window.removeEventListener('relationships-changed',refresh);
+      window.removeEventListener('focus',refresh);
     };
   }, [user?.id]);
 
@@ -94,6 +99,7 @@ const StoriesCarousel: React.FC = () => {
             >
               <div className="relative">
                 <UserAvatar
+                  showPresence
                   userId={item.id}
                   src={item.avatarUrl}
                   alt={item.fullName || item.username}

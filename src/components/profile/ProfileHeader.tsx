@@ -4,6 +4,7 @@ import {
   MapPin, 
   Link2, 
   Calendar, 
+  Lock,
   UserPlus, 
   UserCheck, 
   UserMinus, 
@@ -594,11 +595,6 @@ export const ProfileHeader = ({
               <p className="text-xs sm:text-sm text-gray-500 dark:text-[#A8A8A8] font-normal">
                 @{user.username || 'user'}
               </p>
-              {!isOwnProfile && user.isFollower && (
-                <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-gray-100 dark:bg-[#262626] text-gray-600 dark:text-gray-300 border border-gray-200/60 dark:border-[#363636]">
-                  {t('profile.followsYou', { defaultValue: 'Theo dõi bạn' })}
-                </span>
-              )}
             </div>
           )}
         </div>
@@ -709,7 +705,7 @@ export const ProfileHeader = ({
               }`}
               type="button"
             >
-              {tab.label}
+              {user.profileTabAccess?.[tab.id.toLowerCase()] === false && <Lock className="w-3.5 h-3.5 inline mr-1" aria-label={language === 'vi' ? 'Riêng tư' : 'Private'} />}{tab.label}
             </button>
           ))}
         </nav>

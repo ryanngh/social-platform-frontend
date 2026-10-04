@@ -98,6 +98,7 @@ export const formatChatMessage = (m: Partial<MessageResponse> & Pick<MessageResp
     conversationId: m.conversation_id,
     seq: m.seq,
     senderId: m.sender_id,
+    senderDeleted: m.sender_deleted,
     clientMsgId: m.client_msg_id || `srv-${m.id || m.seq}`,
     body: mediaInfo.cleanBody,
     replyToId: m.reply_to_id,

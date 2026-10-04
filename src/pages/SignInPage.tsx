@@ -88,6 +88,7 @@ export const SignInPage: React.FC = () => {
       toast.success(isVi ? 'Đăng nhập thành công!' : 'Successfully signed in!');
       navigate('/feed');
     } catch (error: unknown) {
+      if ((error as { recoveryRequired?: boolean }).recoveryRequired) { navigate('/account/recovery'); return; }
       const msg = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
       toast.error(
         msg ||
@@ -262,12 +263,12 @@ export const SignInPage: React.FC = () => {
                       </label>
                     </div>
                     <div className="text-xs">
-                      <a
-                        href="#"
+                      <Link
+                        to="/forgot-password"
                         className="font-semibold text-[#004AC6] dark:text-[#38BDF8] hover:underline"
                       >
                         {t('auth.forgotPassword')}
-                      </a>
+                      </Link>
                     </div>
                   </div>
 

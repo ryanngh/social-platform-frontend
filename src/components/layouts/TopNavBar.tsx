@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Search, Bell, MessageSquare, Globe, User as UserIcon, LogOut, Sun, Moon, Laptop, X } from 'lucide-react';
+import { Search, Bell, MessageSquare, Globe, User as UserIcon, LogOut, Sun, Moon, Laptop, X, Settings, Shield } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -364,6 +364,22 @@ const TopNavBar: React.FC = () => {
                 </div>
               </div>
 
+              <Link
+                to="/settings/account"
+                onClick={() => setShowUserMenu(false)}
+                className="flex items-center gap-2 px-4 py-2.5 text-xs text-gray-700 dark:text-[#D4D4D4] hover:bg-[#EFF6FF] dark:hover:bg-blue-950/50 hover:text-[#004AC6] dark:hover:text-[#0095F6] transition border-t border-gray-100 dark:border-[#262626]"
+              >
+                <Settings className="w-3.5 h-3.5 text-gray-500 dark:text-[#A8A8A8]" />
+                <span>{t('userMenu.accountSettings')}</span>
+              </Link>
+              <Link
+                to="/settings/privacy"
+                onClick={() => setShowUserMenu(false)}
+                className="flex items-center gap-2 px-4 py-2.5 text-xs text-gray-700 dark:text-[#D4D4D4] hover:bg-[#EFF6FF] dark:hover:bg-blue-950/50 hover:text-[#004AC6] dark:hover:text-[#0095F6] transition"
+              >
+                <Shield className="w-3.5 h-3.5 text-gray-500 dark:text-[#A8A8A8]" />
+                <span>{t('userMenu.privacy')}</span>
+              </Link>
               {/* Language Switcher Button Group */}
               <div className="px-4 py-2.5 border-t border-b border-gray-100 dark:border-[#262626] flex items-center justify-between">
                 <div className="flex items-center gap-1.5 text-xs text-gray-700 dark:text-[#D4D4D4]">

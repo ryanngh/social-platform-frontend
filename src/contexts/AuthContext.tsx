@@ -70,8 +70,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  useEffect(() => {
+    const revoked = () => { localStorage.removeItem('accessToken');localStorage.removeItem('refreshToken');sessionStorage.removeItem('accountRecovery');setUser(null); };
+    window.addEventListener('auth-revoked',revoked);return ()=>window.removeEventListener('auth-revoked',revoked);
+  }, []);
+
   const login = async (data: LoginRequest) => {
     const tokens = await authService.login(data);
+    if ('recoveryToken' in tokens) {
+      localStorage.removeItem('accessToken'); localStorage.removeItem('refreshToken'); setUser(null);
+      sessionStorage.setItem('accountRecovery', JSON.stringify(tokens));
+      throw Object.assign(new Error('Account recovery required'), { recoveryRequired: true });
+    }
     localStorage.setItem('accessToken', tokens.accessToken);
     localStorage.setItem('refreshToken', tokens.refreshToken);
     try {

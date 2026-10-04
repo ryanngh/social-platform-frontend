@@ -1,3 +1,5 @@
+import ChatBlockNotice from './ChatBlockNotice';
+import { useConversationRead } from '../../hooks/useConversationRead';
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -22,7 +24,6 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useCall } from '../../contexts/CallContext';
 import { useChat } from '../../contexts/ChatContext';
 import { formatChatMessage } from '../../utils/chatMessage';
-import { useUserPresence } from '../../contexts/PresenceContext';
 import chatService from '../../services/chatService';
 import chatSocket from '../../services/chatSocket';
 import { playMessageSound } from '../../utils/sound';
@@ -80,14 +81,6 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
   }, [conversations, conversationId]);
 
   const isGroup = conversation?.type === 'GROUP';
-  const partnerId = !isGroup ? conversation?.partner?.id : undefined;
-
-  // Real-time reactive presence tracking for DM partner
-  const { isOnline: isPartnerOnline, status: partnerStatus } = useUserPresence(
-    partnerId,
-    Boolean(partnerId)
-  );
-
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoadingMessages, setIsLoadingMessages] = useState(true);
   const [isLoadingOlder, setIsLoadingOlder] = useState(false);
@@ -97,7 +90,7 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
   const [messageText, setMessageText] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showGifPicker, setShowGifPicker] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const unreadCount = conversation?.unreadSeqDistance || 0;
 
   // Staged attachment
   const [stagedAttachment, setStagedAttachment] = useState<StagedAttachment | null>(null);
@@ -113,6 +106,8 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const mediaInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const initialScrollRef = useRef<string | null>(null);
+  const newestVisibleRef = useRef(true);
   const localLastSeqRef = useRef<number>(0);
   const oldestSeqRef = useRef<number>(0);
   const typingTimerMapRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
@@ -123,6 +118,8 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
   const mediaStreamRef = useRef<MediaStream | null>(null);
 
   const isRateLimited = rateLimitCooldown > 0;
+  const canMessageRef = useRef(true);
+  canMessageRef.current = conversation?.canMessage !== false;
 
   // Format single raw message to ChatMessage
   const formatMsg = useCallback(
@@ -144,11 +141,7 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
         localLastSeqRef.current = maxSeq;
         oldestSeqRef.current = minSeq;
 
-        // Auto mark read if not minimized
-        if (!isMinimized && maxSeq > 0) {
-          chatSocket.sendRead(conversationId, maxSeq);
-          void chatService.markRead(conversationId, maxSeq).catch(() => {});
-        }
+
       } else {
         setMessages([]);
         localLastSeqRef.current = 0;
@@ -159,11 +152,16 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
     } finally {
       setIsLoadingMessages(false);
     }
-  }, [conversationId, formatMsg, isMinimized]);
+  }, [conversationId, formatMsg]);
 
   useEffect(() => {
     void loadMessages();
   }, [loadMessages]);
+
+  useEffect(() => {
+    const read=conversation?.partnerLastReadSeq || 0;
+    if(read) setMessages(prev=>prev.map(m=>m.isMine && (m.seq||0)<=read && m.status!=='READ'?{...m,status:'READ'}:m));
+  }, [conversation?.partnerLastReadSeq, messages.length]);
 
   // Load older messages (pagination)
   const handleLoadOlder = useCallback(async () => {
@@ -195,7 +193,8 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
   // Handle scroll events
   const handleScroll = () => {
     if (!containerRef.current) return;
-    const { scrollTop } = containerRef.current;
+    const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
+    newestVisibleRef.current = scrollHeight - scrollTop - clientHeight <= 32;
     if (scrollTop < 40 && !isLoadingOlder && hasMoreOlderMessages) {
       void handleLoadOlder();
     }
@@ -204,21 +203,13 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
   // Scroll to bottom when messages change and window is open
   useEffect(() => {
     if (!isMinimized && !isLoadingMessages) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      const root = containerRef.current;
+      if (root && initialScrollRef.current !== conversationId) { root.scrollTop=root.scrollHeight; initialScrollRef.current=conversationId; newestVisibleRef.current=true; }
+      if (root && (newestVisibleRef.current || messages[messages.length - 1]?.isMine)) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages.length, isMinimized, isLoadingMessages]);
+  }, [messages[messages.length - 1]?.seq, isMinimized, isLoadingMessages]);
 
-  // Auto mark read and reset unread count when un-minimizing
-  useEffect(() => {
-    if (!isMinimized) {
-      setUnreadCount(0);
-      const curSeq = localLastSeqRef.current;
-      if (curSeq > 0) {
-        chatSocket.sendRead(conversationId, curSeq);
-        void chatService.markRead(conversationId, curSeq).catch(() => {});
-      }
-    }
-  }, [isMinimized, conversationId]);
+  useConversationRead(conversationId, Math.max(0,...messages.map(m => m.seq || 0)), containerRef, !isMinimized && !isLoadingMessages);
 
   // Auto focus input when replying to a message
   useEffect(() => {
@@ -253,9 +244,9 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
     });
 
     // 2. message.new
+    const unsubHistory = chatSocket.on('history.cleared', payload => { if(payload.conversation_id === conversationId) { initialScrollRef.current=null; void loadMessages(); } });
     const unsubNew = chatSocket.on('message.new', (payload) => {
       if (payload.conversation_id !== conversationId) return;
-      const duplicateCall = payload.kind === 'CALL' && payload.seq <= localLastSeqRef.current;
 
       if (payload.sender_id !== currentUserId) {
         playMessageSound();
@@ -291,12 +282,6 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
 
       localLastSeqRef.current = Math.max(localLastSeqRef.current, payload.seq);
 
-      if (isMinimized && !duplicateCall) {
-        setUnreadCount((prev) => prev + 1);
-      } else {
-        chatSocket.sendRead(conversationId, payload.seq);
-        void chatService.markRead(conversationId, payload.seq).catch(() => {});
-      }
     });
 
     // 3. message.updated
@@ -353,9 +338,14 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
       if (state === 'CONNECTED') chatSocket.sendSync(conversationId, localLastSeqRef.current);
     });
 
+    const unsubRead = chatSocket.on('read.updated', payload => {
+      if (payload.conversation_id === conversationId && payload.user_id !== currentUserId) setMessages(prev => prev.map(m => m.isMine && (m.seq || 0) <= payload.last_read_seq ? { ...m, status: 'READ' } : m));
+    });
     return () => {
+      unsubRead();
       unsubAck();
       unsubNew();
+      unsubHistory();
       unsubUpdated();
       unsubDeleted();
       unsubTyping();
@@ -366,6 +356,7 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
 
   // Send typing indicator
   const handleTyping = () => {
+    if (conversation?.canMessage === false) return;
     const now = Date.now();
     if (now - lastTypingSentTimeRef.current > 2800) {
       lastTypingSentTimeRef.current = now;
@@ -375,7 +366,9 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
 
   // Stage file helper
   const stageFile = useCallback(async (rawFile: File) => {
+    if (conversation?.canMessage === false) return;
     const file = await convertHeicToJpeg(rawFile);
+    if (!canMessageRef.current) return;
     const mime = file.type || '';
     let fileType: StagedAttachment['type'] = 'FILE';
     let previewUrl: string | undefined = undefined;
@@ -429,7 +422,7 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
   // Send message
 
   const handleSendMessage = async (customText?: string) => {
-    if (isRateLimited || isUploading) return;
+    if (conversation?.canMessage === false || isRateLimited || isUploading) return;
 
     const replyId = replyingMessage?.id || (replyingMessage?.seq as number | undefined) || null;
 
@@ -547,6 +540,11 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
   };
 
   // Call triggers
+  useEffect(() => {
+    if (conversation?.canMessage !== false) return;
+    cancelRecording(); setStagedAttachment(null);
+  }, [conversation?.canMessage]);
+
   const handleStartCall = (callType: 'audio' | 'video') => {
     if (!conversation) return;
     const target = {
@@ -556,17 +554,19 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
         conversation.partner?.username || conversation.displayName.toLowerCase().replace(/\s+/g, '_'),
       avatarUrl: conversation.partner?.avatarUrl || conversation.avatarUrl || '',
     };
-    if (isGroup) return; void startCall(conversationId, callType, target);
+    if (isGroup || conversation?.canCall === false) return; void startCall(conversationId, callType, target);
   };
 
   // Audio recording
   const startRecording = async () => {
+    if (conversation?.canMessage === false) return;
     try {
       if (!navigator.mediaDevices?.getUserMedia) {
         toast.error('Trình duyệt không hỗ trợ ghi âm trực tiếp!');
         return;
       }
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (!canMessageRef.current) { stream.getTracks().forEach(track => track.stop()); return; }
       mediaStreamRef.current = stream;
       audioChunksRef.current = [];
 
@@ -653,13 +653,12 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
                 userId={conversation?.partner?.id}
                 src={conversation?.avatarUrl}
                 alt={displayName}
-                presenceStatus={isPartnerOnline ? 'online' : partnerStatus}
                 size="sm"
                 className="w-8 h-8 shadow-xs"
               />
             )}
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse shadow-xs">
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[12px] font-bold rounded-full flex items-center justify-center animate-pulse shadow-xs">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
@@ -669,11 +668,7 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
             <p className="text-xs font-bold text-gray-900 dark:text-[#F5F5F5] truncate leading-tight">
               {displayName}
             </p>
-            {isPartnerOnline && !isGroup && (
-              <p className="text-[10px] text-emerald-500 font-medium leading-tight">
-                {t('messages.activeNow')}
-              </p>
-            )}
+
           </div>
         </div>
 
@@ -719,8 +714,8 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
         {/* Left Partner Info */}
         <div
           onClick={() => {
-            if (conversation?.partner?.username) {
-              navigate(`/${conversation.partner.username}`);
+            if (conversation?.partner && !conversation.partnerDeleted) {
+              navigate(`/${conversation.partner.username || conversation.partner.id}`);
             }
           }}
           className="flex items-center gap-2.5 min-w-0 cursor-pointer hover:opacity-90 transition group"
@@ -735,7 +730,6 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
                 userId={conversation?.partner?.id}
                 src={conversation?.avatarUrl}
                 alt={displayName}
-                presenceStatus={isPartnerOnline ? 'online' : partnerStatus}
                 size="sm"
                 className="w-8.5 h-8.5 shadow-xs"
               />
@@ -743,20 +737,18 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
           </div>
 
           <div className="min-w-0">
-            <h3 className="text-[13.5px] font-bold text-gray-900 dark:text-[#F5F5F5] truncate max-w-[130px] leading-tight group-hover:text-[#0084FF] dark:group-hover:text-[#3797F0] transition-colors">
+            <h3 className="text-[13px] font-bold text-gray-900 dark:text-[#F5F5F5] truncate max-w-[130px] leading-tight group-hover:text-[#0084FF] dark:group-hover:text-[#3797F0] transition-colors">
               {displayName}
             </h3>
-            <p className="text-[10.5px] leading-tight text-gray-400 dark:text-[#8E8E8E] truncate">
+            <p className="text-[12px] leading-tight text-gray-400 dark:text-[#8E8E8E] truncate">
               {typingUsers.size > 0 ? (
                 <span className="text-[#0084FF] dark:text-[#3797F0] font-medium animate-pulse">
                   {t('messages.typing')}
                 </span>
               ) : isGroup ? (
                 <span>{conversation?.members?.length || 3} thành viên</span>
-              ) : isPartnerOnline ? (
-                <span className="text-emerald-500 font-medium">{t('messages.activeNow')}</span>
               ) : (
-                <span>{conversation?.lastActiveText || t('messages.offline')}</span>
+                <span />
               )}
             </p>
           </div>
@@ -768,7 +760,7 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
           {/* Audio Call */}
           <button
             type="button"
-            disabled={!callingReady || !['idle', 'ended'].includes(callStatus)}
+            disabled={conversation?.canCall === false || !callingReady || !['idle', 'ended'].includes(callStatus)}
             onClick={() => handleStartCall('audio')}
             className="p-1.5 hover:text-[#0084FF] dark:hover:text-[#3797F0] hover:bg-gray-100 dark:hover:bg-[#2B2B2B] rounded-full transition cursor-pointer"
             title={t('messages.audioCall')}
@@ -779,7 +771,7 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
           {/* Video Call */}
           <button
             type="button"
-            disabled={!callingReady || !['idle', 'ended'].includes(callStatus)}
+            disabled={conversation?.canCall === false || !callingReady || !['idle', 'ended'].includes(callStatus)}
             onClick={() => handleStartCall('video')}
             className="p-1.5 hover:text-[#0084FF] dark:hover:text-[#3797F0] hover:bg-gray-100 dark:hover:bg-[#2B2B2B] rounded-full transition cursor-pointer"
             title={t('messages.videoCall')}
@@ -919,9 +911,10 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
         <div ref={messagesEndRef} />
       </div>
 
+      {conversation && <ChatBlockNotice conversation={conversation} />}
       {/* Replying Banner */}
       {replyingMessage && (
-        <div className="px-3 py-1.5 bg-gray-100 dark:bg-[#202020] border-t border-gray-200 dark:border-[#2C2C2C] flex items-center justify-between text-[11px] animate-slideIn">
+        <div className="px-3 py-1.5 bg-gray-100 dark:bg-[#202020] border-t border-gray-200 dark:border-[#2C2C2C] flex items-center justify-between text-[12px] animate-slideIn">
           <div className="flex items-center gap-1.5 min-w-0 border-l-2 border-[#0084FF] pl-2">
             <span className="text-gray-400 shrink-0">{t('messages.replyingTo')}</span>
             <span className="font-bold text-gray-800 dark:text-[#E0E0E0] truncate">
@@ -958,9 +951,9 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
                 {stagedAttachment.name}
               </p>
               <div className="flex items-center gap-2">
-                <p className="text-[10px] text-gray-400">{formatFileSize(stagedAttachment.size)}</p>
+                <p className="text-[12px] text-gray-400">{formatFileSize(stagedAttachment.size)}</p>
                 {isUploading && (
-                  <span className="text-[10px] text-[#0084FF] font-semibold flex items-center gap-1">
+                  <span className="text-[12px] text-[#0084FF] font-semibold flex items-center gap-1">
                     <Loader2 className="w-2.5 h-2.5 animate-spin" />
                     <span>{uploadPercent}%</span>
                   </span>
@@ -991,14 +984,14 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
             <button
               type="button"
               onClick={cancelRecording}
-              className="px-2.5 py-1 rounded-full bg-gray-200 dark:bg-[#2A2A2A] text-gray-700 dark:text-[#D4D4D4] text-[11px] font-medium cursor-pointer"
+              className="px-2.5 py-1 rounded-full bg-gray-200 dark:bg-[#2A2A2A] text-gray-700 dark:text-[#D4D4D4] text-[12px] font-medium cursor-pointer"
             >
               {t('common.cancel')}
             </button>
             <button
               type="button"
               onClick={stopAndSendRecording}
-              className="px-3 py-1 rounded-full bg-rose-600 text-white text-[11px] font-semibold flex items-center gap-1 cursor-pointer shadow-xs"
+              className="px-3 py-1 rounded-full bg-rose-600 text-white text-[12px] font-semibold flex items-center gap-1 cursor-pointer shadow-xs"
             >
               <StopCircle className="w-3.5 h-3.5" />
               <span>Gửi</span>
@@ -1046,7 +1039,7 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
                 setShowEmojiPicker(!showEmojiPicker);
                 setShowGifPicker(false);
               }}
-              disabled={isRateLimited || isUploading}
+              disabled={conversation?.canMessage === false || isRateLimited || isUploading}
               className={clsx(
                 'p-1 transition cursor-pointer shrink-0',
                 showEmojiPicker
@@ -1067,7 +1060,7 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
                 setMessageText(e.target.value);
                 handleTyping();
               }}
-              disabled={isRateLimited || isUploading}
+              disabled={conversation?.canMessage === false || isRateLimited || isUploading}
               placeholder={
                 isRateLimited
                   ? `Chờ ${rateLimitCooldown}s...`
@@ -1095,7 +1088,7 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
                   e.preventDefault();
                   void handleSendMessage();
                 }}
-                disabled={isRateLimited || isUploading}
+                disabled={conversation?.canMessage === false || isRateLimited || isUploading}
                 className="text-xs font-bold text-[#0084FF] dark:text-[#3797F0] hover:text-[#0066CC] px-2 py-1 min-h-[32px] transition cursor-pointer shrink-0 disabled:opacity-50 select-none flex items-center gap-1"
                 title={t('messages.send')}
               >
@@ -1111,7 +1104,7 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
                 <button
                   type="button"
                   onClick={startRecording}
-                  disabled={isRateLimited}
+                  disabled={conversation?.canMessage === false || isRateLimited}
                   className="p-1 hover:text-[#0084FF] dark:hover:text-[#3797F0] transition cursor-pointer"
                   title={t('messages.recordVoice')}
                 >
@@ -1122,7 +1115,7 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
                 <button
                   type="button"
                   onClick={() => mediaInputRef.current?.click()}
-                  disabled={isRateLimited}
+                  disabled={conversation?.canMessage === false || isRateLimited}
                   className="p-1 hover:text-[#0084FF] dark:hover:text-[#3797F0] transition cursor-pointer"
                   title={t('messages.attachPhoto')}
                 >
@@ -1133,7 +1126,7 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={isRateLimited}
+                  disabled={conversation?.canMessage === false || isRateLimited}
                   className="p-1 hover:text-[#0084FF] dark:hover:text-[#3797F0] transition cursor-pointer"
                   title={t('messages.attachDocument')}
                 >
@@ -1147,7 +1140,7 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
                     setShowGifPicker(!showGifPicker);
                     setShowEmojiPicker(false);
                   }}
-                  disabled={isRateLimited}
+                  disabled={conversation?.canMessage === false || isRateLimited}
                   className={clsx(
                     'p-1 transition cursor-pointer flex items-center justify-center shrink-0',
                     showGifPicker
@@ -1156,7 +1149,7 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
                   )}
                   title={t('messages.attachGif')}
                 >
-                  <span className="font-extrabold text-[9.5px] border border-current px-1 py-[1.5px] rounded-[4px] leading-none select-none tracking-tight">
+                  <span className="font-extrabold text-[12px] border border-current px-1 py-[1.5px] rounded-[4px] leading-none select-none tracking-tight">
                     GIF
                   </span>
                 </button>
@@ -1165,7 +1158,7 @@ export const DockedChatWindow: React.FC<DockedChatWindowProps> = ({
                 <button
                   type="button"
                   onClick={() => handleSendMessage('👍')}
-                  disabled={isRateLimited}
+                  disabled={conversation?.canMessage === false || isRateLimited}
                   className="p-1 text-gray-500 dark:text-[#A8A8A8] hover:text-[#0084FF] dark:hover:text-[#3797F0] hover:scale-110 active:scale-95 transition cursor-pointer"
                   title={t('messages.sendLike')}
                 >

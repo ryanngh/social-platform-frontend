@@ -69,6 +69,7 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
       setBannerFile(null);
       setAvatarPreview(user.avatarUrl ? getAvatarUrl(user.avatarUrl) : null);
       setBannerPreview(user.bannerUrl ? getBannerUrl(user.bannerUrl) : null);
+      setInterests(user.interests || []);
       setIsAddingInterest(false);
       setNewInterestInput('');
     }
@@ -76,6 +77,7 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
   }, [isOpen, user]);
 
   const isFormChanged =
+    JSON.stringify(interests) !== JSON.stringify(user.interests || []) ||
     firstName.trim() !== (user.firstName || '').trim() ||
     lastName.trim() !== (user.lastName || '').trim() ||
     username.trim() !== (user.username || '').trim() ||
@@ -120,7 +122,7 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
   };
 
   const addInterest = () => {
-    if (newInterestInput.trim() && !interests.includes(newInterestInput.trim())) {
+    if (newInterestInput.trim() && newInterestInput.trim().length <= 40 && interests.length < 20 && !interests.some(tag => tag.toLocaleLowerCase() === newInterestInput.trim().toLocaleLowerCase())) {
       setInterests([...interests, newInterestInput.trim()]);
       setNewInterestInput('');
       setIsAddingInterest(false);
@@ -144,6 +146,7 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
       }
 
       const updateData: ProfileUpdateRequest = {
+        interests,
         firstName,
         lastName,
         username,
@@ -392,7 +395,8 @@ export const EditProfileModal = ({ isOpen, onClose, user, onSave }: EditProfileM
                       type="text"
                       autoFocus
                       placeholder={language === 'vi' ? 'Nhập sở thích...' : 'Enter interest...'}
-                      value={newInterestInput}
+                      maxLength={40}
+                    value={newInterestInput}
                       onChange={(e) => setNewInterestInput(e.target.value)}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {

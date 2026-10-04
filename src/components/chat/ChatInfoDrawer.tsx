@@ -1,4 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import { getSharedMedia } from '../../services/chatService';
+import chatSocket from '../../services/chatSocket';
+import { formatChatMessage } from '../../utils/chatMessage';
+import type { ChatMessage } from '../../types/chat';
+import { securityError } from '../../services/accountSecurity';
+import { Link } from 'react-router-dom';
+import { ChatBlockButton } from './ChatBlockNotice';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   X,
   Phone,
@@ -10,7 +17,6 @@ import {
   UserMinus,
   Trash2,
   Shield,
-  ShieldAlert,
   Image as ImageIcon,
   Film,
   FileText,
@@ -22,8 +28,6 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useCall } from '../../contexts/CallContext';
 import { useChat } from '../../contexts/ChatContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { useUserPresence } from '../../contexts/PresenceContext';
-import { relationshipService } from '../../services/relationshipService';
 import { getMediaUrl } from '../../utils/media';
 import UserAvatar from '../common/UserAvatar';
 import clsx from 'clsx';
@@ -39,32 +43,41 @@ export const ChatInfoDrawer: React.FC<ChatInfoDrawerProps> = ({
   onOpenAddMemberModal,
   onOpenClearHistoryModal,
 }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { user } = useAuth();
   const { startCall, enabled: callingEnabled, ready: callingReady, status: callStatus } = useCall();
-  const { activeConversation, messages, removeMemberFromGroup, leaveGroup } = useChat();
+  const { activeConversation, removeMemberFromGroup, leaveGroup } = useChat();
 
   const [isMuted, setIsMuted] = useState(false);
   const [activeMediaTab, setActiveMediaTab] = useState<'media' | 'files'>('media');
 
-  const sharedMedia = useMemo(() => {
-    return messages.filter(
-      (m) => !m.isDeleted && (m.mediaType === 'IMAGE' || m.mediaType === 'VIDEO') && m.mediaUrl
-    );
-  }, [messages]);
-
-  const sharedFiles = useMemo(() => {
-    return messages.filter((m) => !m.isDeleted && m.mediaType === 'FILE' && m.mediaUrl);
-  }, [messages]);
+  const [sharedMedia, setSharedMedia] = useState<ChatMessage[]>([]);
+  const [sharedFiles, setSharedFiles] = useState<ChatMessage[]>([]);
+  const [mediaCursor, setMediaCursor] = useState(0);
+  const [loadingMedia, setLoadingMedia] = useState(false);
+  const [mediaError, setMediaError] = useState('');
+  const mediaRequestRef = useRef(0);
+  const loadMedia = useCallback(async (cursor = 0) => {
+    if (!activeConversation?.id) return;
+    const request = ++mediaRequestRef.current; setLoadingMedia(true); setMediaError('');
+    try {
+      const result = await getSharedMedia(activeConversation.id, activeMediaTab, cursor);
+      if (request !== mediaRequestRef.current) return;
+      const items = result.items.map(item => ({ ...formatChatMessage(item, user?.id || ''), mediaType: item.media_type, mediaUrl: item.media_url, fileName: item.file_name, fileSize: item.file_size }));
+      const update = (prev: ChatMessage[]) => cursor ? [...prev, ...items.filter(item => !prev.some(old => old.id === item.id))] : items;
+      if (activeMediaTab === 'media') setSharedMedia(update); else setSharedFiles(update);
+      setMediaCursor(result.next_cursor);
+    } catch (e) { if (request === mediaRequestRef.current) setMediaError(securityError(e)); }
+    finally { if (request === mediaRequestRef.current) setLoadingMedia(false); }
+  }, [activeConversation?.id, activeMediaTab, user?.id]);
+  useEffect(() => {
+    setSharedMedia([]); setSharedFiles([]); setMediaCursor(0); void loadMedia();
+    const refresh = (payload: { conversation_id: string }) => { if (payload.conversation_id === activeConversation?.id) void loadMedia(); };
+    const offNew = chatSocket.on('message.new', refresh); const offDeleted = chatSocket.on('message.deleted', refresh); const offHistory=chatSocket.on('history.cleared', refresh);
+    return () => { mediaRequestRef.current++; offNew(); offDeleted(); offHistory(); };
+  }, [loadMedia, activeConversation?.id]);
 
   const isGroup = activeConversation?.type === 'GROUP';
-  const partnerId = !isGroup ? activeConversation?.partner?.id : undefined;
-
-  const { isOnline: isPartnerOnline, status: partnerStatus, lastSeenText } = useUserPresence(
-    partnerId,
-    Boolean(partnerId)
-  );
-
   if (!activeConversation) return null;
 
   const currentUserId = user?.id || 'me';
@@ -80,7 +93,7 @@ export const ChatInfoDrawer: React.FC<ChatInfoDrawerProps> = ({
       username: activeConversation.partner?.username || activeConversation.displayName.toLowerCase().replace(/\s+/g, '_'),
       avatarUrl: activeConversation.partner?.avatarUrl || activeConversation.avatarUrl || '',
     };
-    if (isGroup) return; void startCall(activeConversation.id, callType, target);
+    if (isGroup || activeConversation.canCall === false) return; void startCall(activeConversation.id, callType, target);
   };
 
   const handleToggleMute = () => {
@@ -89,18 +102,6 @@ export const ChatInfoDrawer: React.FC<ChatInfoDrawerProps> = ({
       toast.success(t('messages.mutedSuccess'));
     } else {
       toast.success(t('messages.unmutedSuccess'));
-    }
-  };
-
-  const handleBlockUser = async () => {
-    if (activeConversation.partner?.id) {
-      try {
-        await relationshipService.blockUser(activeConversation.partner.id);
-        toast.success(t('messages.blockConfirm', { username: activeConversation.partner.username }));
-        onClose();
-      } catch {
-        toast.error(t('messages.blockFailed'));
-      }
     }
   };
 
@@ -154,30 +155,27 @@ export const ChatInfoDrawer: React.FC<ChatInfoDrawerProps> = ({
             userId={activeConversation.partner?.id}
             src={activeConversation.avatarUrl}
             alt={activeConversation.displayName}
-            presenceStatus={isPartnerOnline ? 'online' : partnerStatus}
             size="xl"
             className="w-16 h-16 mb-2 border-2 border-white dark:border-[#262626] shadow-md"
           />
         )}
 
         <h4 className="font-bold text-sm text-gray-900 dark:text-[#F5F5F5] truncate max-w-[240px]">
-          {activeConversation.displayName}
+          <Link to={isGroup || activeConversation.partnerDeleted ? "#" : `/${activeConversation.partner?.username || activeConversation.partner?.id}`}>{activeConversation.displayName}</Link>
         </h4>
         <p className="text-xs text-gray-400 dark:text-[#737373] mb-4">
           {isGroup
             ? t('messages.membersCount', { count: activeConversation.members?.length || 4 })
             : activeConversation.partner?.username
             ? `@${activeConversation.partner.username}`
-            : isPartnerOnline
-            ? t('messages.activeNow')
-            : lastSeenText || t('messages.offline')}
+            : ''}
         </p>
 
         {/* Quick Action Buttons */}
         <div className="flex items-center justify-center gap-2 w-full">
           {!isGroup && callingEnabled && <>
           <button
-            disabled={!callingReady || !['idle', 'ended'].includes(callStatus)}
+            disabled={activeConversation.canCall === false || !callingReady || !['idle', 'ended'].includes(callStatus)}
             onClick={() => handleStartCall('audio')}
             className="flex-1 py-2 px-3 rounded-2xl bg-[#EFF6FF] dark:bg-blue-950/60 text-[#0084FF] dark:text-[#3797F0] hover:bg-blue-100 dark:hover:bg-blue-900/60 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs transition"
           >
@@ -186,7 +184,7 @@ export const ChatInfoDrawer: React.FC<ChatInfoDrawerProps> = ({
           </button>
 
           <button
-            disabled={!callingReady || !['idle', 'ended'].includes(callStatus)}
+            disabled={activeConversation.canCall === false || !callingReady || !['idle', 'ended'].includes(callStatus)}
             onClick={() => handleStartCall('video')}
             className="flex-1 py-2 px-3 rounded-2xl bg-[#EFF6FF] dark:bg-blue-950/60 text-[#0084FF] dark:text-[#3797F0] hover:bg-blue-100 dark:hover:bg-blue-900/60 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs transition"
           >
@@ -247,19 +245,19 @@ export const ChatInfoDrawer: React.FC<ChatInfoDrawerProps> = ({
                     <p className="text-xs font-semibold text-gray-900 dark:text-[#F5F5F5] truncate">
                       {member.displayName}
                     </p>
-                    <p className="text-[10px] text-gray-400 truncate">@{member.username}</p>
+                    <p className="text-[12px] text-gray-400 truncate">@{member.username}</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-1 shrink-0">
                   {member.role === 'OWNER' && (
-                    <span className="flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400">
+                    <span className="flex items-center gap-0.5 text-[12px] font-bold px-1.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400">
                       <Crown className="w-2.5 h-2.5" />
                       {t('messages.roleOwner')}
                     </span>
                   )}
                   {member.role === 'ADMIN' && (
-                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
+                    <span className="text-[12px] font-bold px-1.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
                       {t('messages.roleAdmin')}
                     </span>
                   )}
@@ -285,7 +283,7 @@ export const ChatInfoDrawer: React.FC<ChatInfoDrawerProps> = ({
           <h5 className="text-xs font-bold text-gray-900 dark:text-[#F5F5F5]">
             {t('messages.sharedMedia')}
           </h5>
-          <div className="flex items-center gap-1 text-[11px] font-semibold text-gray-500">
+          <div className="flex items-center gap-1 text-[12px] font-semibold text-gray-500">
             <button
               onClick={() => setActiveMediaTab('media')}
               className={clsx(
@@ -342,7 +340,7 @@ export const ChatInfoDrawer: React.FC<ChatInfoDrawerProps> = ({
           ) : (
             <div className="py-4 text-center text-gray-400 dark:text-[#737373] text-xs space-y-1">
               <ImageIcon className="w-5 h-5 mx-auto opacity-50" />
-              <p>Chưa có ảnh hoặc video nào được chia sẻ</p>
+              <p>{loadingMedia ? (language === 'vi' ? 'Đang tải…' : 'Loading…') : (language === 'vi' ? 'Chưa có ảnh hoặc video được chia sẻ' : 'No shared photos or videos')}</p>
             </div>
           )
         ) : (
@@ -386,6 +384,8 @@ export const ChatInfoDrawer: React.FC<ChatInfoDrawerProps> = ({
         )}
       </div>
 
+      {mediaError && <div role="alert" className="text-red-600 text-[13px]">{mediaError}<button className="security-button" onClick={() => void loadMedia()}>{language === 'vi' ? 'Thử lại' : 'Retry'}</button></div>}
+      {mediaCursor > 0 && <button type="button" disabled={loadingMedia} onClick={() => void loadMedia(mediaCursor)} className="security-button">{language === 'vi' ? 'Tải thêm' : 'Load more'}</button>}
       {/* 5. Privacy & Danger Actions */}
       <div className="border-t border-gray-100 dark:border-[#262626] pt-4 space-y-1 text-xs">
         {isGroup ? (
@@ -405,13 +405,7 @@ export const ChatInfoDrawer: React.FC<ChatInfoDrawerProps> = ({
               <Shield className="w-4 h-4" />
               <span>{t('messages.reportUser')}</span>
             </button>
-            <button
-              onClick={handleBlockUser}
-              className="w-full text-left py-2 px-2.5 rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 flex items-center gap-2 cursor-pointer font-medium transition"
-            >
-              <ShieldAlert className="w-4 h-4" />
-              <span>{t('messages.blockUser')}</span>
-            </button>
+            <ChatBlockButton conversation={activeConversation} />
           </>
         )}
 

@@ -53,6 +53,7 @@ export interface PrepareAttachmentResponse {
 // ==========================================
 
 export interface ConversationResponse {
+  blocked_by_me?: boolean; blocked_by_other?: boolean; can_message?: boolean; can_call?: boolean; partner_deleted?: boolean;
   last_message?: MessageResponse;
   id: string;
   type: ConversationType;
@@ -64,6 +65,7 @@ export interface ConversationResponse {
   last_message_at?: string | null;
   unread_seq_distance: number;
   last_read_seq: number;
+  partner_last_read_seq?: number;
   cleared_before_seq: number;
 }
 
@@ -74,6 +76,7 @@ export interface MessageResponse {
   conversation_id: string;
   seq: number;
   sender_id: string;
+  sender_deleted?: boolean;
   client_msg_id: string;
   body: string;
   reply_to_id?: number | null;
@@ -141,7 +144,7 @@ export type WSClientFrame = import('./call').CallClientFrame
       };
     };
 
-export type WSServerFrame = import('./call').CallServerFrame
+export type WSServerFrame = {type:'history.cleared';payload:{conversation_id:string}} | {type:'account.changed';payload:{user_id:string}} | { type: 'relationship.changed'; payload: { user_a: string; user_b: string } } | import('./call').CallServerFrame
   | {
       type: 'message.ack';
       payload: {
@@ -158,6 +161,7 @@ export type WSServerFrame = import('./call').CallServerFrame
         conversation_id: string;
         seq: number;
         sender_id: string;
+  sender_deleted?: boolean;
         client_msg_id?: string;
         kind?: 'TEXT' | 'CALL';
         call?: import('./call').CallSummary;
@@ -245,7 +249,7 @@ export type WSServerFrame = import('./call').CallServerFrame
 // CLIENT-SIDE ENRICHED TYPES
 // ==========================================
 
-export type MessageStatus = 'SENDING' | 'SENT' | 'FAILED';
+export type MessageStatus = 'SENDING' | 'SENT' | 'FAILED' | 'READ';
 export type MediaType = 'TEXT' | 'IMAGE' | 'VIDEO' | 'AUDIO' | 'FILE';
 
 export interface ChatReaction {
@@ -261,6 +265,7 @@ export interface ChatMessage {
   conversationId: string;
   seq?: number;
   senderId: string;
+  senderDeleted?: boolean;
   senderName?: string;
   senderAvatar?: string;
   clientMsgId: string;
@@ -297,6 +302,7 @@ export interface ChatMember {
 }
 
 export interface ChatConversationItem {
+  blockedByMe?: boolean; blockedByOther?: boolean; canMessage?: boolean; canCall?: boolean; partnerDeleted?: boolean;
   id: string;
   type: ConversationType;
   dmKey?: string | null;
@@ -307,6 +313,7 @@ export interface ChatConversationItem {
   lastMessageAt?: string | null;
   unreadSeqDistance: number;
   lastReadSeq: number;
+  partnerLastReadSeq?: number;
   clearedBeforeSeq: number;
   
   // UI Enriched fields
@@ -326,6 +333,7 @@ export interface ChatConversationItem {
   lastMessagePreview?: {
     text: string;
     senderId: string;
+  senderDeleted?: boolean;
     senderName: string;
     timestamp: string;
     isRead: boolean;
