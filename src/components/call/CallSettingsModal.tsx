@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { X } from 'lucide-react';
+import { FlipHorizontal, SwitchCamera, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useCall } from '../../contexts/CallContext';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -41,6 +41,48 @@ export default function CallSettingsModal() {
           {devices.filter(d => d.kind === (kind === 'audio' ? 'audioinput' : 'videoinput')).map((d, i) => <option key={d.deviceId} value={d.deviceId}>{d.label || t('calls.device') + ' ' + (i + 1)}</option>)}
         </select>
       </label>)}
+      {c.type === 'video' && (
+        <div className="mb-4 rounded-xl border border-white/10 bg-white/[0.03] p-3.5 space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <FlipHorizontal size={18} className="text-gray-400 shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-white">{t('calls.flipCamera')}</p>
+                <p className="text-xs text-gray-400">{t('calls.flipCameraDesc')}</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-label={t('calls.flipCamera')}
+              aria-checked={c.isCameraFlipped}
+              onClick={c.toggleFlipCamera}
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+                c.isCameraFlipped ? 'bg-blue-600' : 'bg-white/20'
+              }`}
+            >
+              <span
+                aria-hidden="true"
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                  c.isCameraFlipped ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+          {devices.filter(d => d.kind === 'videoinput').length > 1 && (
+            <div className="pt-2 border-t border-white/10 flex justify-end">
+              <button
+                type="button"
+                onClick={() => void c.switchCameraDevice()}
+                className="flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-medium text-gray-200 hover:bg-white/20 active:scale-[0.98] transition-all"
+              >
+                <SwitchCamera size={14} />
+                {t('calls.switchCamera')}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
       {canSelectOutput && canEnumerate ? <label className="block text-sm">{t('calls.speaker')}<select disabled={busy} value={c.outputDeviceId} onChange={event => void select('output', event.target.value)} className="mt-2 w-full rounded-xl border border-white/20 bg-[#23232B] p-3 disabled:opacity-40"><option value="">{t('calls.defaultDevice')}</option>{devices.filter(d => d.kind === 'audiooutput' && d.deviceId !== 'default').map((d, i) => <option key={d.deviceId} value={d.deviceId}>{d.label || t('calls.device') + ' ' + (i + 1)}</option>)}</select></label> : <p className="text-sm text-gray-400">{t('calls.systemAudioOutput')}</p>}
     </CallDialog>
   </div>;

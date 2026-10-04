@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Mic, MicOff, Video, VideoOff, PhoneOff, PictureInPicture2, Maximize2, Minimize2, Settings, LayoutGrid } from 'lucide-react';
+import { Mic, MicOff, Video, VideoOff, PhoneOff, PictureInPicture2, Maximize2, Minimize2, Settings, LayoutGrid, FlipHorizontal } from 'lucide-react';
 import { useCall } from '../../contexts/CallContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -17,6 +17,7 @@ export default function ActiveCallModal() {
       if ((event.target as HTMLElement)?.closest('input,textarea,select') || c.showSettings || ended || c.status === 'preparing') return;
       if (event.key.toLowerCase() === 'm') c.toggleMute();
       if (event.key.toLowerCase() === 'v' && c.type === 'video') void c.toggleVideo();
+      if (event.key.toLowerCase() === 'f' && c.type === 'video') c.toggleFlipCamera();
       if (event.key === 'Escape') c.setViewMode(c.viewMode === 'fullscreen' ? 'modal' : 'floating');
     };
     window.addEventListener('keydown', key); return () => window.removeEventListener('keydown', key);
@@ -42,8 +43,21 @@ export default function ActiveCallModal() {
               {c.partnerMuted && <p className="text-sm text-gray-400">{t('calls.partnerMuted')}</p>}
             </div>}
         </div>
-        {c.type === 'video' && <div className={'overflow-hidden rounded-2xl border border-white/15 bg-[#161720] ' + (c.gridMode ? 'min-h-0' : 'absolute bottom-3 right-3 h-28 w-36 sm:h-36 sm:w-52')}>
-          {c.localMediaStream && !c.isVideoOff ? <CallVideo stream={c.localMediaStream} className="h-full w-full object-cover" /> : <div className="flex h-full flex-col items-center justify-center gap-2 text-gray-400"><VideoOff /><span className="text-xs">{t('calls.cameraOff')}</span></div>}
+        {c.type === 'video' && <div className={'group relative overflow-hidden rounded-2xl border border-white/15 bg-[#161720] ' + (c.gridMode ? 'min-h-0' : 'absolute bottom-3 right-3 h-28 w-36 sm:h-36 sm:w-52')}>
+          {c.localMediaStream && !c.isVideoOff ? (
+            <>
+              <CallVideo stream={c.localMediaStream} mirrored={c.isCameraFlipped} className="h-full w-full object-cover" />
+              <button
+                type="button"
+                onClick={c.toggleFlipCamera}
+                title={t('calls.flipCamera')}
+                aria-label={t('calls.flipCamera')}
+                className="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white/80 opacity-0 backdrop-blur-sm transition-opacity hover:bg-black/80 hover:text-white group-hover:opacity-100 focus:opacity-100 focus-visible:outline-2 focus-visible:outline-blue-400"
+              >
+                <FlipHorizontal size={14} />
+              </button>
+            </>
+          ) : <div className="flex h-full flex-col items-center justify-center gap-2 text-gray-400"><VideoOff /><span className="text-xs">{t('calls.cameraOff')}</span></div>}
         </div>}
         {c.type === 'audio' && !ended && <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2 text-xs text-gray-400"><img className="h-7 w-7 rounded-full" src={getAvatarUrl(user?.avatarUrl)} alt="" /><span>{t('calls.you')}</span><AudioVisualizer stream={c.localMediaStream} isMuted={c.isMuted} className="h-6 w-28" /></div>}
       </div>

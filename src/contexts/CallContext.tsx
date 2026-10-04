@@ -23,6 +23,9 @@ interface CallContextType {
   changeDevice: (kind: 'audio' | 'video', deviceId: string) => Promise<void>;
   changeOutputDevice: (id: string) => Promise<void>; registerAudioElement: (element: HTMLAudioElement | null) => void; setShowSettings: (open: boolean) => void;
   setGridMode: (grid: boolean) => void; setViewMode: (mode: CallViewMode) => void;
+  isCameraFlipped: boolean;
+  toggleFlipCamera: () => void;
+  switchCameraDevice: () => Promise<void>;
   continueWithoutCamera: () => void; formatDuration: (seconds: number) => string;
 }
 const CallContext = createContext<CallContextType | undefined>(undefined);
@@ -50,6 +53,14 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [outputDeviceId, setOutputDeviceId] = useState('');
   const [cameraFallback, setCameraFallback] = useState(false);
   const [errorCode, setErrorCode] = useState<string | null>(null);
+  const [isCameraFlipped, setIsCameraFlipped] = useState<boolean>(() => {
+    try {
+      const stored = localStorage.getItem('call_flip_camera');
+      return stored !== null ? stored === 'true' : true;
+    } catch {
+      return true;
+    }
+  });
   const active = useRef<CallSnapshot | null>(null);
   const stream = useRef<MediaStream | null>(null);
   const audioElement = useRef<HTMLAudioElement | null>(null);
@@ -322,6 +333,34 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (active.current) chatSocket.sendCall('call.media_state', { call_id: active.current.id, muted: mutedRef.current, video_off: videoOffRef.current });
   }, [type, changeDevice, t]);
 
+  const toggleFlipCamera = useCallback(() => {
+    setIsCameraFlipped(prev => {
+      const next = !prev;
+      try { localStorage.setItem('call_flip_camera', String(next)); } catch {}
+      return next;
+    });
+  }, []);
+
+  const switchCameraDevice = useCallback(async () => {
+    if (!navigator.mediaDevices?.enumerateDevices) return;
+    try {
+      const list = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = list.filter(d => d.kind === 'videoinput');
+      if (videoDevices.length <= 1) return;
+      const currentTrack = stream.current?.getVideoTracks()[0];
+      const currentDeviceId = currentTrack?.getSettings().deviceId;
+      const currentIndex = videoDevices.findIndex(d => d.deviceId === currentDeviceId);
+      const nextIndex = (currentIndex + 1) % videoDevices.length;
+      const nextDevice = videoDevices[nextIndex];
+      if (nextDevice) {
+        await changeDevice('video', nextDevice.deviceId);
+        toast.success(nextDevice.label || t('calls.switchCamera'));
+      }
+    } catch (e) {
+      console.warn('[call] switch camera failed', e);
+    }
+  }, [changeDevice, t]);
+
   const mine = call?.caller_id === user?.id;
   return <CallContext.Provider value={{
     enabled, ready: enabled && registered, status, type, viewMode, partner, call, duration,
@@ -330,6 +369,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localMediaStream, remoteMediaStream, showSettings, gridMode, outputDeviceId, cameraFallback, errorCode,
     startCall, acceptCall, declineCall: () => terminate(), endCall: () => terminate(), toggleMute, toggleVideo,
     changeDevice, changeOutputDevice, registerAudioElement, setShowSettings, setGridMode, setViewMode,
+    isCameraFlipped, toggleFlipCamera, switchCameraDevice,
     continueWithoutCamera: () => fallback.current?.(true), formatDuration: formatCallDuration,
   }}>{children}</CallContext.Provider>;
 };
